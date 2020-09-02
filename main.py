@@ -1,13 +1,7 @@
 import argparse
-import os.path
 import sys
 
 from specie.interpreter import Interpreter
-
-from collections import OrderedDict
-from colorama import Fore, Back, Style
-from datetime import datetime, timedelta
-from money import Money
 
 
 # Main function
