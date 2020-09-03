@@ -41,6 +41,10 @@ class ObjRecord(Obj):
   def iter_fields(self):
     yield from self.fields
 
+  # Return the primitive value of this object
+  def value(self):
+    return {name: value.value() for name, value in self.fields.items()}
+
   # Return the truthiness of this object
   def truthy(self):
     return ObjBool(bool(self.fields))

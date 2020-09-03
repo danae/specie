@@ -135,14 +135,14 @@ def empty(*, description = None):
   return parse_empty
 
 # Return a parser with the value of the parsed token
-def token(name, *, description = None):
+def token(name, value = None, *, description = None):
   @parser_function(description = description or f"token({name})")
   def parse_token(tokens, index):
     if index == len(tokens):
       raise UnexpectedEndOfTokens(index)
     else:
       token = tokens[index]
-      if token.name == name:
+      if token.name == name and (value is None or token.value == value):
         return ParseResult(token.value, index + 1)
       else:
         raise UnexpectedToken(token)

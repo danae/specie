@@ -39,6 +39,10 @@ class Obj:
   def call(self, name, *arguments):
     return self.get_method(name)(*arguments)
 
+  # Return the primitive value of this object
+  def value(self):
+    return None
+
   # Return the thruthiness of this object
   def truthy(self):
     return ObjBool(True)
@@ -62,6 +66,10 @@ class ObjNull(Obj):
   def __init__(self):
     Obj.__init__(self)
 
+  # Return the primitive value of this object
+  def value(self):
+    return None
+
   # Return the thruthiness of this object
   def truthy(self):
     return ObjBool(False)
@@ -78,19 +86,23 @@ class ObjNull(Obj):
 # Class that defines a bool object
 class ObjBool(Obj):
   # Constructor
-  def __init__(self, value):
+  def __init__(self, bool_value):
     Obj.__init__(self)
 
-    if isinstance(value, ObjBool):
-      self.value = value.value
-    elif isinstance(value, bool):
-      self.value = value
+    if isinstance(bool_value, ObjBool):
+      self.bool_value = bool_value.value()
+    elif isinstance(bool_value, bool):
+      self.bool_value = bool_value
     elif value == "false":
-      self.value = False
+      self.bool_value = False
     elif value == "true":
-      self.value = True
+      self.bool_value = True
     else:
-      raise TypeError(type(value))
+      raise TypeError(type(bool_value))
+
+  # Return the primitive value of this object
+  def value(self):
+    return self.bool_value
 
   # Return the thruthiness of this object
   def truthy(self):
@@ -98,20 +110,20 @@ class ObjBool(Obj):
 
   # Return if this bool object is equal to another object
   def __eq__(self, other):
-    return ObjBool(isinstance(other, ObjBool) and self.value == other.value)
+    return ObjBool(isinstance(other, ObjBool) and self.bool_value == other.bool_value)
 
   # Convert to hash
   def __hash__(self):
-    return hash((self.value))
+    return hash((self.bool_value))
 
   # Convert to bool
   def __bool__(self):
-    return self.value
+    return self.bool_value
 
   # Convert to representation
   def __repr__(self):
-    return f"{self.__class__.__name__}({self.value!r})"
+    return f"{self.__class__.__name__}({self.bool_value!r})"
 
   # Convert to string
   def __str__(self):
-    return 'true' if self.value else 'false'
+    return 'true' if self.bool_value else 'false'

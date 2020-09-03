@@ -18,6 +18,10 @@ class ObjCollection(Obj):
     self.set_method('count', self.count)
     self.set_method('contains', self.__contains__)
 
+  # Return the primitive value of this object
+  def value(self):
+    return [value.value() for value in self.items]
+
   # Return the truthyness of this object
   def truthy(self):
     return ObjBool(bool(self.items))

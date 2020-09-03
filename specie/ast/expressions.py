@@ -20,7 +20,7 @@ class LiteralExpr(Expr):
 
 # Class that defines a list expression
 class ListExpr(Expr):
-  def __init__(self, items):
+  def __init__(self, items = []):
     self.items = items
 
   def __repr__(self):
@@ -32,7 +32,7 @@ class ListExpr(Expr):
 
 # Class that defines a record expression
 class RecordExpr(Expr):
-  def __init__(self, fields):
+  def __init__(self, fields = []):
     self.fields = fields
 
   def __repr__(self):

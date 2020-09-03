@@ -51,14 +51,12 @@ rules = [
   Rule('keyword_print', r'print', None),
   Rule('keyword_var', r'var', None),
   Rule('keyword_from', r'from', None),
-  Rule('keyword_get', r'get', None),
-  Rule('keyword_set', r'set', None),
-  Rule('keyword_delete', r'delete', None),
-  Rule('keyword_where', r'where', None),
+  #Rule('keyword_get', r'get', None),
+  #Rule('keyword_set', r'set', None),
+  #Rule('keyword_delete', r'delete', None),
+  Rule('keyword_if', r'if', None),
   Rule('keyword_include', r'include', None),
   Rule('keyword_import', r'import', None),
-  Rule('keyword_list', r'list', None),
-  Rule('keyword_table', r'table', None),
 
   # Literal tokens
   Rule('literal_false', r'false', None),
@@ -93,16 +91,19 @@ literal_true = token('literal_true').value(internals.ObjBool(True))
 literal_int = token('literal_int').map(internals.ObjInt)
 literal_float = token('literal_float').map(internals.ObjFloat)
 literal_string = token('literal_string').map(internals.ObjString)
+literal_regex = token('identifier', 'regex') >> token('literal_string').map(internals.ObjRegex)
 literal_date = token('literal_date').map(internals.ObjDate)
-literal = (literal_false | literal_true | literal_int | literal_float | literal_string | literal_date).map(ast.LiteralExpr)
+literal = (literal_false | literal_true | literal_int | literal_float | literal_string | literal_regex | literal_date).map(ast.LiteralExpr)
 
 # List primitives
 list_parameter = lazy(lambda: expr)
-list = square_bracketed(list_parameter.many_separated(token('symbol_comma')).map(ast.ListExpr))
+list_base = list_parameter.many_separated(token('symbol_comma')).map(ast.ListExpr)
+list = square_bracketed(list_base)
 
 # Record primitives
 record_parameter = concat(token('identifier'), token('symbol_colon') >> lazy(lambda: expr), lambda name, value: (name, value))
-record = curly_bracketed(record_parameter.many_separated(token('symbol_comma')).map(ast.RecordExpr))
+record_base = record_parameter.many_separated(token('symbol_comma')).map(ast.RecordExpr)
+record = curly_bracketed(record_base)
 
 # Primitives
 primitive = literal | list | record
@@ -136,11 +137,11 @@ logic_and = logic_not.reduce_separated(token('keyword_and'), lambda l, r: ast.Bi
 logic_or = logic_and.reduce_separated(token('keyword_or'), lambda l, r: ast.BinaryOpExpr(l, 'or', r), min = 1)
 
 # Query expressions
-query_get_action = token('keyword_get') >> lazy(lambda: expr).optional(None).map(lambda expr: ('get', expr))
-query_set_action = token('keyword_set') >> lazy(lambda: expr).map(lambda expr: ('set', expr))
-query_delete_action = token('keyword_delete').value(('delete', None))
+query_get_action = token('identifier', 'get') >> lazy(lambda: expr).optional(None).map(lambda expr: ('get', expr))
+query_set_action = token('identifier', 'set') >> lazy(lambda: expr).map(lambda expr: ('set', expr))
+query_delete_action = token('identifier', 'delete').value(('delete', None))
 query_action = query_get_action | query_set_action | query_delete_action
-query_where = token('keyword_where') >> lazy(lambda: expr)
+query_where = token('keyword_if') >> lazy(lambda: expr)
 query = token('keyword_from') >> concat_multiple(ast.QueryExpr, logic_or, query_action, query_where.optional()) | logic_or
 
 # Assignment expressions
@@ -156,13 +157,11 @@ argument_list = argument.many_separated(token('symbol_comma')).map(dict)
 
 # Statements
 expr_stmt = expr.map(ast.ExprStmt)
-print_stmt = token('keyword_print') >> concat(expr, (token('symbol_comma').then(argument_list)).optional({}), ast.PrintStmt)
+print_stmt = token('keyword_print') >> concat(expr, (token('symbol_comma') >> record_base).optional(ast.RecordExpr()), ast.PrintStmt)
 variable_stmt = token('keyword_var') >> concat(token('identifier'), token('operator_assign').then(expr).optional(), ast.VariableStmt)
 include_stmt = token('keyword_include') >> literal_string.map(ast.IncludeStmt)
-import_stmt = token('keyword_import') >> concat(expr, (token('symbol_comma').then(argument_list)).optional({}), ast.ImportStmt)
-list_stmt = token('keyword_list') >> concat(expr.optional(), (token('symbol_comma').then(argument_list)).optional({}), ast.ListStmt)
-table_stmt = token('keyword_table') >> concat(expr.optional(), (token('symbol_comma').then(argument_list)).optional({}), ast.TableStmt)
-stmt = expr_stmt | print_stmt | variable_stmt | include_stmt | import_stmt | list_stmt | table_stmt
+import_stmt = token('keyword_import') >> concat(expr, (token('symbol_comma') >> record_base).optional(ast.RecordExpr()), ast.ImportStmt)
+stmt = expr_stmt | print_stmt | variable_stmt | include_stmt | import_stmt
 
 # Statement lists
 stmt_list = stmt.many_separated(token('newline')).map(ast.BlockStmt)

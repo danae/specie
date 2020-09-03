@@ -3,12 +3,13 @@ from .errors import RuntimeException, InvalidTypeException, InvalidValueExceptio
 
 # Import callables
 from .callable import Callable
-from .callable_native import MethodFunction, ReflectiveMethodFunction, SumFunction, AvgFunction
+from .callable_native import NativeFunction, MethodFunction, ReflectiveMethodFunction, SumFunction, AvgFunction
 
 # Import objects
 from .object import Obj, ObjNull, ObjBool
 from .object_numeric import ObjNumeric, ObjInt, ObjFloat
 from .object_string import ObjString
+from .object_regex import ObjRegex
 from .object_date import ObjDate
 from .object_collection import ObjCollection, ObjSortedCollection
 from .object_record import ObjRecord

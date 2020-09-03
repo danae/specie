@@ -36,12 +36,12 @@ class VariableStmt(Stmt):
 
 # Class that defines a print statement
 class PrintStmt(Stmt):
-  def __init__(self, expr, args):
+  def __init__(self, expr, arguments):
     self.expr = expr
-    self.args = args
+    self.arguments = arguments
 
   def __repr__(self):
-    return f"{self.__class__.__name__}({self.expr!r}, {self.args!r})"
+    return f"{self.__class__.__name__}({self.expr!r}, {self.arguments!r})"
 
   def accept(self, visitor):
     visitor.visit_print_stmt(self)
@@ -61,41 +61,15 @@ class IncludeStmt(Stmt):
 
 # Class that defines an import statement
 class ImportStmt(Stmt):
-  def __init__(self, file, args):
+  def __init__(self, file, arguments):
     self.file = file
-    self.args = args
+    self.arguments = arguments
 
   def __repr__(self):
-    return f"{self.__class__.__name__}({self.file!r}, {self.args!r})"
+    return f"{self.__class__.__name__}({self.file!r}, {self.arguments!r})"
 
   def accept(self, visitor):
     return visitor.visit_import_stmt(self)
-
-
-# Class that defines a list statement
-class ListStmt(Stmt):
-  def __init__(self, expr, args):
-    self.expr = expr
-    self.args = args
-
-  def __repr__(self):
-    return f"{self.__class__.__name__}({self.expr!r}, {self.args!r})"
-
-  def accept(self, visitor):
-    return visitor.visit_list_stmt(self)
-
-
-# Class that defines a table statement
-class TableStmt(Stmt):
-  def __init__(self, expr, args):
-    self.expr = expr
-    self.args = args
-
-  def __repr__(self):
-    return f"{self.__class__.__name__}({self.expr!r}, {self.args!r})"
-
-  def accept(self, visitor):
-    return visitor.visit_table_stmt(self)
 
 
 # Class that defines a block statement
@@ -125,12 +99,6 @@ class StmtVisitor:
     raise NotImplementedError()
 
   def visit_import_stmt(self, stmt):
-    raise NotImplementedError()
-
-  def visit_list_stmt(self, stmt):
-    raise NotImplementedError()
-
-  def visit_table_stmt(self, stmt):
     raise NotImplementedError()
 
   def visit_block_stmt(self, stmt):

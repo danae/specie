@@ -1,8 +1,26 @@
+import inspect
+
 from .callable import Callable
 from .object import Obj, ObjNull, ObjBool
 from .object_numeric import ObjNumeric, ObjFloat
 from .object_collection import ObjCollection
 from .errors import InvalidTypeException, UndefinedMethod
+
+
+# Class that defines a callable that calls a native function
+class NativeFunction(Callable):
+  # Constructor
+  def __init__(self, function):
+    self.function = function
+
+  # Return the arity of the function
+  def arity(self):
+    signature = inspect.signature(self.function)
+    return len([p for p in signature.parameters.values() if p.kind in [inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD]])
+
+  # Call the function
+  def call(self, interpreter, arguments):
+    return self.function(*arguments)
 
 
 # Class that defines a call to a method

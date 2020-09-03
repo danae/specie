@@ -1,7 +1,7 @@
 import contextlib
 import os.path
 
-from . import ast, internals, output, parser, transactions
+from . import ast, internals, output, parser, semantics, transactions
 
 
 ### Definition of the environment ###
@@ -47,6 +47,35 @@ class Environment:
       raise internals.UndefinedField(name)
 
 
+# Class that defines a global environment
+class GlobalEnvironment(Environment):
+  # Constructor
+  def __init__(self):
+    Environment.__init__(self)
+
+    # Add constructor functions
+    #self.define('regex', internals.NativeFunction(internals.ObjRegex))
+
+    # Add method functions
+    self.define('at', internals.MethodFunction('at', 2))
+    self.define('count', internals.MethodFunction('count', 1))
+    self.define('eq', internals.ReflectiveMethodFunction('eq', 'eq'))
+    self.define('neq', internals.ReflectiveMethodFunction('neq', 'neq'))
+    self.define('lt', internals.ReflectiveMethodFunction('lt', 'gte'))
+    self.define('lte', internals.ReflectiveMethodFunction('lte', 'gt'))
+    self.define('gt', internals.ReflectiveMethodFunction('gt', 'lte'))
+    self.define('gte', internals.ReflectiveMethodFunction('gte', 'lt'))
+    self.define('match', internals.MethodFunction('match', 2))
+    self.define('contains', internals.MethodFunction('contains', 2))
+
+    # Add native functions
+    self.define('sum', internals.SumFunction())
+    self.define('avg', internals.AvgFunction())
+
+    # Add default collection
+    self.define('_', transactions.TransactionList())
+
+
 ### Definition of the interpreter ###
 
 # Class that defines an interpreter
@@ -55,26 +84,9 @@ class Interpreter(ast.ExprVisitor, ast.StmtVisitor):
 
   # Constructor
   def __init__(self):
-    self.env = Environment()
+    self.cache_analyzer = semantics.CacheAnalyzer(self)
+    self.env = GlobalEnvironment()
     self.includes = [self.MAIN_FILE]
-
-    # Add default collection
-    self.env.define('_', transactions.TransactionList())
-
-    # Add native functions
-    self.env.define('at', internals.MethodFunction('at', 2))
-    self.env.define('count', internals.MethodFunction('count', 1))
-    self.env.define('eq', internals.ReflectiveMethodFunction('eq', 'eq'))
-    self.env.define('neq', internals.ReflectiveMethodFunction('neq', 'neq'))
-    self.env.define('lt', internals.ReflectiveMethodFunction('lt', 'gte'))
-    self.env.define('lte', internals.ReflectiveMethodFunction('lte', 'gt'))
-    self.env.define('gt', internals.ReflectiveMethodFunction('gt', 'lte'))
-    self.env.define('gte', internals.ReflectiveMethodFunction('gte', 'lt'))
-    self.env.define('match', internals.MethodFunction('match', 2))
-    self.env.define('contains', internals.MethodFunction('contains', 2))
-
-    self.env.define('sum', internals.SumFunction())
-    self.env.define('avg', internals.AvgFunction())
 
   # Create a new lexical scope with the specified variables
   @contextlib.contextmanager
@@ -96,9 +108,14 @@ class Interpreter(ast.ExprVisitor, ast.StmtVisitor):
 
   # Parse a string into an abstract syntax tree and interpret it
   def execute(self, string):
-    # Parse and interpret the string
     try:
+      # Parse the string into an abstract syntax tree
       ast = parser.parse(string)
+
+      # Cache literal constants
+      self.cache_analyzer.analyze(ast)
+
+      # Interpret the abstract syntax tree
       self.interpret(ast)
 
     # Catch syntax errors
@@ -140,7 +157,7 @@ class Interpreter(ast.ExprVisitor, ast.StmtVisitor):
     print(object)
 
 
-  ### Definition of the expression visitor ###
+  ### Definition of the expression visitor functions ###
 
   # Evaluate an expression
   def evaluate(self, expr):
@@ -200,16 +217,14 @@ class Interpreter(ast.ExprVisitor, ast.StmtVisitor):
       raise internals.InvalidTypeException(f"Queries can only operate on collections")
 
     # Evaluate the clause
-    def evaluate_clause(item):
-      return self.evaluate_scope(expr.clause, item)
-
     clause_collection = collection
     if expr.clause is not None:
-      clause_collection = clause_collection.filter(evaluate_clause)
+      clause_collection = clause_collection.filter(lambda item: self.evaluate_scope(expr.clause, item))
 
     # Execute the action
     if expr.action[0] == 'get':
       # Get the item or the specified expression based on the item
+
       # Map the collection to the specified expression
       if expr.action[1] is not None:
         clause_collection = clause_collection.map(lambda item: self.evaluate_scope(expr.action[1], item))
@@ -218,6 +233,7 @@ class Interpreter(ast.ExprVisitor, ast.StmtVisitor):
       return clause_collection
     elif expr.action[0] == 'set':
       # Set the fields in the specified record into the item
+
       # Iterate over the collection
       for item in clause_collection:
         # Evaluate the set record
@@ -235,6 +251,7 @@ class Interpreter(ast.ExprVisitor, ast.StmtVisitor):
       return internals.ObjInt(len(clause_collection))
     elif expr.action[0] == 'delete':
       # Delete the items that match the clause from the collection
+
       # Check if there is a clause
       if expr.clause is None:
         raise internals.RuntimeException(f"Delete queries must provide a clause")
@@ -308,7 +325,7 @@ class Interpreter(ast.ExprVisitor, ast.StmtVisitor):
       return internals.ObjBool(self.evaluate(expr.left).truthy() or self.evaluate(expr.right).truthy())
 
 
-  ### Definition of the statement visitor ###
+  ### Definition of the statement visitor functions ###
 
   # Interpret a statement
   def interpret(self, stmt):
@@ -328,9 +345,8 @@ class Interpreter(ast.ExprVisitor, ast.StmtVisitor):
   # Visit a print statement
   def visit_print_stmt(self, stmt):
     result = self.evaluate(stmt.expr)
-    args = {key: self.evaluate(value) for key, value in stmt.args.items()}
-
-    output.print_object(result, **args)
+    arguments = self.evaluate(stmt.arguments)
+    output.print_object(result, **arguments.value())
 
   # Visit a variable statement
   def visit_variable_stmt(self, stmt):
@@ -353,32 +369,20 @@ class Interpreter(ast.ExprVisitor, ast.StmtVisitor):
   # Visit an import statement
   def visit_import_stmt(self, stmt):
     file = self.evaluate(stmt.file)
-    # TODO: Implement logic for objects instead of their values
-    args = {key: self.evaluate(value).value for key, value in stmt.args.items()}
+    arguments = self.evaluate(stmt.arguments)
+
     if not isinstance(file, internals.ObjString):
-      raise TypeError(file)
-    file_name = str(file)
+      raise TypeError(type(file))
+    file_name = file.value()
 
     # Add the include path to the file
     if self.includes[-1] != self.MAIN_FILE:
       file_name = os.path.join(os.path.split(self.includes[-1])[0], file_name)
 
     # Add the imported transactions
-    new_transactions = transactions.TransactionReader(file_name, **args)
+    new_transactions = transactions.TransactionReader(file_name, **arguments.value())
     self.env.get('_').insert_all(new_transactions)
     print(f"Imported {len(new_transactions)} transactions from '{file_name}'")
-
-  """
-  # Visit a list statement
-  def visit_list_stmt(self, stmt):
-    o = output.ListOutput(stmt.expr, **stmt.args)
-    o.print(self.env.get('_'))
-
-  # Visit a table statement
-  def visit_table_stmt(self, stmt):
-    o = output.TableOutput(stmt.expr, **stmt.args)
-    o.print(self.env.get('_'))
-  """
 
   # Visit a block statement
   def visit_block_stmt(self, stmt):

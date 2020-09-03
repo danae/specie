@@ -1,4 +1,5 @@
 import argparse
+import readline
 import sys
 
 from specie.interpreter import Interpreter
