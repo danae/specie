@@ -12,9 +12,10 @@ __all__ = ['rules, grammar']
 
 ### Definiton of token rules ###
 
+# List of token rules
 rules = [
   # Whitespace tokens
-  Rule(None, r'[ \t]+'),
+  Rule('whitespace', r'[ \t]+', ignore = True),
 
   # Bracket tokens
   Rule('parenthesis_left', r'\(', None),
@@ -42,21 +43,16 @@ rules = [
   Rule('operator_gte', r'>='),
   Rule('operator_gt', r'>'),
   Rule('operator_in', r'in'),
+  Rule('operator_or', r'or'),
+  Rule('operator_and', r'and'),
+  Rule('operator_not', r'not'),
   Rule('operator_assign', r'='),
 
   # Keyword tokens
-  Rule('keyword_or', r'or', None),
-  Rule('keyword_and', r'and', None),
-  Rule('keyword_not', r'not', None),
-  Rule('keyword_print', r'print', None),
+  Rule('keyword_regex', r'regex', None),
   Rule('keyword_var', r'var', None),
   Rule('keyword_from', r'from', None),
-  #Rule('keyword_get', r'get', None),
-  #Rule('keyword_set', r'set', None),
-  #Rule('keyword_delete', r'delete', None),
   Rule('keyword_if', r'if', None),
-  Rule('keyword_include', r'include', None),
-  Rule('keyword_import', r'import', None),
 
   # Literal tokens
   Rule('literal_false', r'false', None),
@@ -71,100 +67,100 @@ rules = [
 ]
 
 
+### Definition of parser helper methods ###
+
+# Map a list of arguments to positional and keyword arguments
+def map_arguments(list):
+  # Create two lists to store the arguments and keywords
+  args = []; kwargs = []
+
+  # Iterate over the arguments
+  for item in list:
+    if isinstance(item, tuple):
+      # The call argument is a keyword argument
+      kwargs.append(item)
+    elif not kwargs:
+      # The call argument is a positional argument
+      args.append(item)
+    else:
+      # A positional argument was found after a keyword argument, which is invalid
+      raise ParserError("A keyword argument cannot be followed by a positional argument")
+
+  # Return the lists as the appropriate expressions
+  return ast.Arguments(ast.ListExpr(args), ast.RecordExpr(kwargs))
+
+
 ### Definiton of parser rules ###
 
-# Return a parser between parentheses
-def parenthesized(parser):
-  return parser.between(token('parenthesis_left'), token('parenthesis_right'))
-
-# Return a parser between square brackets
-def square_bracketed(parser):
-  return parser.between(token('square_bracket_left'), token('square_bracket_right'))
-
-# Return a parser between square brackets
-def curly_bracketed(parser):
-  return parser.between(token('curly_bracket_left'), token('curly_bracket_right'))
+# Register all token parsers in the global dictionary for easier access
+for rule in rules:
+  globals()[rule.name.upper()] = token(rule.name)
 
 # Literals
-literal_false = token('literal_false').value(internals.ObjBool(False))
-literal_true = token('literal_true').value(internals.ObjBool(True))
-literal_int = token('literal_int').map(internals.ObjInt)
-literal_float = token('literal_float').map(internals.ObjFloat)
-literal_string = token('literal_string').map(internals.ObjString)
-literal_regex = token('identifier', 'regex') >> token('literal_string').map(internals.ObjRegex)
-literal_date = token('literal_date').map(internals.ObjDate)
+literal_false = LITERAL_FALSE.value(internals.ObjBool(False))
+literal_true = LITERAL_TRUE.value(internals.ObjBool(True))
+literal_int = LITERAL_INT.map(lambda t: internals.ObjInt(t.value))
+literal_float = LITERAL_FLOAT.map(lambda t: internals.ObjFloat(t.value))
+literal_string = LITERAL_STRING.map(lambda t: internals.ObjString(t.value))
+literal_regex = KEYWORD_REGEX >> LITERAL_STRING.map(lambda t: internals.ObjRegex(t.value))
+literal_date = LITERAL_DATE.map(lambda t: internals.ObjDate(t.value))
 literal = (literal_false | literal_true | literal_int | literal_float | literal_string | literal_regex | literal_date).map(ast.LiteralExpr)
 
 # List primitives
-list_parameter = lazy(lambda: expr)
-list_base = list_parameter.many_separated(token('symbol_comma')).map(ast.ListExpr)
-list = square_bracketed(list_base)
+list_arg = lazy(lambda: expr)
+list = SQUARE_BRACKET_LEFT >> list_arg.many_separated(SYMBOL_COMMA).map(ast.ListExpr) << SQUARE_BRACKET_RIGHT
 
 # Record primitives
-record_parameter = concat(token('identifier'), token('symbol_colon') >> lazy(lambda: expr), lambda name, value: (name, value))
-record_base = record_parameter.many_separated(token('symbol_comma')).map(ast.RecordExpr)
-record = curly_bracketed(record_base)
+record_arg = concat(IDENTIFIER, SYMBOL_COLON >> lazy(lambda: expr), lambda name, value: (name, value))
+record = CURLY_BRACKET_LEFT >> record_arg.many_separated(SYMBOL_COMMA).map(ast.RecordExpr) << CURLY_BRACKET_RIGHT
 
-# Primitives
-primitive = literal | list | record
+# Primary expressions
+primary = literal | list | record | IDENTIFIER.map(ast.VariableExpr) | PARENTHESIS_LEFT >> lazy(lambda: expr).map(ast.GroupingExpr) << PARENTHESIS_RIGHT
 
-# Helper parsers
-parameters = token('identifier').many_separated(token('symbol_comma'))
-arguments = lazy(lambda: expr).many_separated(token('symbol_comma'))
+# Arguments
+arguments_arg = record_arg | list_arg
+arguments = arguments_arg.many_separated(SYMBOL_COMMA).optional([]).map(map_arguments)
 
-# Primitive expressions
-variable = token('identifier').map(ast.VariableExpr)
-primary = primitive | variable | parenthesized(lazy(lambda: expr))
-call = concat(primary, parenthesized(lazy(lambda: arguments)), ast.CallExpr) | primary
+# Call expressions
+call = concat_multiple(ast.CallExpr, primary, PARENTHESIS_LEFT, arguments << PARENTHESIS_RIGHT) | primary
 
 # Arithmetic expressions
-multiplication_op = token('operator_mul') | token('operator_div')
+multiplication_op = OPERATOR_MUL | OPERATOR_DIV
 multiplication = call.reduce_separated(multiplication_op, ast.BinaryOpExpr, min = 1, parse_separator = True)
-addition_op = token('operator_add') | token('operator_sub')
+addition_op = OPERATOR_ADD | OPERATOR_SUB
 addition = multiplication.reduce_separated(addition_op, ast.BinaryOpExpr, min = 1, parse_separator = True)
 
 # Comparison expressions
-comparison_op = token('operator_lt') | token('operator_lte') | token('operator_gt') | token('operator_gte') | token('operator_match') | token('operator_in')
+comparison_op = OPERATOR_LT | OPERATOR_LTE | OPERATOR_GT | OPERATOR_GTE | OPERATOR_MATCH | OPERATOR_IN
 comparison = concat_multiple(ast.BinaryOpExpr, addition, comparison_op, addition) | addition
 
 # Equality expressions
-equality_op = token('operator_eq') | token('operator_neq')
+equality_op = OPERATOR_EQ | OPERATOR_NEQ
 equality = concat_multiple(ast.BinaryOpExpr, comparison, equality_op, comparison) | comparison
 
 # Logic expressions
-logic_not = token('keyword_not') >> lazy(lambda: logic_not).map(lambda expr: ast.UnaryOpExpr('not', expr)) | equality
-logic_and = logic_not.reduce_separated(token('keyword_and'), lambda l, r: ast.BinaryOpExpr(l, 'and', r), min = 1)
-logic_or = logic_and.reduce_separated(token('keyword_or'), lambda l, r: ast.BinaryOpExpr(l, 'or', r), min = 1)
+logic_not = concat(OPERATOR_NOT, lazy(lambda: logic_not), ast.UnaryOpExpr) | equality
+logic_and = logic_not.reduce_separated(OPERATOR_AND, ast.BinaryOpExpr, min = 1, parse_separator = True)
+logic_or = logic_and.reduce_separated(OPERATOR_OR, ast.BinaryOpExpr, min = 1, parse_separator = True)
 
 # Query expressions
-query_get_action = token('identifier', 'get') >> lazy(lambda: expr).optional(None).map(lambda expr: ('get', expr))
-query_set_action = token('identifier', 'set') >> lazy(lambda: expr).map(lambda expr: ('set', expr))
-query_delete_action = token('identifier', 'delete').value(('delete', None))
-query_action = query_get_action | query_set_action | query_delete_action
-query_where = token('keyword_if') >> lazy(lambda: expr)
-query = token('keyword_from') >> concat_multiple(ast.QueryExpr, logic_or, query_action, query_where.optional()) | logic_or
+query_action = concat(IDENTIFIER, arguments, ast.Call)
+query_where = KEYWORD_IF >> lazy(lambda: expr)
+query = concat_multiple(ast.QueryExpr, KEYWORD_FROM >> IDENTIFIER.map(ast.VariableExpr), query_action, query_where.optional()) | logic_or
 
 # Assignment expressions
-assignment_op = token('operator_assign')
-assignment = concat(token('identifier'), assignment_op >> lazy(lambda: assignment), ast.AssignmentExpr) | query
+assignment_op = OPERATOR_ASSIGN
+assignment = concat_multiple(ast.AssignmentExpr, IDENTIFIER, assignment_op, lazy(lambda: assignment)) | query
+
+# Declaration expressions
+declaration_op = OPERATOR_ASSIGN
+declaration = KEYWORD_VAR >> concat_multiple(ast.DeclarationExpr, IDENTIFIER, declaration_op, query) | assignment
 
 # Expressions
-expr = assignment
+expr = declaration
 
-# Arguments
-argument = concat(token('identifier'), token('symbol_colon').then(expr).optional(internals.ObjBool(True)), lambda key, value: (key, value))
-argument_list = argument.many_separated(token('symbol_comma')).map(dict)
-
-# Statements
-expr_stmt = expr.map(ast.ExprStmt)
-print_stmt = token('keyword_print') >> concat(expr, (token('symbol_comma') >> record_base).optional(ast.RecordExpr()), ast.PrintStmt)
-variable_stmt = token('keyword_var') >> concat(token('identifier'), token('operator_assign').then(expr).optional(), ast.VariableStmt)
-include_stmt = token('keyword_include') >> literal_string.map(ast.IncludeStmt)
-import_stmt = token('keyword_import') >> concat(expr, (token('symbol_comma') >> record_base).optional(ast.RecordExpr()), ast.ImportStmt)
-stmt = expr_stmt | print_stmt | variable_stmt | include_stmt | import_stmt
-
-# Statement lists
-stmt_list = stmt.many_separated(token('newline')).map(ast.BlockStmt)
+# Expression lists
+expr_list = expr.many_separated(token('newline')).map(lambda exprs: ast.BlockExpr(exprs, False))
 
 # Grammar
-grammar = stmt_list.phrase()
+grammar = expr_list.phrase()

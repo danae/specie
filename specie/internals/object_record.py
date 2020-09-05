@@ -1,5 +1,5 @@
 from .object import Obj, ObjNull, ObjBool
-from .errors import InvalidTypeException, UndefinedField
+from .errors import InvalidTypeException, UndefinedFieldException
 
 
 # Class that defines a record object
@@ -7,39 +7,62 @@ class ObjRecord(Obj):
   # Constructor
   def __init__(self):
     Obj.__init__(self)
-
     self.fields = {}
+
+
+  ### Definition of field access functions ###
+
+  # Get a field in the record
+  def __getitem__(self, name):
+    return self.fields[name]
+
+  # Set a field in the record
+  def __setitem__(self, name, value):
+    self.fields[name] = value
+
+  # Return if a field exists in the record
+  def __contains__(self, name):
+    return name in self.fields
+
+  # Return an iterator over the fields in the record
+  def __iter__(self):
+    return iter(self.fields.items())
+
+  # Return an iterator over the field names in the record
+  def names(self):
+    return iter(self.fields)
+
+  # Return an iterator over the field values in the record
+  def values(self):
+    return iter(self.fields.values(0))
+
+  # Return a field in the record, or a default value if the field doesn't exist
+  def get(self, name, default = None):
+    try:
+      return self[name]
+    except IndexError:
+      return default
+
+
+  ### Definition of field access functions for lexer tokens ###
+
+  # Get a field in the record by means of a lexer token
+  def get_field(self, name):
+    try:
+      return self[name.value]
+    except IndexError:
+      raise UndefinedFieldException(name.value, name.location)
+
+  # Set a field in the record by means of a lexer token
+  def set_field(self, name, value):
+    self[name.value] = value
 
   # Return if a field with the specified name exists
   def has_field(self, name):
-    return name in self.fields
+    return name.value in self
 
-  # Set the field with the specified name and value
-  def set_field(self, name, value):
-    self.fields[name] = value
 
-  # Return the field with the specified name
-  def get_field(self, name):
-    if not self.has_field(name):
-      raise UndefinedField(name)
-    return self.fields[name]
-
-  # Return the field with the specified name, or a default value if the field is undefined
-  def get_field_or_default(self, name, default = None):
-    try:
-      return self.get_field(name)
-    except UndefinedField:
-      return default
-
-  # Remove the field with the specified name
-  def remove_field(self, name):
-    if not self.has_field(name):
-      raise UndefinedField(name)
-    del self.fields[name]
-
-  # Iterate over the field names in this record
-  def iter_fields(self):
-    yield from self.fields
+  ### Definition of object functions ###
 
   # Return the primitive value of this object
   def value(self):
@@ -52,6 +75,9 @@ class ObjRecord(Obj):
   # Return if this record object is equal to another object
   def __eq__(self, other):
     return ObjBool(isinstance(other, ObjRecord) and self.fields == other.fields)
+
+
+  ### Definition of conversion functions ###
 
   # Convert to hash
   def __hash__(self):

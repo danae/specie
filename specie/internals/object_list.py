@@ -2,11 +2,11 @@ from bisect import insort
 
 from .object import Obj, ObjNull, ObjBool
 from .object_numeric import ObjInt
-from .errors import InvalidTypeException, UndefinedIndex
+from .errors import InvalidTypeException, UndefinedIndexException
 
 
-# Class that defines a collection object
-class ObjCollection(Obj):
+# Class that defines a list object
+class ObjList(Obj):
   # Constructor
   def __init__(self, iterable = []):
     Obj.__init__(self)
@@ -26,51 +26,51 @@ class ObjCollection(Obj):
   def truthy(self):
     return ObjBool(bool(self.items))
 
-  # Return if this collection object is equal to another object
+  # Return if this list object is equal to another object
   def __eq__(self, other):
-    return ObjBool(isinstance(other, ObjCollection) and self.items == other.items)
+    return ObjBool(isinstance(other, ObjList) and self.items == other.items)
 
-  # Return the item in the collection at the specified index
+  # Return the item in the list at the specified index
   def __getitem__(self, index):
     if isinstance(index, ObjInt):
       try:
         return self.items[index.value]
       except IndexError:
-        raise UndefinedIndex(index)
+        raise UndefinedIndexException(index)
     else:
       raise InvalidTypeException(index)
 
-  # Return the length of the collection
+  # Return the length of the list
   def count(self):
     return ObjInt(len(self.items))
 
-  # Return if the specified item exists in the collection
+  # Return if the specified item exists in the list
   def __contains__(self, item):
     return ObjBool(item in self.items)
 
-  # Insert an item into the collection
+  # Insert an item into the list
   def insert(self, item):
     if isinstance(item, Obj):
       self.items.append(item)
     else:
       raise InvalidTypeException(item)
 
-  # Add several items to the collection
+  # Add several items to the list
   def insert_all(self, iterable):
     for item in iterable:
       self.insert(item)
 
-  # Delete an item from the collection
+  # Delete an item from the list
   def delete(self, item):
     self.items.remove(item)
 
-  # Map the items of the collection
+  # Map the items of the list
   def map(self, func):
-    return ObjCollection(func(item) for item in self)
+    return ObjList(func(item) for item in self)
 
-  # Filter the items of the collection
+  # Filter the items of the list
   def filter(self, func):
-    return ObjCollection(item for item in self if func(item))
+    return ObjList(item for item in self if func(item))
 
   # Convert to hash
   def __hash__(self):
@@ -93,13 +93,13 @@ class ObjCollection(Obj):
     return '[' + ', '.join(f"{item}" for item in self.items) + ']'
 
 
-# Class that defines a sorted collection object
-class ObjSortedCollection(ObjCollection):
+# Class that defines a sorted list object
+class ObjSortedList(ObjList):
   # Constructor
   def __init__(self, iterable = []):
-    ObjCollection.__init__(self, iterable)
+    ObjList.__init__(self, iterable)
 
-  # Insert an item into the collection
+  # Insert an item into the list
   def insert(self, item):
     if isinstance(item, Obj):
       insort(self.items, item)

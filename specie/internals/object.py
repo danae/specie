@@ -1,6 +1,6 @@
 import functools
 
-from .errors import UndefinedMethod
+from .errors import UndefinedMethodException
 
 
 # Base class for any object
@@ -22,13 +22,13 @@ class Obj:
   # Return the method with the specified name
   def get_method(self, name):
     if not self.has_method(name):
-      raise UndefinedMethod(name)
+      raise UndefinedMethodException(name)
     return self.methods[name]
 
   # Remove the method with the specified name
   def remove_method(self, name):
     if not self.has_method(name):
-      raise UndefinedMethod(name)
+      raise UndefinedMethodException(name)
     del self.methods[name]
 
   # Iterate over the methods names in this record

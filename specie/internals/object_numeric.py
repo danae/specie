@@ -20,6 +20,9 @@ class ObjNumeric(Obj):
     self.set_method('mul', self.__mul__)
     self.set_method('div', self.__truediv__)
 
+
+  ### Definition of object functions ###
+
   # Return the primitive value of this object
   def value(self):
     raise NotImplementedError(f"This function must be implemented by subclasses of {self.__class__.__name__}")
@@ -62,6 +65,8 @@ class ObjNumeric(Obj):
       return ObjFloat(self.value() / other.value())
     raise InvalidTypeException(other)
 
+  ### Definition of conversion functions ###
+
   # Convert to hash
   def __hash__(self):
     return hash((self.value()))
@@ -81,6 +86,10 @@ class ObjNumeric(Obj):
   # Convert to float
   def __float__(self):
     return float(self.value())
+
+  # Convert to format
+  def __format__(self, format_spec):
+    return format(self.value(), format_spec)
 
 
 # Class that defines an integer object

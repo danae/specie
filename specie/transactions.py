@@ -12,25 +12,24 @@ from collections import OrderedDict
 from colorama import Fore, Back, Style
 from datetime import date, datetime, timedelta
 from functools import total_ordering
-from money import Money
 from os.path import isfile
 
 
 # Transaction list class
-class TransactionList(internals.ObjSortedCollection):
+class TransactionList(internals.ObjSortedList):
   # Constructor
   def __init__(self, iterable = []):
     super().__init__(iterable)
 
   # Return the date boundaries of this list
   def first_date(self):
-    return self[0].get('date') if self else internals.ObjDate(date.min)
+    return self[0]['date'] if len(self) else internals.ObjDate(date.min)
   def last_date(self):
-    return self[-1].get('date') if self else internals.Objdate(date.max)
+    return self[-1]['date'] if len(self) else internals.Objdate(date.max)
 
   # Get total balance
   def total(self, currency = "EUR"):
-    return sum(transaction.get('amount') for transaction in self if transaction.get('amount').currency == currency) or Money(0, currency)
+    return sum(transaction['amount'] for transaction in self if transaction['amount']['currency'] == currency) or internals.ObjMoney(currency = internals.ObjString(currency))
 
   # Retain transactions that match the predicate
   def where(self, function):
@@ -40,13 +39,13 @@ class TransactionList(internals.ObjSortedCollection):
   def where_after(self, date):
     if date is None:
       return self
-    return self.where(lambda t: t.get('date') >= date)
+    return self.where(lambda t: t['date'] >= date)
 
   # Retain transactions before a given date
   def where_before(self, date):
     if date is None:
       return self
-    return self.where(lambda t: t.get('date') <= date)
+    return self.where(lambda t: t['date'] <= date)
 
   # Retain transactions in a given period
   def where_period(self, first, last):
@@ -56,7 +55,7 @@ class TransactionList(internals.ObjSortedCollection):
   def where_label(self, label):
     if label is None:
       return self
-    return self.where(lambda t: t.get('label') == label)
+    return self.where(lambda t: t['label'] == label)
 
 
 # Transaction reader class
@@ -69,17 +68,13 @@ class TransactionReader(TransactionList):
     elif kwargs['type'] == 'paypal':
       return PaypalTransactionReader(filename, **kwargs)
     else:
-      raise ValueError("The type '{}' is unsupported".format(type))
+      raise ValueError(f"The type '{type}' is unsupported")
 
 
 # Rabobank transaction reader class
 class RabobankTransactionReader(TransactionReader):
   # Return a transaction list that has bean read
   def __new__(cls, filename, **kwargs):
-    # Check if the file exists
-    if not isfile(filename):
-      raise RuntimeError("The file '{}' could not be found".format(filename))
-
     # Create a new transaction list
     transactions = TransactionList()
 
@@ -100,8 +95,8 @@ class RabobankTransactionReader(TransactionReader):
     return internals.ObjTransaction(
       id = internals.ObjString("rabobank:{}".format(record['Volgnr'])),
       date = internals.ObjDate(datetime.strptime(record['Datum'], '%Y-%m-%d').date()),
-      amount = Money(record['Bedrag'].replace(',', '.'), record['Munt']),
-      balance = Money(record['Saldo na trn'].replace(',','.'), record['Munt']),
+      amount = internals.ObjMoney(currency = internals.ObjString(record['Munt']), amount = internals.ObjFloat(record['Bedrag'].replace(',', '.'))),
+      balance = internals.ObjMoney(currency = internals.ObjString(record['Munt']), amount = internals.ObjFloat(record['Saldo na trn'].replace(',','.'))),
       own_address = internals.ObjString(record['IBAN/BBAN']),
       own_bic = internals.ObjString(record['BIC']),
       address = internals.ObjString(record['Tegenrekening IBAN/BBAN']),
@@ -115,10 +110,6 @@ class RabobankTransactionReader(TransactionReader):
 class PaypalTransactionReader(TransactionReader):
   # Return a transaction list that has bean read
   def __new__(cls, filename, currency = 'EUR', **kwargs):
-    # Check if the file exists
-    if not isfile(filename):
-      raise RuntimeError("The file '{}' could not be found".format(filename))
-
     # Create a new transaction list
     transactions = TransactionList()
 
@@ -169,12 +160,12 @@ class PaypalTransactionReader(TransactionReader):
   # Parse a transaction from a record
   @staticmethod
   def parse_transaction(record, index = 0):
-    amount = Money(record['Bruto'].replace(',','.'), record['Valuta'])
+    amount = internals.ObjMoney(currency = internals.ObjString(record['Valuta']), amount = internals.ObjFloat(record['Bruto'].replace(',','.')))
 
     from_email = record['Van e-mailadres'].lower()
     to_email = record['Naar e-mailadres'].lower()
-    own_address = from_email if amount.amount < 0 else to_email
-    address = to_email if amount.amount < 0 else from_email
+    own_address = from_email if amount.amount < internals.ObjectFloat(0.0) else to_email
+    address = to_email if amount.amount < internals.ObjFloat(0.0) else from_email
 
     return internals.ObjTransaction(
       id = internals.ObjString("paypal:{:04d}".format(index)),

@@ -21,28 +21,28 @@ class ObjTransaction(ObjRecord):
     self.set_method('gt', self.__gt__)
     self.set_method('gte', self.__ge__)
 
-    self.set_field('id', ObjString())
-    self.set_field('date', ObjDate())
-    self.set_field('amount', ObjMoney(currency = ObjString('EUR'), amount = ObjFloat()))
-    self.set_field('label', ObjString())
-    self.set_field('name', ObjString())
-    self.set_field('address', ObjString())
-    self.set_field('description', ObjString())
+    self['id'] = ObjString()
+    self['date'] = ObjDate()
+    self['amount'] = ObjMoney(currency = ObjString('EUR'), amount = ObjFloat())
+    self['label'] = ObjString()
+    self['name'] = ObjString()
+    self['address'] = ObjString()
+    self['description'] = ObjString()
 
     for name, value in kwargs.items():
-      self.set_field(name, value)
+      self[name] = value
 
   # Return if this transaction object is equal to another object
   def __eq__(self, other):
-    return ObjBool(isinstance(other, ObjTransaction) and self.get_field('id') == other.get_field('id'))
+    return ObjBool(isinstance(other, ObjTransaction) and self['id'] == other['id'])
 
   # Return if this transaction object is less than another transaction
   def __lt__(self, other):
     if isinstance(other, ObjTransaction):
-      return ObjBool((self.get_field('date'), self.get_field('id')) < (other.get_field('date'), other.get_field('id')))
+      return ObjBool((self['date'], self['id']) < (other['date'], other['id']))
     else:
       raise InvalidTypeException(other)
 
   # Convert to hash
   def __hash__(self):
-    return hash((self.get_field('id')))
+    return hash((self['id']))

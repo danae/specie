@@ -13,10 +13,9 @@ newline_pattern = re.compile(newline_pattern_literal)
 # Class that represents a token rule
 class Rule:
   # Constructor
-  def __init__(self, name, pattern, replacement = 0):
+  def __init__(self, name, pattern, replacement = 0, *, ignore = False):
     self.name = name
     self.pattern = re.compile(pattern, re.IGNORECASE)
-
     if callable(replacement):
       self.replacement = replacement
     elif isinstance(replacement, int):
@@ -25,6 +24,7 @@ class Rule:
       self.replacement = lambda m: replacement
     else:
       self.replacement = lambda m: None
+    self.ignore = ignore
 
 
 # Class that represents a location
@@ -150,7 +150,7 @@ class Lexer:
         if token_match := rule.pattern.match(string, pos):
           value = rule.replacement(token_match)
           token = Token(rule.name, value, location)
-          token_matches.append((token_match.end(), -rule_index, token))
+          token_matches.append((token_match.end(), -rule_index, token, rule))
 
       # Check if there are matched rules
       if not token_matches:
@@ -161,8 +161,8 @@ class Lexer:
         token_matches.sort()
         match_tuple = token_matches[-1]
 
-        # Ignore tuples without a name
-        if match_tuple[2].name is not None:
+        # Ignore tuples that should be ignored
+        if not match_tuple[3].ignore:
           # Yield the match token
           yield match_tuple[2]
 

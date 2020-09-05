@@ -2,41 +2,12 @@ import functools
 
 # Define the exports for this module
 __all__ = [
-  'empty', 'token', 'lazy', 'map', 'value', 'concat', 'then', 'before',
-  'between', 'concat_multiple', 'alternate', 'optional', 'many',
+  'empty', 'token', 'lazy', 'debug', 'map', 'value', 'concat', 'then',
+  'before', 'between', 'concat_multiple', 'alternate', 'optional', 'many',
   'many_separated', 'many_separated_and_terminated',
-  'many_separated_and_optionally_terminated', 'phrase', 'lazy',
+  'many_separated_and_optionally_terminated', 'phrase',
   'ParserError', 'UnexpectedEndOfTokens', 'UnexpectedToken'
 ]
-
-
-# Wrap a parser to print its result
-debug_indent = 0
-def debug(parser_class):
-  global debug_indent
-
-  original_call = parser_class.parse
-  def parse(self, tokens, index):
-    global debug_indent
-
-    self_repr = repr(self)
-    self_repr = (self_repr[:100] + "...") if len(self_repr) > 100 else self_repr
-    print("|   " * debug_indent + "{}:".format(self_repr))
-
-    debug_indent += 1
-    try:
-      result = original_call(self, tokens, index)
-      debug_indent -= 1
-      print("|   " * debug_indent + "|-> \033[32m{!s}\033[39m".format(result))
-      return result
-    except ParserError as e:
-      debug_indent -= 1
-      print("|   " * debug_indent + "|-> \033[31m{!s}\033[39m".format(e))
-      raise
-
-
-  parser_class.parse = parse
-  return parser_class
 
 
 ### Definition of the parser class ###
@@ -54,7 +25,7 @@ class Parser():
 
   # Convert to string representation
   def __repr__(self):
-    return self.description or f"{self.__class__.__name__}({self.function})"
+    return self.description or f"{self.__class__.__name__}({self.func})"
 
   # Definition of object oriented versions of the parser functions
   def map(self, function):
@@ -66,14 +37,14 @@ class Parser():
   def concat(self, other, function):
     return concat(self, other, function)
 
-  def then(self, after):
-    return then(self, after)
+  def then(self, right):
+    return then(self, right)
 
-  def before(self, before):
-    return before(before, self)
+  def before(self, right):
+    return before(self, right)
 
-  def between(self, before, after = None):
-    return between(self, before, after)
+  def between(self, left, right = None):
+    return between(self, left, right)
 
   def alternate(self, other):
     return alternate(self, other)
@@ -127,6 +98,29 @@ class Parser():
 def parser_function(*, description = None):
   return lambda func: Parser(func, description)
 
+# Return a wrapped parser that prints its result for debugging purposes
+debug_indent = 0
+def debug(parser):
+  @parser_function()
+  def parse_debug(tokens, index):
+    global debug_indent
+
+    parser_repr = repr(parser)
+    parser_repr = (parser_repr[:100] + "...") if len(parser_repr) > 100 else parser_repr
+    print("| " * debug_indent + "{}:".format(parser_repr))
+
+    debug_indent += 1
+    try:
+      result = parser.parse(tokens, index)
+      debug_indent -= 1
+      print("| " * debug_indent + "|-> \033[32m{!s}\033[39m".format(result))
+      return result
+    except ParserError as e:
+      debug_indent -= 1
+      print("| " * debug_indent + "|-> \033[31m{!s}\033[39m".format(e))
+      raise
+  return parse_debug
+
 # Return an empty parser
 def empty(*, description = None):
   @parser_function(description = description or f"empty()")
@@ -143,7 +137,7 @@ def token(name, value = None, *, description = None):
     else:
       token = tokens[index]
       if token.name == name and (value is None or token.value == value):
-        return ParseResult(token.value, index + 1)
+        return ParseResult(token, index + 1)
       else:
         raise UnexpectedToken(token)
   return parse_token
@@ -154,6 +148,9 @@ def lazy(parser_factory, *, description = None):
   def parse_lazy(tokens, index):
     return parser_factory().parse(tokens, index)
   return parse_lazy
+
+
+### Definition of parser combinators ###
 
 # Return a parser that maps the result using the specified function
 def map(parser, function, *, description = None):

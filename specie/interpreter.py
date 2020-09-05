@@ -1,7 +1,8 @@
-import contextlib
 import os.path
 
-from . import ast, internals, output, parser, semantics, transactions
+from colorama import Fore, Back, Style
+
+from . import ast, functions, internals, output, parser, query, semantics, transactions
 
 
 ### Definition of the environment ###
@@ -9,105 +10,107 @@ from . import ast, internals, output, parser, semantics, transactions
 # Class that defines an environment
 class Environment:
   # Constructor
-  def __init__(self, enclosing = None, variables = None):
-    self.enclosing = enclosing
+  def __init__(self, previous = None, variables = None):
+    self.previous = previous
     self.variables = variables or internals.ObjRecord()
 
-  # Define a varable
-  def define(self, name, value):
-    # Define a new variable in the record
-    self.variables.set_field(name, value)
+  # Get a variable in the environment
+  def __getitem__(self, name):
+    # Get a variable from the current environment
+    if name in self.variables:
+      return self.variables[name]
 
-  # Assign a variable
-  def assign(self, name, value):
-    # Set a variable in the record
-    if self.variables.has_field(name):
-      self.variables.set_field(name, value)
-
-    # Set a variable in the enclosing environment
-    elif self.enclosing is not None:
-      self.enclosing.assign(name)
+    # Get a variable from the previous environment
+    elif self.previous is not None:
+      return self.previous[name]
 
     # No matching variable found
     else:
-      raise internals.UndefinedField(name)
+      raise IndexError(f"Undefined field '{name}'")
 
-  # Get a variable
-  def get(self, name):
-    # Get a variable from the record
-    if self.variables.has_field(name):
-      return self.variables.get_field(name)
+  # Set a variable in the environment
+  def __setitem__(self, name, value):
+    # Set a variable in the current environment
+    if name in self.variables:
+      self.variables[name] = value
 
-    # Get a variable from the enclosing environment
-    elif self.enclosing is not None:
-      return self.enclosing.get(name)
+    # Set a variable in the previous environment
+    elif self.previous is not None:
+      self.previous[name] = value
 
     # No matching variable found
     else:
-      raise internals.UndefinedField(name)
+      raise IndexError(f"Undefined field '{name}'")
 
+  # Return is a variable exists in the environment
+  def __contains__(self, name):
+    # Check the current environment
+    if name in self.variables:
+      return True
 
-# Class that defines a global environment
-class GlobalEnvironment(Environment):
-  # Constructor
-  def __init__(self):
-    Environment.__init__(self)
+    # Check the previous environment
+    elif self.previous is not None:
+      return name in self.previous
 
-    # Add constructor functions
-    #self.define('regex', internals.NativeFunction(internals.ObjRegex))
+    # No matching variable found
+    else:
+      return False
 
-    # Add method functions
-    self.define('at', internals.MethodFunction('at', 2))
-    self.define('count', internals.MethodFunction('count', 1))
-    self.define('eq', internals.ReflectiveMethodFunction('eq', 'eq'))
-    self.define('neq', internals.ReflectiveMethodFunction('neq', 'neq'))
-    self.define('lt', internals.ReflectiveMethodFunction('lt', 'gte'))
-    self.define('lte', internals.ReflectiveMethodFunction('lte', 'gt'))
-    self.define('gt', internals.ReflectiveMethodFunction('gt', 'lte'))
-    self.define('gte', internals.ReflectiveMethodFunction('gte', 'lt'))
-    self.define('match', internals.MethodFunction('match', 2))
-    self.define('contains', internals.MethodFunction('contains', 2))
+  # Get a variable in the environment by means of a lexer token
+  def get_variable(self, name):
+    try:
+      return self[name.value]
+    except IndexError:
+      raise internals.UndefinedFieldException(name.value, name.location)
 
-    # Add native functions
-    self.define('sum', internals.SumFunction())
-    self.define('avg', internals.AvgFunction())
+  # Set a variable in the environment by means of a lexer token
+  def set_variable(self, name, value):
+    try:
+      self[name.value] = value
+    except IndexError:
+      raise internals.UndefinedFieldException(name.value, name.location)
 
-    # Add default collection
-    self.define('_', transactions.TransactionList())
+  # Declare a varable in the environment by means of a lexer token
+  def declare_variable(self, name, value):
+    # Set the variable in the current environment if it doesn't yet exist
+    if name.value in self.variables:
+      raise internals.RuntimeException(f"Variable '{name.value}' already exists in the current scope", name.location)
+    self.variables[name.value] = value
+
+  # Return a global environment
+  @classmethod
+  def globals(cls):
+    globals = internals.ObjRecord()
+    globals['print'] = functions.PrintFunction()
+    globals['include'] = functions.IncludeFunction()
+    globals['import'] = functions.ImportFunction()
+    globals['_'] = transactions.TransactionList()
+    return cls(None, globals)
 
 
 ### Definition of the interpreter ###
 
 # Class that defines an interpreter
-class Interpreter(ast.ExprVisitor, ast.StmtVisitor):
-  MAIN_FILE = '__main__'
-
+class Interpreter(ast.ExprVisitor[internals.Obj]):
   # Constructor
   def __init__(self):
+    # Define the environment
+    self.globals = Environment.globals()
+    self.environment = self.globals
+
+    # Define the include stack; the first file is the interactive console
+    self.includes = [None]
+
+    # Define the static analyzers
     self.cache_analyzer = semantics.CacheAnalyzer(self)
-    self.env = GlobalEnvironment()
-    self.includes = [self.MAIN_FILE]
-
-  # Create a new lexical scope with the specified variables
-  @contextlib.contextmanager
-  def scope(self, variables = None):
-    # Store the current environment
-    previous = self.env
-
-    # Execute the suite
-    try:
-      # Create a new environment
-      self.env = Environment(previous, variables)
-
-      # Yield the previous environment
-      yield previous
-    finally:
-      # Restore the previous environment
-      self.env = previous
-
 
   # Parse a string into an abstract syntax tree and interpret it
   def execute(self, string):
+    # Check if the string is empty
+    if not string.strip():
+      return
+
+    # Parse and interpret the string
     try:
       # Parse the string into an abstract syntax tree
       ast = parser.parse(string)
@@ -116,275 +119,289 @@ class Interpreter(ast.ExprVisitor, ast.StmtVisitor):
       self.cache_analyzer.analyze(ast)
 
       # Interpret the abstract syntax tree
-      self.interpret(ast)
+      result = self.evaluate(ast)
+      if not self.includes[-1]:
+        output.print_object(result)
 
     # Catch syntax errors
     except parser.SyntaxError as err:
-      print(err)
+      if self.includes[-1]:
+        print(f"In file '{self.includes[-1]}':")
+      print(f"{Style.BRIGHT}{Fore.RED}{err}{Style.RESET_ALL}")
       print(err.location.point(string, 2))
 
-    # Catch parse errors
+    # Catch unexpected token errors
     except parser.UnexpectedToken as err:
-      print(err)
+      if self.includes[-1]:
+        print(f"In file '{self.includes[-1]}':")
+      print(f"{Style.BRIGHT}{Fore.RED}{err}{Style.RESET_ALL}")
       print(err.token.location.point(string, 2))
 
     # Catch runtime errors
     except internals.RuntimeException as err:
-      print(f"{err.__class__.__name__}: {err}")
+      if self.includes[-1]:
+        print(f"In file '{self.includes[-1]}':")
+      print(f"{Style.BRIGHT}{Fore.RED}{err}{Style.RESET_ALL}")
+      if err.location:
+        print(err.location.point(string, 2))
 
-    #except RuntimeError as err:
-      #print(err)
+  # Begin a new scope
+  def begin_scope(self, variables = None):
+    self.environment = Environment(self.environment, variables)
+
+  # End the current scope
+  def end_scope(self):
+    if self.environment.previous is None:
+      raise RuntimeError("Could not end the current scope")
+    self.environment = self.environment.previous
+
+  # Begin an included file
+  def begin_include(self, file):
+    self.includes.append(file)
+
+  # End an included file
+  def end_include(self):
+    if not self.includes:
+      raise RuntimeError("Could not end the current included file")
+    self.includes.pop()
+
+  # Resolve a file name
+  def resolve_file_name(self, file_name):
+    # If it's an absolute path, just check if it exists
+    if os.path.isfile(file_name):
+      return file_name
+
+    # If an include file is defined, check relative to that
+    if (include := self.includes[-1]) and os.path.exists(include):
+      include_file_name = os.path.join(os.path.dirname(include), file_name)
+      if os.path.isfile(include_file_name):
+        return include_file_name
+
+    # No matching file name found
+    return None
+
+
+  ### Definition of native functions ###
 
   # Include a file
   def execute_include(self, file_name):
     # Check if the file exists
-    if not os.path.isfile(file_name):
-      raise internals.RuntimeException("The file '{}' could not be found".format(file_name))
+    if (resolved_file_name := self.resolve_file_name(file_name)) is None:
+      raise internals.RuntimeException(f"Include failed: the file '{file_name}' could not be found")
 
     # Add the file to the include stack
-    self.includes.append(file_name)
+    self.begin_include(resolved_file_name)
+    self.begin_scope()
 
     # Open the file and execute the contents
-    with open(file_name, 'r') as file:
+    with open(resolved_file_name, 'r') as file:
       string = file.read()
       self.execute(string)
 
-    # Remove the file from the include stack
-    self.includes.pop()
+    # Get the current defined variables
+    variables = self.environment.variables
 
-  # Print an object
-  def print(self, object):
-    print(object)
+    # Remove the file from the include stack
+    self.end_scope()
+    self.end_include()
+
+    # Return the variables
+    return variables
+
+  # Import a file
+  def execute_import(self, file_name, **keywords):
+    # Check if the file exists
+    if (resolved_file_name := self.resolve_file_name(file_name)) is None:
+      raise internals.RuntimeException(f"Import failed: the file '{file_name}' could not be found")
+
+    # Add the imported transactions
+    new_transactions = transactions.TransactionReader(resolved_file_name, **keywords)
+    self.environment['_'].insert_all(new_transactions)
+
+    # Return a result object
+    result = internals.ObjRecord()
+    result['count'] = internals.ObjInt(len(new_transactions))
+    return result
 
 
   ### Definition of the expression visitor functions ###
 
   # Evaluate an expression
-  def evaluate(self, expr):
+  def evaluate(self, expr: ast.Expr) -> internals.Obj:
     return expr.accept(self)
 
   # Evaluate an expression in a new scope
-  def evaluate_scope(self, expr, variables = None):
-    with self.scope(variables):
-      return self.evaluate(expr)
+  def evaluate_scope(self, expr: ast.Expr, locals = None) -> internals.Obj:
+    self.begin_scope(locals)
+    self.evaluate(expr)
+    self.end_scope()
 
   # Visit a literal expression
-  def visit_literal_expr(self, expr):
+  def visit_literal_expr(self, expr: ast.LiteralExpr) -> internals.Obj:
     return expr.object
 
   # Visit a list expression
-  def visit_list_expr(self, expr):
-    list_object = internals.ObjCollection()
-    for item in expr.items:
+  def visit_list_expr(self, expr: ast.ListExpr) -> internals.Obj:
+    list_object = internals.ObjList()
+    for item in expr:
       list_object.insert(self.evaluate(item))
     return list_object
 
   # Visit a record expression
-  def visit_record_expr(self, expr):
+  def visit_record_expr(self, expr: ast.RecordExpr) -> internals.Obj:
     record_object = internals.ObjRecord()
-    for name, expression in expr.fields:
-      record_object.set_field(name, self.evaluate(expression))
+    for name, value in expr:
+      record_object[name.value] = self.evaluate(value)
     return record_object
 
   # Visit a variable expression
-  def visit_variable_expr(self, expr):
-    return self.env.get(expr.name)
+  def visit_variable_expr(self, expr: ast.VariableExpr) -> internals.Obj:
+    return self.environment.get_variable(expr.name)
+
+  # Visit a grouping expression
+  def visit_grouping_expr(self, expr: ast.GroupingExpr) -> internals.Obj:
+    return self.evaluate(expr.expression)
 
   # Visit a call expression
-  def visit_call_expr(self, expr):
-    # Evaluate the callee and arguments
+  def visit_call_expr(self, expr: ast.CallExpr) -> internals.Obj:
+    # Evaluate the expression
     callee = self.evaluate(expr.callee)
-    arguments = [self.evaluate(argument) for argument in expr.arguments]
+    args = self.evaluate(expr.arguments.args)
+    kwargs = self.evaluate(expr.arguments.kwargs)
 
     # Check if the callee is callable
     if not isinstance(callee, internals.Callable):
-      raise internals.RuntimeException(f"The expression '{expr.callee}' is not callable")
+      raise internals.RuntimeException(f"The expression '{expr.callee}' is not callable", expr.paren.location)
 
-    # Check the arity of the callable
-    if len(arguments) != callee.arity():
-      raise internals.RuntimeException(f"Expected {callee.arity()} arguments but got {len(arguments)}")
+    # Check the signature of the callable
+    signature = callee.signature()
+
+    # Check the arguments
+    # TODO: Print correct types instead of internal names
+    args_types = [type(arg) for arg in args]
+    if len(args_types) != len(signature.args_types):
+      raise internals.InvalidCallException(f"Expected {len(signature.arguments_types)} arguments, got {len(argument_types)}", expr.paren.location)
+    for i, arg_type in enumerate(signature.args_types):
+      # Check if the argument is the valid type
+      if not issubclass(check_type := args_types[i], arg_type):
+        raise internals.InvalidCallException(f"Expected argument {i+1} of type {arg_type}, got type {check_type}", expr.paren.location)
+
+    # Check the keywords
+    # TODO: Print correct types instead of internal names
+    kwargs_types = {name: type(value) for name, value in kwargs}
+    for name, kwarg_type in signature.kwargs_types.items():
+      # Check if the keyword is provided
+      if not name in kwargs_types:
+        raise internals.InvalidCallException(f"Expected keyword '{name}' of type {kwarg_type}", expr.paren.location)
+      # Check if the keyword is the valid type
+      if not issubclass(check_type := kwargs_types[name], kwarg_type):
+        raise internals.InvalidCallException(f"Expected keyword '{name}' of type {kwarg_type}, got type {check_type}", expr.paren.location)
 
     # Call the callable
-    return callee.call(self, arguments)
-
-  # Visit a query expression
-  def visit_query_expr(self, expr):
-    # Evaluate the collection
-    collection = self.evaluate(expr.collection)
-
-    # Check if the collection is of the right type
-    if not isinstance(collection, internals.ObjCollection):
-      raise internals.InvalidTypeException(f"Queries can only operate on collections")
-
-    # Evaluate the clause
-    clause_collection = collection
-    if expr.clause is not None:
-      clause_collection = clause_collection.filter(lambda item: self.evaluate_scope(expr.clause, item))
-
-    # Execute the action
-    if expr.action[0] == 'get':
-      # Get the item or the specified expression based on the item
-
-      # Map the collection to the specified expression
-      if expr.action[1] is not None:
-        clause_collection = clause_collection.map(lambda item: self.evaluate_scope(expr.action[1], item))
-
-      # Return the collection
-      return clause_collection
-    elif expr.action[0] == 'set':
-      # Set the fields in the specified record into the item
-
-      # Iterate over the collection
-      for item in clause_collection:
-        # Evaluate the set record
-        set_record = self.evaluate_scope(expr.action[1], item)
-
-        # Check if the record is of the right type
-        if not isinstance(set_record, internals.ObjRecord):
-          raise internals.InvalidTypeException(f"Set queries can only set records")
-
-        # Apply the record
-        for name, value in set_record.fields.items():
-          item.set_field(name, value)
-
-      # Return the number of updated items
-      return internals.ObjInt(len(clause_collection))
-    elif expr.action[0] == 'delete':
-      # Delete the items that match the clause from the collection
-
-      # Check if there is a clause
-      if expr.clause is None:
-        raise internals.RuntimeException(f"Delete queries must provide a clause")
-
-      # Iterate over the collection
-      for item in clause_collection:
-        # Delete the item from the collection
-        collection.delete(item)
-
-      # Return the number of removed items
-      return internals.ObjInt(len(clause_collection))
-    else:
-      raise RuntimeError(f"Invalid query action '{expr.action[0]}'")
-
-  # Visit an assignment expression
-  def visit_assignment_expr(self, expr):
-    # Evaluate the value
-    value = self.evaluate(expr.value)
-
-    # Assign the value and return it
-    self.env.assign(expr.name, value)
-    return value
+    return callee.call(self, args, kwargs)
 
   # Visit a unary operator expression
-  def visit_unary_op_expr(self, expr):
+  def visit_unary_op_expr(self, expr: ast.UnaryOpExpr) -> internals.Obj:
+    op = expr.op.value
+
     # Logic operations
-    if expr.op == 'not':
+    if op == 'not':
       return internals.ObjBool(not self.evaluate(expr.expr).truthy())
 
     # No matching operation found
-    raise ValueError("Undefined unary operator '{}'".format(self.op))
+    raise internals.RuntimeException("Undefined unary operator '{}'".format(op), expr.op.location)
 
   # Visit a binary operator expression
-  def visit_binary_op_expr(self, expr):
+  def visit_binary_op_expr(self, expr: ast.BinaryOpExpr) -> internals.Obj:
+    op = expr.op.value
+
     # Arithmetic operations
-    if expr.op == '*':
+    if op == '*':
       return self.evaluate(expr.left).call('mul', self.evaluate(expr.right))
-    elif expr.op == '/':
+    elif op == '/':
       return self.evaluate(expr.left).call('div', self.evaluate(expr.right))
-    elif expr.op == '+':
+    elif op == '+':
       return self.evaluate(expr.left).call('add', self.evaluate(expr.right))
-    elif expr.op == '-':
+    elif op == '-':
       return self.evaluate(expr.left).call('sub', self.evaluate(expr.right))
 
     # Comparison operations
-    elif expr.op == '<':
+    elif op == '<':
       return self.evaluate(expr.left).call('lt', self.evaluate(expr.right))
-    elif expr.op == '<=':
+    elif op == '<=':
       return self.evaluate(expr.left).call('lte', self.evaluate(expr.right))
-    elif expr.op == '>':
+    elif op == '>':
       return self.evaluate(expr.left).call('gt', self.evaluate(expr.right))
-    elif expr.op == '>=':
+    elif op == '>=':
       return self.evaluate(expr.left).call('gte', self.evaluate(expr.right))
-    elif expr.op == '~':
+    elif op == '~':
       return self.evaluate(expr.left).call('match', self.evaluate(expr.right))
 
     # Containment operations
-    elif expr.op == 'in':
+    elif op == 'in':
       return self.evaluate(expr.right).call('contains', self.evaluate(expr.left))
 
     # Equality operations
-    elif expr.op == '==':
+    elif op == '==':
       return self.evaluate(expr.left).call('eq', self.evaluate(expr.right))
-    elif expr.op == '!=':
+    elif op == '!=':
       return self.evaluate(expr.left).call('neq', self.evaluate(expr.right))
 
     # Logic operations
-    elif expr.op == 'and':
+    elif op == 'and':
       return internals.ObjBool(self.evaluate(expr.left).truthy() and self.evaluate(expr.right).truthy())
-    elif expr.op == 'or':
+    elif op == 'or':
       return internals.ObjBool(self.evaluate(expr.left).truthy() or self.evaluate(expr.right).truthy())
 
+    # No matching operation found
+    raise internals.RuntimeException("Undefined binary operator '{}'".format(op), expr.op.location)
 
-  ### Definition of the statement visitor functions ###
+  # Visit a query expression
+  def visit_query_expr(self, expr: ast.QueryExpr) -> internals.Obj:
+    # Evaluate the table
+    table = self.evaluate(expr.table)
 
-  # Interpret a statement
-  def interpret(self, stmt):
-    stmt.accept(self)
+    # Check if the collection is of the right type
+    if not isinstance(table, internals.ObjList):
+      raise internals.InvalidTypeException(f"Queries can only operate on tables")
 
-  # Interpret a statement in a new scope
-  def interpret_scope(self, stmt, variables = None):
-    with self.scope(variables):
-      self.interpret(stmt)
+    # Create a query and execute that
+    q = query.Query(table, expr.action, expr.predicate)
+    return q.execute(self)
 
-  # Visit an expression statement
-  def visit_expr_stmt(self, stmt):
-    result = self.evaluate(stmt.expr)
-    if self.includes[-1] == self.MAIN_FILE:
-      print(result)
+  # Visit an assignment expression
+  def visit_assignment_expr(self, expr: ast.AssignmentExpr) -> internals.Obj:
+    # Evaluate the value
+    value = self.evaluate(expr.value)
 
-  # Visit a print statement
-  def visit_print_stmt(self, stmt):
-    result = self.evaluate(stmt.expr)
-    arguments = self.evaluate(stmt.arguments)
-    output.print_object(result, **arguments.value())
+    # Set the value and return it
+    self.environment.set_variable(expr.name, value)
+    return value
 
-  # Visit a variable statement
-  def visit_variable_stmt(self, stmt):
-    value = internals.ObjNull()
-    if stmt.value is not None:
-      value = self.evaluate(stmt.value)
-    self.env.define(stmt.name, value)
+  # Visit a declaration expression
+  def visit_declaration_expr(self, expr: ast.DeclarationExpr) -> internals.Obj:
+    # Evaluate the value
+    value = self.evaluate(expr.value)
 
-  # Visit an include statement
-  def visit_include_stmt(self, stmt):
-    # Check the types of the arguments
-    file_result = self.evaluate(stmt.file)
-    if not isinstance(file_result, internals.ObjString):
-      raise TypeError(type(file_result))
-    file_name = file_result.value
+    # Declare the value and return it
+    self.environment.declare_variable(expr.name, value)
+    return value
 
-    # Include the file
-    self.interpreter.execute_include(file_name)
+  # Visit a block expression
+  def visit_block_expr(self, expr: ast.BlockExpr) -> internals.Obj:
+    result = None
 
-  # Visit an import statement
-  def visit_import_stmt(self, stmt):
-    file = self.evaluate(stmt.file)
-    arguments = self.evaluate(stmt.arguments)
+    # Start a new scope if applicable
+    if expr.new_scope:
+      self.begin_scope()
 
-    if not isinstance(file, internals.ObjString):
-      raise TypeError(type(file))
-    file_name = file.value()
+    # Evaluate the sub-expressions
+    for expression in expr.expressions:
+      result = self.evaluate(expression)
 
-    # Add the include path to the file
-    if self.includes[-1] != self.MAIN_FILE:
-      file_name = os.path.join(os.path.split(self.includes[-1])[0], file_name)
+    # End the current scope if applicable
+    if expr.new_scope:
+      self.end_scope()
 
-    # Add the imported transactions
-    new_transactions = transactions.TransactionReader(file_name, **arguments.value())
-    self.env.get('_').insert_all(new_transactions)
-    print(f"Imported {len(new_transactions)} transactions from '{file_name}'")
-
-  # Visit a block statement
-  def visit_block_stmt(self, stmt):
-    for sub_stmt in stmt.statements:
-      self.interpret(sub_stmt)
+    # Return the last result
+    return result

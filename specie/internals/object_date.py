@@ -32,9 +32,16 @@ class ObjDate(Obj):
     self.set_method('add', self.__add__)
     self.set_method('sub', self.__sub__)
 
+
+  ### Definition of object methods ###
+
   # Return the primitive value of this object
   def value(self):
     return self.date_value
+
+  # Return the truthyness of this object
+  def truthy(self):
+    return True
 
   # Return if this date object is equal to another object
   def __eq__(self, other):
@@ -49,16 +56,19 @@ class ObjDate(Obj):
   # Return this date with a specified amount of days added
   def __add__(self, other):
     if isinstance(other, ObjInt):
-      return ObjDate(self.value() + datetime.timedelta(days = other.value()))
+      return ObjDate(self.value() + timedelta(days = other.value()))
     raise InvalidTypeException(other)
 
   # Return this date with a specified amount of days subtracted
   def __sub__(self, other):
     if isinstance(other, ObjInt):
-      return DateObject(self.value() - datetime.timedelta(days = other.value()))
+      return ObjDate(self.value() - timedelta(days = other.value()))
     elif isinstance(other, ObjDate):
       return ObjInt((self.value() - other.value()).days)
     raise InvalidTypeException(other)
+
+
+  ### Definition of conversion functions ###
 
   # Convert to hash
   def __hash__(self):

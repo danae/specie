@@ -2,21 +2,21 @@ from . import ast
 
 
 # Class that defines an analyzer that caches literal constants
-class CacheAnalyzer(ast.ExprVisitor, ast.StmtVisitor):
+class CacheAnalyzer(ast.ExprVisitor[None]):
   # Constructor
   def __init__(self, interpreter):
     self.interpreter = interpreter
     self.constants = []
 
-  # Analyze a statement or expression
-  def analyze(self, expr_or_stmt):
-    expr_or_stmt.accept(self)
-
 
   ### Definition of the expression visitor functions ###
 
+  # Analyze an expression
+  def analyze(self, expr: ast.Expr) -> None:
+    expr.accept(self)
+
   # Visit a literal expression
-  def visit_literal_expr(self, expr):
+  def visit_literal_expr(self, expr: ast.LiteralExpr) -> None:
     try:
       # Check if the literal value is already in the list of constants
       index = self.constants.index(expr.object)
@@ -28,78 +28,62 @@ class CacheAnalyzer(ast.ExprVisitor, ast.StmtVisitor):
       expr.object = self.constants[self.constants.index(expr.object)]
 
   # Visit a list expression
-  def visit_list_expr(self, expr):
+  def visit_list_expr(self, expr: ast.ListExpr) -> None:
     for item in expr.items:
       self.analyze(item)
 
   # Visit a record expression
-  def visit_record_expr(self, expr):
+  def visit_record_expr(self, expr: ast.RecordExpr) -> None:
     for name, value in expr.fields:
       self.analyze(value)
 
   # Visit a variable expression
-  def visit_variable_expr(self, expr):
+  def visit_variable_expr(self, expr: ast.VariableExpr) -> None:
     pass
 
+  # Visit a grouping expression
+  def visit_grouping_expr(self, expr: ast.GroupingExpr) -> None:
+    self.analyze(expr.expression)
+
   # Visit a call expression
-  def visit_call_expr(self, expr):
+  def visit_call_expr(self, expr: ast.CallExpr) -> None:
     self.analyze(expr.callee)
-    for argument in expr.arguments:
-      self.analyze(argument)
-
-  # Visit a query expression
-  def visit_query_expr(self, expr):
-    self.analyze(expr.collection)
-    # TODO: Anayze the action
-    if expr.clause:
-      self.analyze(expr.clause)
-
-  # Visit an assignment expression
-  def visit_assignment_expr(self, expr):
-    self.analyze(expr.value)
+    self.analyze(expr.arguments.args)
+    self.analyze(expr.arguments.kwargs)
 
   # Visit a unary operator expression
-  def visit_unary_op_expr(self, expr):
+  def visit_unary_op_expr(self, expr: ast.UnaryOpExpr) -> None:
     self.analyze(expr.expr)
 
   # Visit a binary operator expression
-  def visit_binary_op_expr(self, expr):
+  def visit_binary_op_expr(self, expr: ast.BinaryOpExpr) -> None:
     self.analyze(expr.left)
     self.analyze(expr.right)
 
+  # Visit a query expression
+  def visit_query_expr(self, expr: ast.QueryExpr) -> None:
+    self.analyze(expr.table)
+    self.analyze(expr.action.arguments.args)
+    self.analyze(expr.action.arguments.kwargs)
+    if expr.predicate:
+      self.analyze(expr.predicate)
 
-  ### Definition of the statement visitor functions ###
+  # Visit an assignment expression
+  def visit_assignment_expr(self, expr: ast.AssignmentExpr) -> None:
+    self.analyze(expr.value)
 
-  # Visit an expression statement
-  def visit_expr_stmt(self, stmt):
-    self.analyze(stmt.expr)
+  # Visit a declaration expression
+  def visit_declaration_expr(self, expr: ast.DeclarationExpr) -> None:
+    self.analyze(expr.value)
 
-  # Visit a print statement
-  def visit_print_stmt(self, stmt):
-    self.analyze(stmt.expr)
-    self.analyze(stmt.arguments)
-
-  # Visit a variable statement
-  def visit_variable_stmt(self, stmt):
-    self.analyze(stmt.value)
-
-  # Visit an include statement
-  def visit_include_stmt(self, stmt):
-    self.analyze(stmt.file)
-
-  # Visit an import statement
-  def visit_import_stmt(self, stmt):
-    self.analyze(stmt.file)
-    self.analyze(stmt.arguments)
-
-  # Visit a block statement
-  def visit_block_stmt(self, stmt):
-    for statement in stmt.statements:
-      self.analyze(statement)
+  # Visit a block expression
+  def visit_block_expr(self, expr: ast.BlockExpr) -> None:
+    for expression in expr.expressions:
+      self.analyze(expression)
 
 
 # Class that defines an analyzer that resolves variable accesses
-class ResolveAnalyzer(ast.ExprVisitor, ast.StmtVisitor):
+class ResolveAnalyzer(ast.ExprVisitor[None]):
   # Constructor
   def __init__(self, interpreter):
     self.interpreter = interpreter
@@ -189,36 +173,3 @@ class ResolveAnalyzer(ast.ExprVisitor, ast.StmtVisitor):
   def visit_binary_op_expr(self, expr):
     self.resolve_expr(expr.left)
     self.resolve_expr(expr.right)
-
-
-  ### Definition of the statement visitor functions ###
-
-  # Visit an expression statement
-  def visit_expr_stmt(self, stmt):
-    self.resolve_expr(stmt.expr)
-
-  # Visit a print statement
-  def visit_print_stmt(self, stmt):
-    self.resolve_expr(stmt.expr)
-
-  # Visit a variable statement
-  def visit_variable_stmt(self, stmt):
-    self.declare(stmt.name)
-    if stmt.value is not None:
-      self.resolve_expr(stmt.value)
-    self.define(stmt.name)
-
-  # Visit an include statement
-  def visit_include_stmt(self, stmt):
-    self.resolve_expr(stmt.file)
-
-  # Visit an import statement
-  def visit_import_stmt(self, stmt):
-    self.resolve_expr(stmt.file)
-
-  # Visit a block statement
-  def visit_block_stmt(self, stmt):
-    self.begin_scope()
-    for statement in stmt.statements:
-      self.resolve_stmt(statement)
-    self.end_scope()

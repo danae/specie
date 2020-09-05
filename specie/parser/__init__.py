@@ -1,4 +1,4 @@
-from .lexer import Lexer, LexerError, SyntaxError
+from .lexer import Token, Lexer, LexerError, SyntaxError
 from .parser import ParserError, UnexpectedEndOfTokens, UnexpectedToken
 from .grammar import rules, grammar
 

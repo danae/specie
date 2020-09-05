@@ -86,10 +86,10 @@ class Table:
     for row in self.rows:
       # Check if this is a separator row
       if row == ["---"] * self.column_count():
-        strings.append(separators.strip())
+        strings.append(separators)
       # Otherwise append the row
       else:
-        strings.append(fmt.format(*row).strip())
+        strings.append(fmt.format(*row))
     strings.append("")
 
     # Return the strings
@@ -102,8 +102,8 @@ class Table:
 def print_object(object, **kwargs):
   if isinstance(object, internals.ObjRecord):
     print_record(object, **kwargs)
-  elif isinstance(object, internals.ObjCollection):
-    print_collection(object, **kwargs)
+  elif isinstance(object, internals.ObjList):
+    print_list(object, **kwargs)
   else:
     print(object)
 
@@ -119,30 +119,30 @@ def print_record(record, **kwargs):
 
   print(table)
 
-# Print a collection object
-def print_collection(collection, **kwargs):
-  print(f"{len(collection)} items:")
+# Print a list object
+def print_list(list, **kwargs):
+  print(f"{len(list)} items:")
 
-  # Check if this collection is a collection of records
-  if all(isinstance(item, internals.ObjRecord) for item in collection):
+  # Check if this list is a list of records
+  if all(isinstance(item, internals.ObjRecord) for item in list):
     # Get all fields
     if (fields := kwargs.get('fields', None)) is not None:
       all_fields = set(str(field) for field in fields)
     else:
       # TODO: implement sorted in insertion order
-      all_fields = functools.reduce(lambda a, b: a | set(b), (record.iter_fields() for record in collection), set())
+      all_fields = functools.reduce(lambda a, b: a | set(b), (record.names() for record in list), set())
 
-    # Print the collection in table form
+    # Print the list in table form
     table = Table()
     table.append_row(all_fields)
     table.append_separator_row()
 
-    for record in collection:
-      table.append_row([record.get_field_or_default(name, "") for name in all_fields])
+    for record in list:
+      table.append_row([record.get(name, "") for name in all_fields])
 
     print(table)
 
   # Otherwise just print every item on its own line
   else:
-    for item in collection:
+    for item in list:
       print(f"- {item}")
