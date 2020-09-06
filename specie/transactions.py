@@ -6,8 +6,6 @@ import re
 
 from . import ast, internals
 
-from .utils import format_money
-
 from collections import OrderedDict
 from colorama import Fore, Back, Style
 from datetime import date, datetime, timedelta

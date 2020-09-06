@@ -1,5 +1,3 @@
-import functools
-
 from datetime import datetime, date, timedelta
 
 from .object import Obj, ObjNull, ObjBool
@@ -8,7 +6,6 @@ from .errors import InvalidTypeException
 
 
 # Class that defines a date object
-@functools.total_ordering
 class ObjDate(Obj):
   DATE_FORMAT = "%Y-%m-%d"
 
@@ -41,16 +38,28 @@ class ObjDate(Obj):
 
   # Return the truthyness of this object
   def truthy(self):
-    return True
+    return ObjBool(True)
 
   # Return if this date object is equal to another object
   def __eq__(self, other):
     return ObjBool(isinstance(other, ObjDate) and self.value() == other.value())
 
-  # Return if this date object is less than another object
+  # Compare this date object with another object
   def __lt__(self, other):
     if isinstance(other, ObjDate):
       return ObjBool(self.value() < other.value())
+    raise InvalidTypeException(other)
+  def __le__(self, other):
+    if isinstance(other, ObjDate):
+      return ObjBool(self.value() <= other.value())
+    raise InvalidTypeException(other)
+  def __gt__(self, other):
+    if isinstance(other, ObjDate):
+      return ObjBool(self.value() > other.value())
+    raise InvalidTypeException(other)
+  def __ge__(self, other):
+    if isinstance(other, ObjDate):
+      return ObjBool(self.value() >= other.value())
     raise InvalidTypeException(other)
 
   # Return this date with a specified amount of days added

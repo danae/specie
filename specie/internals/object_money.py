@@ -1,5 +1,3 @@
-from colorama import Fore, Style
-
 from .object import Obj, ObjNull, ObjBool
 from .object_numeric import ObjFloat
 from .object_string import ObjString
@@ -34,12 +32,23 @@ class ObjMoney(ObjRecord):
   def __eq__(self, other):
     return ObjBool(isinstance(other, ObjMoney) and (self['currency'], self['amount']) == (other['currency'], other['amount']))
 
-  # Return if this money object is less than another transaction
+  # Compare this money object with another object
   def __lt__(self, other):
     if isinstance(other, MoneyObject):
       return ObjBool(self['amount'] < other['amount'])
-    else:
-      raise InvalidTypeException(other)
+    raise InvalidTypeException(other)
+  def __le__(self, other):
+    if isinstance(other, MoneyObject):
+      return ObjBool(self['amount'] <= other['amount'])
+    raise InvalidTypeException(other)
+  def __gt__(self, other):
+    if isinstance(other, MoneyObject):
+      return ObjBool(self['amount'] > other['amount'])
+    raise InvalidTypeException(other)
+  def __ge__(self, other):
+    if isinstance(other, MoneyObject):
+      return ObjBool(self['amount'] >= other['amount'])
+    raise InvalidTypeException(other)
 
 
   ### Definition of conversion functions ###
@@ -50,7 +59,4 @@ class ObjMoney(ObjRecord):
 
   # Convert to string
   def __str__(self):
-    if self['amount'] < ObjFloat(0.0):
-      return f"{Fore.RED}{Style.BRIGHT}{self['currency']} {self['amount']:.2f}{Style.RESET_ALL}"
-    else:
-      return f"{Fore.GREEN}{Style.BRIGHT}{self['currency']} {self['amount']:.2f}{Style.RESET_ALL}"
+    return f"{self['currency']} {self['amount']:.2f}"

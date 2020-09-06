@@ -1,5 +1,3 @@
-import functools
-
 from .object import Obj, ObjNull, ObjBool
 from .object_numeric import ObjFloat
 from .object_string import ObjString
@@ -10,7 +8,6 @@ from .errors import InvalidTypeException
 
 
 # Class that defines a transaction object
-@functools.total_ordering
 class ObjTransaction(ObjRecord):
   # Constructor
   def __init__(self, **kwargs):
@@ -36,12 +33,23 @@ class ObjTransaction(ObjRecord):
   def __eq__(self, other):
     return ObjBool(isinstance(other, ObjTransaction) and self['id'] == other['id'])
 
-  # Return if this transaction object is less than another transaction
+  # Compare this transaction object with another object
   def __lt__(self, other):
     if isinstance(other, ObjTransaction):
       return ObjBool((self['date'], self['id']) < (other['date'], other['id']))
-    else:
-      raise InvalidTypeException(other)
+    raise InvalidTypeException(other)
+  def __le__(self, other):
+    if isinstance(other, ObjTransaction):
+      return ObjBool((self['date'], self['id']) <= (other['date'], other['id']))
+    raise InvalidTypeException(other)
+  def __gt__(self, other):
+    if isinstance(other, ObjTransaction):
+      return ObjBool((self['date'], self['id']) > (other['date'], other['id']))
+    raise InvalidTypeException(other)
+  def __ge__(self, other):
+    if isinstance(other, ObjTransaction):
+      return ObjBool((self['date'], self['id']) >= (other['date'], other['id']))
+    raise InvalidTypeException(other)
 
   # Convert to hash
   def __hash__(self):

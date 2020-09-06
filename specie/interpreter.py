@@ -82,6 +82,7 @@ class Environment:
   def globals(cls):
     globals = internals.ObjRecord()
     globals['print'] = functions.PrintFunction()
+    globals['print_title'] = functions.PrintTitleFunction()
     globals['include'] = functions.IncludeFunction()
     globals['import'] = functions.ImportFunction()
     globals['_'] = transactions.TransactionList()
@@ -120,7 +121,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
       # Interpret the abstract syntax tree
       result = self.evaluate(ast)
-      if not self.includes[-1]:
+      if not self.includes[-1] and result is not None:
         output.print_object(result)
 
     # Catch syntax errors
@@ -233,8 +234,10 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
   # Evaluate an expression in a new scope
   def evaluate_scope(self, expr: ast.Expr, locals = None) -> internals.Obj:
     self.begin_scope(locals)
-    self.evaluate(expr)
+    result = self.evaluate(expr)
     self.end_scope()
+
+    return result
 
   # Visit a literal expression
   def visit_literal_expr(self, expr: ast.LiteralExpr) -> internals.Obj:

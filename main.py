@@ -2,7 +2,8 @@ import argparse
 import readline
 import sys
 
-from specie.interpreter import Interpreter
+from colorama import Fore, Back, Style
+from specie import internals, interpreter, parser
 
 
 # Main function
@@ -17,7 +18,7 @@ def main(args):
   args = argparser.parse_args(args)
 
   # Create the interpreter
-  intp = Interpreter()
+  intp = interpreter.Interpreter()
 
   try:
     # Interpret each specified file
@@ -40,6 +41,29 @@ def main(args):
 
       intp.execute(line)
 
+  # Catch syntax errors
+  except parser.SyntaxError as err:
+    if intp.includes[-1]:
+      print(f"In file '{intp.includes[-1]}':")
+    print(f"{Style.BRIGHT}{Fore.RED}{err}{Style.RESET_ALL}")
+    print(err.location.point(string, 2))
+
+  # Catch unexpected token errors
+  except parser.UnexpectedToken as err:
+    if intp.includes[-1]:
+      print(f"In file '{intp.includes[-1]}':")
+    print(f"{Style.BRIGHT}{Fore.RED}{err}{Style.RESET_ALL}")
+    print(err.token.location.point(string, 2))
+
+  # Catch runtime errors
+  except internals.RuntimeException as err:
+    if intp.includes[-1]:
+      print(f"In file '{intp.includes[-1]}':")
+    print(f"{Style.BRIGHT}{Fore.RED}{err}{Style.RESET_ALL}")
+    if err.location:
+      print(err.location.point(string, 2))
+
+  # Catch keyboard interrupts
   except KeyboardInterrupt:
     print()
 

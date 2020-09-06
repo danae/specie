@@ -68,6 +68,9 @@ class ListExpr(Expr):
   def __str__(self):
     return '[' + ', '.join(f"{item}" for item in self.items) + ']'
 
+  def __getitem__(self, index):
+    return self.items[index]
+
   def __len__(self):
     return len(self.items)
 
@@ -85,6 +88,9 @@ class RecordExpr(Expr):
 
   def __str__(self):
     return '{' + ', '.join(f"{name.value}: {value}" for name, value in self.fields) + '}'
+
+  def __getitem__(self, index):
+    return self.fields[index]
 
   def __len__(self):
     return len(self.fields)

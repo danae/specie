@@ -1,20 +1,17 @@
-from colorama import Fore, Back, Style
-
-
-# Money formatter
-def format_money(money, display_currency = True):
-  color = Fore.WHITE
-  if money.amount > 0:
-    color = Style.BRIGHT + Fore.GREEN
-  elif money.amount < 0:
-    color = Style.BRIGHT + Fore.RED
-
-  return color + (str(money) if display_currency else str(money.amount)) + Style.RESET_ALL
-
-
-# Ellipsis function
+# Return a truncated string if the specified string exceeds the maximum length
 def ellipsis(string, length = 70):
   return (string[:length] + "...") if len(string) > length else string
+
+# Return a list with the distinct items from the iterable appended
+def distinct_append(list, iterable):
+  for item in iterable:
+    if item not in list:
+      list.append(item)
+  return list
+
+# Return a list of the distinct items from the iterable
+def distinct(iterable):
+  return distinct_append([], iterable)
 
 
 # Format the name of a period
@@ -27,10 +24,3 @@ def period_name(period, split_months = False):
 # Create a table row of a period list
 def row_from_periods(title, periods, split_months = False):
   return [title] + [period_name(period,split_months) for period in periods]
-
-# Print title
-def print_title(title):
-  title = title.upper()
-  print("=" * (len(title) + 2))
-  print(" " + title + " ")
-  print("=" * (len(title) + 2))

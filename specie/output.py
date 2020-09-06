@@ -1,6 +1,6 @@
 import functools
 
-from . import internals
+from . import internals, utils
 
 
 ### Definition of the table utility class ###
@@ -64,11 +64,15 @@ class Table:
   def column_count(self):
     return len(self.rows[0]) if self.rows else 0
 
+  # Covnert to bool
+  def __bool__(self):
+    return bool(self.rows)
+
   # Convert to string
   def __str__(self):
     # Calculate the width of the columns
     widths = []
-    for column_index in range(0,self.column_count()):
+    for column_index in range(0, self.column_count()):
       column = self.get_column(column_index)
       width = max(len(cell) for cell in column)
       widths.append(width)
@@ -98,6 +102,13 @@ class Table:
 
 ### Definition of functions to print objects ###
 
+# Print a title
+def title(string):
+  string = string.upper()
+  print("=" * (len(string) + 2))
+  print(" " + string + " ")
+  print("=" * (len(string) + 2))
+
 # Print an object
 def print_object(object, **kwargs):
   if isinstance(object, internals.ObjRecord):
@@ -109,40 +120,46 @@ def print_object(object, **kwargs):
 
 # Print a record oject
 def print_record(record, **kwargs):
-  table = Table()
-  table.append_row(['field', 'value'])
-  table.append_separator_row()
+  tbl = Table()
+  tbl.append_row(['field', 'value'])
+  tbl.append_separator_row()
 
-  for name in record.iter_fields():
-    value = record.get_field(name)
-    table.append_row([name, value])
+  for name, value  in record:
+    tbl.append_row([name, value])
 
-  print(table)
+  if tbl:
+    print(tbl)
 
 # Print a list object
 def print_list(list, **kwargs):
-  print(f"{len(list)} items:")
-
-  # Check if this list is a list of records
-  if all(isinstance(item, internals.ObjRecord) for item in list):
-    # Get all fields
-    if (fields := kwargs.get('fields', None)) is not None:
-      all_fields = set(str(field) for field in fields)
-    else:
-      # TODO: implement sorted in insertion order
-      all_fields = functools.reduce(lambda a, b: a | set(b), (record.names() for record in list), set())
-
-    # Print the list in table form
-    table = Table()
-    table.append_row(all_fields)
-    table.append_separator_row()
-
-    for record in list:
-      table.append_row([record.get(name, "") for name in all_fields])
-
-    print(table)
-
-  # Otherwise just print every item on its own line
+  # Check if the list is empty
+  if not list:
+    print("No items in the list")
   else:
-    for item in list:
-      print(f"- {item}")
+    # Check if this list is a list of records
+    if all(isinstance(item, internals.ObjRecord) for item in list):
+      print_table(list, **kwargs)
+
+    # Otherwise just print every item on its own line
+    else:
+      for item in list:
+        print(f"- {item}")
+
+# print a table object
+def print_table(table, **kwargs):
+  # Get all fields
+  if (fields := kwargs.get('fields', None)) is not None:
+    fields = utils.distinct(fields)
+  else:
+    fields = functools.reduce(utils.distinct_append, (record.names() for record in table), [])
+
+  # Print the list in table form
+  tbl = Table()
+  tbl.append_row(fields)
+  tbl.append_separator_row()
+
+  for record in table:
+    tbl.append_row([record.get(name, "") for name in fields])
+
+  if tbl:
+    print(tbl)

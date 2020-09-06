@@ -1,11 +1,8 @@
-import functools
-
 from .object import Obj, ObjNull, ObjBool
 from .errors import InvalidTypeException
 
 
 # Class that defines a numeric object
-@functools.total_ordering
 class ObjNumeric(Obj):
   # Constructor
   def __init__(self):
@@ -35,10 +32,22 @@ class ObjNumeric(Obj):
   def __eq__(self, other):
     return ObjBool(isinstance(other, ObjNumeric) and self.value() == other.value())
 
-  # Return if this numeric is less than another object
+  # Compare this numeric object with another object
   def __lt__(self, other):
     if isinstance(other, ObjNumeric):
       return ObjBool(self.value() < other.value())
+    raise InvalidTypeException(other)
+  def __le__(self, other):
+    if isinstance(other, ObjNumeric):
+      return ObjBool(self.value() <= other.value())
+    raise InvalidTypeException(other)
+  def __gt__(self, other):
+    if isinstance(other, ObjNumeric):
+      return ObjBool(self.value() > other.value())
+    raise InvalidTypeException(other)
+  def __ge__(self, other):
+    if isinstance(other, ObjNumeric):
+      return ObjBool(self.value() >= other.value())
     raise InvalidTypeException(other)
 
   # Return the addition of two numeric objects
@@ -64,6 +73,7 @@ class ObjNumeric(Obj):
     if isinstance(other, ObjNumeric):
       return ObjFloat(self.value() / other.value())
     raise InvalidTypeException(other)
+
 
   ### Definition of conversion functions ###
 

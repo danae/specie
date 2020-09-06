@@ -18,6 +18,9 @@ class ObjList(Obj):
     self.set_method('count', self.count)
     self.set_method('contains', self.__contains__)
 
+
+  ### Definition of object functions ###
+
   # Return the primitive value of this object
   def value(self):
     return [value.value() for value in self.items]
@@ -72,9 +75,8 @@ class ObjList(Obj):
   def filter(self, func):
     return ObjList(item for item in self if func(item))
 
-  # Convert to hash
-  def __hash__(self):
-    return hash((self.items))
+
+  ### Definition of conversion functions
 
   # Convert to iterator
   def __iter__(self):

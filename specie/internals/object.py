@@ -8,8 +8,10 @@ class Obj:
   # Constructor
   def __init__(self):
     self.methods = {}
-
     self.set_method('eq', self.__eq__)
+
+
+  ### Definition of method functions ###
 
   # Return if a method with the specified name exists
   def has_method(self, name):
@@ -39,6 +41,9 @@ class Obj:
   def call(self, name, *arguments):
     return self.get_method(name)(*arguments)
 
+
+  ### Definition of object functions
+
   # Return the primitive value of this object
   def value(self):
     return None
@@ -50,6 +55,9 @@ class Obj:
   # Return if this object is equal to another object
   def __eq__(self, other):
     return ObjBool(self is other)
+
+
+  ## Definition of conversion functions
 
   # Convert to representation
   def __repr__(self):
@@ -66,6 +74,9 @@ class ObjNull(Obj):
   def __init__(self):
     Obj.__init__(self)
 
+
+  ### Definition of object functions ###
+
   # Return the primitive value of this object
   def value(self):
     return None
@@ -77,6 +88,9 @@ class ObjNull(Obj):
   # Return if this null object is equal to another object
   def __eq__(self, other):
     return isinstance(other, ObjNull)
+
+
+  ### Definition of conversion functions ###
 
   # Convert to string
   def __str__(self):
@@ -100,6 +114,9 @@ class ObjBool(Obj):
     else:
       raise TypeError(type(bool_value))
 
+
+  ### Definition of object functions ###
+
   # Return the primitive value of this object
   def value(self):
     return self.bool_value
@@ -112,9 +129,8 @@ class ObjBool(Obj):
   def __eq__(self, other):
     return ObjBool(isinstance(other, ObjBool) and self.bool_value == other.bool_value)
 
-  # Convert to hash
-  def __hash__(self):
-    return hash((self.bool_value))
+
+  ### Definition of conversion functions
 
   # Convert to bool
   def __bool__(self):

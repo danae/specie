@@ -1,4 +1,3 @@
-import functools
 import re
 
 from .object import Obj, ObjNull, ObjBool
@@ -7,7 +6,6 @@ from .errors import InvalidTypeException
 
 
 # Class that defines a string object
-@functools.total_ordering
 class ObjString(Obj):
   # Constructor
   def __init__(self, string_value = ""):
@@ -26,6 +24,9 @@ class ObjString(Obj):
     self.set_method('contains', self.contains)
     self.set_method('match', self.match)
 
+
+  ### Definition of object functions ###
+
   # Return the primitive value of this object
   def value(self):
     return self.string_value
@@ -38,10 +39,22 @@ class ObjString(Obj):
   def __eq__(self, other):
     return ObjBool(isinstance(other, ObjString) and self.value() == other.value())
 
-  # Return if this string object is less than another object
+  # Compare this string object to another object
   def __lt__(self, other):
     if isinstance(other, ObjString):
       return ObjBool(self.value() < other.value())
+    raise InvalidTypeException(other)
+  def __le__(self, other):
+    if isinstance(other, ObjString):
+      return ObjBool(self.value() <= other.value())
+    raise InvalidTypeException(other)
+  def __gt__(self, other):
+    if isinstance(other, ObjString):
+      return ObjBool(self.value() > other.value())
+    raise InvalidTypeException(other)
+  def __ge__(self, other):
+    if isinstance(other, ObjString):
+      return ObjBool(self.value() >= other.value())
     raise InvalidTypeException(other)
 
   # Return the concatenation of two string objects
@@ -63,6 +76,9 @@ class ObjString(Obj):
     if isinstance(pattern, ObjString):
       return ObjBool(re.search(pattern.value(), self.value(), re.IGNORECASE) is not None)
     raise InvalidTypeException(pattern)
+
+
+  ### Definition of conversion functions ###
 
   # Convert to string
   def __str__(self):
