@@ -105,9 +105,9 @@ class Table:
 # Print a title
 def title(string):
   string = string.upper()
-  print("=" * (len(string) + 2))
-  print(" " + string + " ")
-  print("=" * (len(string) + 2))
+  print()
+  print(string)
+  print("=" * (len(string)))
 
 # Print an object
 def print_object(object, **kwargs):
@@ -148,10 +148,7 @@ def print_list(list, **kwargs):
 # print a table object
 def print_table(table, **kwargs):
   # Get all fields
-  if (fields := kwargs.get('fields', None)) is not None:
-    fields = utils.distinct(fields)
-  else:
-    fields = functools.reduce(utils.distinct_append, (record.names() for record in table), [])
+  fields = functools.reduce(utils.distinct_append, (record.names(only_visible = True) for record in table), [])
 
   # Print the list in table form
   tbl = Table()

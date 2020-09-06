@@ -91,17 +91,20 @@ class RabobankTransactionReader(TransactionReader):
   @staticmethod
   def parse_transaction(record):
     return internals.ObjTransaction(
+      # Standard fields
       id = internals.ObjString("rabobank:{}".format(record['Volgnr'])),
       date = internals.ObjDate(datetime.strptime(record['Datum'], '%Y-%m-%d').date()),
       amount = internals.ObjMoney(currency = internals.ObjString(record['Munt']), amount = internals.ObjFloat(record['Bedrag'].replace(',', '.'))),
-      balance = internals.ObjMoney(currency = internals.ObjString(record['Munt']), amount = internals.ObjFloat(record['Saldo na trn'].replace(',','.'))),
-      own_address = internals.ObjString(record['IBAN/BBAN']),
-      own_bic = internals.ObjString(record['BIC']),
-      address = internals.ObjString(record['Tegenrekening IBAN/BBAN']),
-      bic = internals.ObjString(record['BIC tegenpartij']),
       name = internals.ObjString(record['Naam tegenpartij'].upper()),
-      type = internals.ObjString(record['Code']),
-      description = internals.ObjString(re.sub('\s+', ' ', ' '.join([record['Omschrijving-1'], record['Omschrijving-2'], record['Omschrijving-3']]).strip())))
+      address = internals.ObjString(record['Tegenrekening IBAN/BBAN']),
+      description = internals.ObjString(re.sub('\s+', ' ', ' '.join([record['Omschrijving-1'], record['Omschrijving-2'], record['Omschrijving-3']]).strip())),
+
+      # Extension fields
+      balance = (internals.ObjMoney(currency = internals.ObjString(record['Munt']), amount = internals.ObjFloat(record['Saldo na trn'].replace(',','.'))), True, False),
+      own_address = (internals.ObjString(record['IBAN/BBAN']), True, False),
+      own_bic = (internals.ObjString(record['BIC']), True, False),
+      bic = (internals.ObjString(record['BIC tegenpartij']), True, False),
+      type = (internals.ObjString(record['Code']), True, False))
 
 
 # Paypal transaction reader class
@@ -166,12 +169,15 @@ class PaypalTransactionReader(TransactionReader):
     address = to_email if amount.amount < internals.ObjFloat(0.0) else from_email
 
     return internals.ObjTransaction(
+      # Standard fields
       id = internals.ObjString("paypal:{:04d}".format(index)),
-      ref = internals.ObjString(record['Transactiereferentie']),
       date = internals.ObjDate(datetime.strptime(record['Datum'], '%d-%m-%Y').date()),
       amount = amount,
-      own_address = internals.ObjString(own_address),
-      address = internals.ObjString(address),
       name = internals.ObjString(record['Naam'].upper()),
-      type = internals.ObjString(record['Type']),
-      description = internals.ObjString(record['Item Title'] or record['Note']))
+      address = internals.ObjString(address),
+      description = internals.ObjString(record['Item Title'] or record['Note']),
+
+      # Extension fields
+      ref = (internals.ObjString(record['Transactiereferentie']), True, False),
+      own_address = (internals.ObjString(own_address), True, False),
+      type = (internals.ObjString(record['Type']), True, False))
