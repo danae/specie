@@ -26,9 +26,9 @@ rules = [
   Rule('curly_bracket_right', r'\}', None),
 
   # Symbol tokens
-  Rule('symbol_arrow', r'->', None),
-  Rule('symbol_comma', r',', None),
-  Rule('symbol_colon', r':', None),
+  Rule('symbol_dot', r'\.', None),
+  Rule('symbol_comma', r'\,', None),
+  Rule('symbol_colon', r'\:', None),
 
   # Operator tokens
   Rule('operator_add', r'\+'),
@@ -97,70 +97,71 @@ for rule in rules:
   globals()[rule.name.upper()] = token(rule.name)
 
 # Literals
-literal_false = LITERAL_FALSE.value(internals.ObjBool(False))
-literal_true = LITERAL_TRUE.value(internals.ObjBool(True))
-literal_int = LITERAL_INT.map(lambda t: internals.ObjInt(t.value))
-literal_float = LITERAL_FLOAT.map(lambda t: internals.ObjFloat(t.value))
-literal_string = LITERAL_STRING.map(lambda t: internals.ObjString(t.value))
-literal_regex = KEYWORD_REGEX >> LITERAL_STRING.map(lambda t: internals.ObjRegex(t.value))
-literal_date = LITERAL_DATE.map(lambda t: internals.ObjDate(t.value))
-literal = (literal_false | literal_true | literal_int | literal_float | literal_string | literal_regex | literal_date).map(ast.LiteralExpr)
+literal_false = describe('literal_false', LITERAL_FALSE.value(internals.ObjBool(False)))
+literal_true = describe('literal_true', LITERAL_TRUE.value(internals.ObjBool(True)))
+literal_int = describe('literal_int', LITERAL_INT.map(lambda t: internals.ObjInt(t.value)))
+literal_float = describe('literal_float', LITERAL_FLOAT.map(lambda t: internals.ObjFloat(t.value)))
+literal_string = describe('literal_string', LITERAL_STRING.map(lambda t: internals.ObjString(t.value)))
+literal_regex = describe('literal_regex', KEYWORD_REGEX >> LITERAL_STRING.map(lambda t: internals.ObjRegex(t.value)))
+literal_date = describe('literal_date', LITERAL_DATE.map(lambda t: internals.ObjDate(t.value)))
+literal = describe('literal', (literal_false | literal_true | literal_int | literal_float | literal_string | literal_regex | literal_date).map(ast.LiteralExpr))
 
 # List primitives
-list_arg = lazy(lambda: expr)
-list = SQUARE_BRACKET_LEFT >> list_arg.many_separated(SYMBOL_COMMA).map(ast.ListExpr) << SQUARE_BRACKET_RIGHT
+list_arg = describe('list_arg', lazy(lambda: expr))
+list = describe('list', SQUARE_BRACKET_LEFT >> list_arg.many_separated(SYMBOL_COMMA).map(ast.ListExpr) << SQUARE_BRACKET_RIGHT)
 
 # Record primitives
-record_arg = concat(IDENTIFIER, SYMBOL_COLON >> lazy(lambda: expr), lambda name, value: (name, value))
-record = CURLY_BRACKET_LEFT >> record_arg.many_separated(SYMBOL_COMMA).map(ast.RecordExpr) << CURLY_BRACKET_RIGHT
+record_arg = describe('record_arg', concat(IDENTIFIER, SYMBOL_COLON >> lazy(lambda: expr), lambda name, value: (name, value)))
+record = describe('record', CURLY_BRACKET_LEFT >> record_arg.many_separated(SYMBOL_COMMA).map(ast.RecordExpr) << CURLY_BRACKET_RIGHT)
 
 # Primary expressions
-primary = literal | list | record | IDENTIFIER.map(ast.VariableExpr) | PARENTHESIS_LEFT >> lazy(lambda: expr).map(ast.GroupingExpr) << PARENTHESIS_RIGHT
+primary = describe('primary', literal | list | record | IDENTIFIER.map(ast.VariableExpr) | (PARENTHESIS_LEFT >> lazy(lambda: expr).map(ast.GroupingExpr) << PARENTHESIS_RIGHT))
 
 # Arguments
-arguments_arg = record_arg | list_arg
-arguments = arguments_arg.many_separated(SYMBOL_COMMA).optional([]).map(map_arguments)
+arguments_arg = describe('arguments_arg', record_arg | list_arg)
+arguments = describe('arguments', arguments_arg.many_separated(SYMBOL_COMMA).optional([]).map(map_arguments))
 
 # Call expressions
-call = concat_multiple(ast.CallExpr, primary, PARENTHESIS_LEFT, arguments << PARENTHESIS_RIGHT) | primary
+#call = primary.reduce(concat(PARENTHESIS_LEFT, arguments << PARENTHESIS_RIGHT) | concat(SYMBOL_DOT, IDENTIFIER, ast.GetExpr))
+call = describe('call', concat_multiple(ast.CallExpr, primary, PARENTHESIS_LEFT, arguments << PARENTHESIS_RIGHT) | primary)
 
 # Arithmetic expressions
-multiplication_op = OPERATOR_MUL | OPERATOR_DIV
-multiplication = call.reduce_separated(multiplication_op, ast.BinaryOpExpr, min = 1, parse_separator = True)
-addition_op = OPERATOR_ADD | OPERATOR_SUB
-addition = multiplication.reduce_separated(addition_op, ast.BinaryOpExpr, min = 1, parse_separator = True)
+multiplication_op = describe('multiplication_op', OPERATOR_MUL | OPERATOR_DIV)
+multiplication = describe('multiplication', call.reduce(ast.BinaryOpExpr, multiplication_op, call))
+addition_op = describe('addition_op', OPERATOR_ADD | OPERATOR_SUB)
+addition = describe('addition', multiplication.reduce(ast.BinaryOpExpr, addition_op, multiplication))
 
 # Comparison expressions
-comparison_op = OPERATOR_LT | OPERATOR_LTE | OPERATOR_GT | OPERATOR_GTE | OPERATOR_MATCH | OPERATOR_IN
-comparison = concat_multiple(ast.BinaryOpExpr, addition, comparison_op, addition) | addition
+comparison_op = describe('comparison_op', OPERATOR_LT | OPERATOR_LTE | OPERATOR_GT | OPERATOR_GTE | OPERATOR_MATCH | OPERATOR_IN)
+comparison = describe('comparison', concat_multiple(ast.BinaryOpExpr, addition, comparison_op, addition) | addition)
 
 # Equality expressions
-equality_op = OPERATOR_EQ | OPERATOR_NEQ
-equality = concat_multiple(ast.BinaryOpExpr, comparison, equality_op, comparison) | comparison
+equality_op = describe('equality_op', OPERATOR_EQ | OPERATOR_NEQ)
+equality = describe('equality', concat_multiple(ast.BinaryOpExpr, comparison, equality_op, comparison) | comparison)
 
 # Logic expressions
-logic_not = concat(OPERATOR_NOT, lazy(lambda: logic_not), ast.UnaryOpExpr) | equality
-logic_and = logic_not.reduce_separated(OPERATOR_AND, ast.BinaryOpExpr, min = 1, parse_separator = True)
-logic_or = logic_and.reduce_separated(OPERATOR_OR, ast.BinaryOpExpr, min = 1, parse_separator = True)
+logic_not = describe('logic_not', concat(OPERATOR_NOT, lazy(lambda: logic_not), ast.UnaryOpExpr) | equality)
+logic_and = describe('logic_and', logic_not.reduce(ast.BinaryOpExpr, OPERATOR_AND, logic_not))
+logic_or = describe('logic_or', logic_and.reduce(ast.BinaryOpExpr, OPERATOR_OR, logic_and))
 
 # Query expressions
-query_action = concat(IDENTIFIER, arguments, ast.Call)
-query_where = KEYWORD_IF >> lazy(lambda: expr)
-query = concat_multiple(ast.QueryExpr, KEYWORD_FROM >> IDENTIFIER.map(ast.VariableExpr), query_action, query_where.optional()) | logic_or
+query_action = describe('query_action', concat(IDENTIFIER, arguments, ast.Call))
+query_where = describe('query_where', KEYWORD_IF >> lazy(lambda: expr))
+query = describe('query', concat_multiple(ast.QueryExpr, KEYWORD_FROM >> IDENTIFIER.map(ast.VariableExpr), query_action, query_where.optional()) | logic_or)
 
 # Assignment expressions
-assignment_op = OPERATOR_ASSIGN
-assignment = concat_multiple(ast.AssignmentExpr, IDENTIFIER, assignment_op, lazy(lambda: assignment)) | query
+assignment_op = describe('assignment_op', OPERATOR_ASSIGN)
+assignment = describe('assignment', concat_multiple(ast.AssignmentExpr, IDENTIFIER, assignment_op, lazy(lambda: assignment)) | query)
 
 # Declaration expressions
-declaration_op = OPERATOR_ASSIGN
-declaration = KEYWORD_VAR >> concat_multiple(ast.DeclarationExpr, IDENTIFIER, declaration_op, query) | assignment
+declaration_op = describe('declaration_op', OPERATOR_ASSIGN)
+declaration = describe('declaration', KEYWORD_VAR >> concat_multiple(ast.DeclarationExpr, IDENTIFIER, declaration_op, query) | assignment)
 
 # Expressions
-expr = declaration
+expr = describe('expr', declaration)
 
 # Expression lists
-expr_list = expr.many_separated(token('newline')).map(lambda exprs: ast.BlockExpr(exprs, False))
+expr_list = describe('expr_list', expr.many_separated(token('newline')).map(lambda exprs: ast.BlockExpr(exprs, False)))
 
 # Grammar
-grammar = expr_list.phrase()
+grammar = describe('grammar', expr_list.phrase())

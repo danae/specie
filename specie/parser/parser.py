@@ -2,15 +2,43 @@ import functools
 
 # Define the exports for this module
 __all__ = [
-  'empty', 'token', 'lazy', 'debug', 'map', 'value', 'concat', 'then',
-  'before', 'between', 'concat_multiple', 'alternate', 'optional', 'many',
-  'many_separated', 'many_separated_and_terminated',
-  'many_separated_and_optionally_terminated', 'phrase',
+  'describe', 'empty', 'token', 'lazy', 'debug', 'map', 'value', 'concat',
+  'then', 'before', 'between', 'concat_multiple', 'alternate', 'optional',
+  'many', 'many_separated', 'many_separated_and_terminated',
+  'many_separated_and_optionally_terminated', 'reduce', 'phrase',
   'ParserError', 'UnexpectedEndOfTokens', 'UnexpectedToken'
 ]
 
 
 ### Definition of the parser class ###
+
+# Return a wrapped parser that prints its result for debugging purposes
+debug_indent = 0
+def debug(parser):
+  parse = parser.parse
+
+  def debug_wrapper(self, tokens, index):
+    global debug_indent
+
+    parser_repr = repr(self)
+    parser_repr = (parser_repr[:100] + "...") if len(parser_repr) > 100 else parser_repr
+    #print("| " * debug_indent + "{}:".format(parser_repr))
+
+    debug_indent += 1
+    try:
+      result = parse(self, tokens, index)
+      debug_indent -= 1
+      print("-" * debug_indent + " {}:".format(parser_repr))
+      print("-" * debug_indent + " \033[32m{!s}\033[39m".format(result))
+      return result
+    except ParserError as e:
+      debug_indent -= 1
+      print("-" * debug_indent + " {}:".format(parser_repr))
+      print("-" * debug_indent + " \033[31m{!s}\033[39m".format(e))
+      raise
+
+  parser.parse = debug_wrapper
+  return parser
 
 # Class that defines a parser
 class Parser():
@@ -55,26 +83,17 @@ class Parser():
   def many(self, *, min = 0, max = 0):
     return many(self, map=map, min=min, max=max)
 
-  def many_separated(self, separator, *, min = 0, max = 0, parse_separator = False):
-    return many_separated(self, separator, min=min, max=max, parse_separator=parse_separator)
+  def many_separated(self, separator, *, min = 0, max = 0):
+    return many_separated(self, separator, min=min, max=max)
 
-  def many_separated_and_terminated(self, separator, *, min = 0, max = 0, parse_separator = False):
-    return many_separated_and_terminated(self, separator, min=min, max=max, parse_separator=parse_separator)
+  def many_separated_and_terminated(self, separator, *, min = 0, max = 0):
+    return many_separated_and_terminated(self, separator, min=min, max=max)
 
-  def many_separated_and_optionally_terminated(self, separator, *, min = 0, max = 0, parse_separator = False):
-    return many_separated_and_optionally_terminated(self, separator, min=min, max=max, parse_separator=parse_separator)
+  def many_separated_and_optionally_terminated(self, separator, *, min = 0, max = 0):
+    return many_separated_and_optionally_terminated(self, separator, min=min, max=max)
 
-  def reduce(self, function, initializer = None, *, min = 0, max = 0):
-    return reduce(self, function, initializer, map=map, min=min, max=max)
-
-  def reduce_separated(self, separator, function, initializer = None, *, min = 0, max = 0, parse_separator = False):
-    return reduce_separated(self, separator, function, initializer, min=min, max=max, parse_separator=parse_separator)
-
-  def reduce_separated_and_terminated(self, separator, function, initializer = None, *, min = 0, max = 0, parse_separator = False):
-    return reduce_separated_and_terminated(self, separator, function, initializer, min=min, max=max, parse_separator=parse_separator)
-
-  def reduce_separated_and_optionally_terminated(self, separator, function, initializer = None, *, min = 0, max = 0, parse_separator = False):
-    return reduce_separated_and_optionally_terminated(self, separator, function, initializer, min=min, max=max, parse_separator=parse_separator)
+  def reduce(self, function, *iterator, min = 0, max = 0):
+    return reduce(self, function, *iterator, min=min, max=max)
 
   def phrase(self):
     return phrase(self)
@@ -98,28 +117,10 @@ class Parser():
 def parser_function(*, description = None):
   return lambda func: Parser(func, description)
 
-# Return a wrapped parser that prints its result for debugging purposes
-debug_indent = 0
-def debug(parser):
-  @parser_function()
-  def parse_debug(tokens, index):
-    global debug_indent
-
-    parser_repr = repr(parser)
-    parser_repr = (parser_repr[:100] + "...") if len(parser_repr) > 100 else parser_repr
-    print("| " * debug_indent + "{}:".format(parser_repr))
-
-    debug_indent += 1
-    try:
-      result = parser.parse(tokens, index)
-      debug_indent -= 1
-      print("| " * debug_indent + "|-> \033[32m{!s}\033[39m".format(result))
-      return result
-    except ParserError as e:
-      debug_indent -= 1
-      print("| " * debug_indent + "|-> \033[31m{!s}\033[39m".format(e))
-      raise
-  return parse_debug
+# Return the parser but with the specified description
+def describe(description, parser):
+  parser.description = description
+  return parser
 
 # Return an empty parser
 def empty(*, description = None):
@@ -169,8 +170,6 @@ def value(parser, val, *, description = None):
 
 # Return a parser that concatenates two parses using the specified function
 def concat(left, right, function, *, description = None):
-  function = function or (lambda l, r: (l, r))
-
   @parser_function(description = description or f"concat({left}, {right}, {function})")
   def parse_concat(tokens, index):
     left_result = left.parse(tokens, index)
@@ -224,90 +223,75 @@ def optional(parser, default = None, *, description = None):
   def parse_optional(tokens, index):
     try:
       result = parser.parse(tokens, index)
-      return ParseResult(default, index) if not result else result
+      return ParseResult(default, index) if result is None else result
     except ParserError:
       return ParseResult(default, index)
   return parse_optional
 
 # Return the result of multiple identical parsers
 # min must be at least 0; max must be at least 1, or 0 for no maximum
-def many(parser, separator = empty(), terminator = empty(), *, min = 0, max = 0, parse_separator = False, description = None):
-  @parser_function(description = description or f"many({parser}, {separator}, {terminator}, {min=}, {max=}, {parse_separator=})")
+def many(parser, separator = empty(), terminator = empty(), *, min = 0, max = 0, description = None):
+  @parser_function(description = description or f"many({parser}, {separator}, {terminator}, {min=}, {max=})")
   def parse_many(tokens, index):
     results = []
 
     # Parse the first occurence
-    result = parser.parse(tokens, index)
-    result.value = (None, result.value)
-    while result:
-      # Append the result to the list
-      if not parse_separator:
-        result.value = result.value[1]
-      results.append(result.value)
-      index = result.index
+    try:
+      result = parser.parse(tokens, index)
+      while result:
+        # Append the result to the list
+        results.append(result.value)
+        index = result.index
 
-      if max > 0 and len(results) == max:
-        break
-
-      # Parse the next occurence
-      try:
-        result = concat(separator, parser, lambda s, p: (s, p)).parse(tokens, index)
-      except ParserError:
-        break
+        # Parse the next occurence
+        result = then(separator, parser).parse(tokens, index)
+    except ParserError:
+      pass
 
     # Terminate and return
-    if len(results) >= min and terminator.parse(tokens, index):
+    if min <= len(results) and (max == 0 or max >= len(results)) and terminator.parse(tokens, index):
       return ParseResult(results, index)
-    #elif index >= len(tokens):
-    #  raise UnexpectedEndOfTokens(index)
     else:
       raise UnexpectedToken(tokens[index])
   return parse_many
 
 # Return the result of multiple identical parsers separated by another parser
-def many_separated(parser, separator, *, min = 0, max = 0, parse_separator = False, description = None):
-  return many(parser, separator, min=min, max=max, parse_separator=parse_separator,
-    description = description or f"many_separated({parser}, {separator}, {min=}, {max=}, {parse_separator=})")
+def many_separated(parser, separator, *, min = 0, max = 0, description = None):
+  return many(parser, separator, min=min, max=max,
+    description = description or f"many_separated({parser}, {separator}, {min=}, {max=})")
 
 # Return the result of multiple identical parsers separated and terminated by another parser
-def many_separated_and_terminated(parser, separator, *, min = 0, max = 0, parse_separator = False, description = None):
-  return many(parser, separator, separator, min=min, max=max, parse_separator=parse_separator,
-    description = description or f"many_separated_and_terminated({parser}, {separator}, {min=}, {max=}, {parse_separator=})")
+def many_separated_and_terminated(parser, separator, *, min = 0, max = 0, description = None):
+  return many(parser, separator, separator, min=min, max=max,
+    description = description or f"many_separated_and_terminated({parser}, {separator}, {min=}, {max=})")
 
 # Return the result of multiple identical parsers separated and optionally terminated by another parser
-def many_separated_and_optionally_terminated(parser, separator, *, min = 0, parse_separator = False, max = 0, description = None):
-  return many(parser, separator, optional(separator), min=min, max=max, parse_separator=parse_separator,
-    description = description or f"many_separated_and_optionally_terminated({parser}, {separator}, {min=}, {max=}, {parse_separator=})")
+def many_separated_and_optionally_terminated(parser, separator, *, min = 0, max = 0, description = None):
+  return many(parser, separator, optional(separator), min=min, max=max,
+    description = description or f"many_separated_and_optionally_terminated({parser}, {separator}, {min=}, {max=})")
 
-# Return a parser that reduces multiple identical parsers into a single result
-def reduce(parser, function, initializer = None, separator = empty(), terminator = empty(), *, min = 0, max = 0, parse_separator = False, description = None):
-  @parser_function(description = description or f"reduce({function}, {parser}, {min=}, {max=})")
+# Return a parser that reduces an iterator of parsers using the specified function and the initializer
+def reduce(initializer, function, *iterator, min = 0, max = 0, description = None):
+  @parser_function(description = description or f"reduce({initializer}, {function}, {', '.join(str(e) for e in iterator)}, {min=}, {max=})")
   def parse_reduce(tokens, index):
-    result = many(parser, separator, terminator, min=min, max=max, parse_separator=parse_separator).parse(tokens, index)
-    if not result.value:
-      return result
-    elif parse_separator:
-      return ParseResult(functools.reduce(lambda a, i: function(a, *i), result.value[1:], result.value[0][1]), result.index)
-    elif initializer is not None:
-      return ParseResult(functools.reduce(function, result.value, initializer), result.index)
-    else:
-      return ParseResult(functools.reduce(function, result.value), result.index)
+    # Parse the initializer
+    initializer_result = initializer.parse(tokens, index)
+    if initializer_result.value is None:
+      return initializer_result
+
+    # Parse the iterator
+    iterator_result = many(concat_multiple(lambda *args: tuple(args), *iterator), min = min, max = max).parse(tokens, initializer_result.index)
+    if iterator_result.value is None:
+      return iterator_result
+
+    # Reduce the iterator
+    value = initializer_result.value
+    for element in iterator_result.value:
+      value = function(value, *element)
+
+    # Return the value
+    return ParseResult(value, iterator_result.index)
   return parse_reduce
-
-# Return a parser that reduces multiple identical parsers separated by another parser into a single result
-def reduce_separated(parser, separator, function, initializer = None, *, min = 0, max = 0, parse_separator = False, description = None):
-  return reduce(parser, function, initializer, separator, min=min, max=max, parse_separator=parse_separator,
-    description = description or f"reduce_separated({function}, {parser}, {min=}, {max=}, {parse_separator=})")
-
-# Return a parser that reduces multiple identical parsers separated by another parser into a single result
-def reduce_separated_and_terminated(parser, separator, function, initializer = None, *, min = 0, max = 0, parse_separator = False, description = None):
-  return reduce(parser, function, initializer, separator, separator, min=min, max=max, parse_separator=parse_separator,
-    description = description or f"reduce_separated_and_terminated({function}, {parser}, {min=}, {max=}, {parse_separator=})")
-
-# Return a parser that reduces multiple identical parsers separated by another parser into a single result
-def reduce_separated_and_optionally_terminated(parser, separator, function, initializer = None, *, min = 0, max = 0, parse_separator = False, description = None):
-  return reduce(parser, function, initializer, separator, optional(separator), min=min, max=max, parse_separator=parse_separator,
-    description = description or f"reduce_separated_and_optionally_terminated({function}, {parser}, {min=}, {max=}, {parse_separator=})")
 
 # Return a parser if that parser consumed all tokens
 def phrase(parser, *, description = None):
@@ -331,6 +315,9 @@ class ParseResult:
 
   def __repr__(self):
     return f"{self.__class__.__name__}({self.value!r}, {self.index!r})"
+
+  def __str__(self):
+    return f"{type(self.value).__name__}({self.value}) at index {self.index}"
 
 
 ### Definition of parser errors ###
