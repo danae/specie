@@ -47,9 +47,18 @@ class CacheAnalyzer(ast.ExprVisitor[None]):
 
   # Visit a call expression
   def visit_call_expr(self, expr: ast.CallExpr) -> None:
-    self.analyze(expr.callee)
+    self.analyze(expr.expression)
     self.analyze(expr.arguments.args)
     self.analyze(expr.arguments.kwargs)
+
+  # Visit a get expression
+  def visit_get_expr(self, expr: ast.GetExpr) -> None:
+    self.analyze(expr.expression)
+
+  # Visit a set expression
+  def visit_set_expr(self, expr: ast.SetExpr) -> None:
+    self.analyze(expr.expression)
+    self.analyze(expr.value)
 
   # Visit a unary operator expression
   def visit_unary_op_expr(self, expr: ast.UnaryOpExpr) -> None:

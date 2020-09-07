@@ -89,6 +89,32 @@ def map_arguments(list):
   # Return the lists as the appropriate expressions
   return ast.Arguments(ast.ListExpr(args), ast.RecordExpr(kwargs))
 
+# Map a call expression
+def map_call(expr, token, value):
+  # Check if the token is a left parenthesis
+  if token.name == 'parenthesis_left':
+    return ast.CallExpr(expr, token, value)
+
+  # Check if the token is a dot
+  elif token.name == 'symbol_dot':
+    return ast.GetExpr(expr, token, value)
+
+  # Otherwise fail
+  raise ParserError(f"Invalid token {token} in call expression")
+
+# Map an assignment expression
+def map_assignment(expr, op, value):
+  # Check if the expression is a variable expression
+  if isinstance(expr, ast.VariableExpr):
+    return ast.AssignmentExpr(expr.name, op, value)
+
+  # Check if the expression is a get expression
+  elif isinstance(expr, ast.GetExpr):
+    return ast.SetExpr(expr.expression, expr.token, expr.name, op, value)
+
+  # Otherwise fail
+  raise ParserError(f"Invalid assignment target {token}")
+
 
 ### Definiton of parser rules ###
 
@@ -122,8 +148,7 @@ arguments_arg = describe('arguments_arg', record_arg | list_arg)
 arguments = describe('arguments', arguments_arg.many_separated(SYMBOL_COMMA).optional([]).map(map_arguments))
 
 # Call expressions
-#call = primary.reduce(concat(PARENTHESIS_LEFT, arguments << PARENTHESIS_RIGHT) | concat(SYMBOL_DOT, IDENTIFIER, ast.GetExpr))
-call = describe('call', concat_multiple(ast.CallExpr, primary, PARENTHESIS_LEFT, arguments << PARENTHESIS_RIGHT) | primary)
+call = describe('call', primary.reduce(map_call, concat(PARENTHESIS_LEFT, arguments << PARENTHESIS_RIGHT) | concat(SYMBOL_DOT, IDENTIFIER)))
 
 # Arithmetic expressions
 multiplication_op = describe('multiplication_op', OPERATOR_MUL | OPERATOR_DIV)
@@ -151,7 +176,7 @@ query = describe('query', concat_multiple(ast.QueryExpr, KEYWORD_FROM >> IDENTIF
 
 # Assignment expressions
 assignment_op = describe('assignment_op', OPERATOR_ASSIGN)
-assignment = describe('assignment', concat_multiple(ast.AssignmentExpr, IDENTIFIER, assignment_op, lazy(lambda: assignment)) | query)
+assignment = describe('assignment', concat_multiple(map_assignment, call, assignment_op, lazy(lambda: assignment)) | query)
 
 # Declaration expressions
 declaration_op = describe('declaration_op', OPERATOR_ASSIGN)

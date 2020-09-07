@@ -169,7 +169,9 @@ def value(parser, val, *, description = None):
   return parse_value
 
 # Return a parser that concatenates two parses using the specified function
-def concat(left, right, function, *, description = None):
+def concat(left, right, function = None, *, description = None):
+  function = function or (lambda left, right: (left, right))
+
   @parser_function(description = description or f"concat({left}, {right}, {function})")
   def parse_concat(tokens, index):
     left_result = left.parse(tokens, index)
@@ -179,14 +181,16 @@ def concat(left, right, function, *, description = None):
 
 # Return a concat parser for a list of parsers
 def concat_multiple(function, *parsers):
-  if len(parsers) <= 1:
-    raise ValueError("parsers must at least contain one element")
-
-  parsers = list(parsers)
-  map_parser = parsers.pop(0)
-  for parser in parsers:
-    map_parser = concat(map_parser, parser, lambda left, right: (*left, right) if isinstance(left, tuple) else (left, right))
-  return map_parser.map(lambda args: function(*args))
+  if len(parsers) == 0:
+    raise ValueError("At leasat one parser must be provided to concatenate")
+  elif len(parsers) == 1:
+    return next(iter(parsers))
+  else:
+    parsers = list(parsers)
+    map_parser = parsers.pop(0)
+    for parser in parsers:
+      map_parser = concat(map_parser, parser, lambda left, right: (*left, right) if isinstance(left, tuple) else (left, right))
+    return map_parser.map(lambda args: function(*args))
 
 # Return a parser that returns the result of the second parser
 def then(left, right, *, description = None):

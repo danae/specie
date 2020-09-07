@@ -128,16 +128,46 @@ class GroupingExpr(Expr):
 
 # Class that defines a call expression
 class CallExpr(Expr):
-  def __init__(self, callee, paren, arguments):
-    self.callee = callee
-    self.paren = paren
+  def __init__(self, expression, token, arguments):
+    self.expression = expression
+    self.token = token
     self.arguments = arguments
 
   def __str__(self):
-    return f"{self.callee}({self.arguments})"
+    return f"{self.expression}({self.arguments})"
 
   def accept(self, visitor):
     return visitor.visit_call_expr(self)
+
+
+# Class that defines a get expression
+class GetExpr(Expr):
+  def __init__(self, expression, token, name):
+    self.expression = expression
+    self.token = token
+    self.name = name
+
+  def __str__(self):
+    return f"{self.expression}.{self.name}"
+
+  def accept(self, visitor):
+    return visitor.visit_get_expr(self)
+
+
+# Class that defines a set expression
+class SetExpr(Expr):
+  def __init__(self, expression, token, name, op, value):
+    self.expression = expression
+    self.token = token
+    self.name = name
+    self.op = op
+    self.value = value
+
+  def __str__(self):
+    return f"{self.expression}.{self.name} {self.op} {self.value}"
+
+  def accept(self, visitor):
+    return visitor.visit_set_expr(self)
 
 
 # Class that defines an unary operator expression
@@ -248,6 +278,12 @@ class ExprVisitor(Generic[T]):
     raise NotImplementedError()
 
   def visit_call_expr(self, expr: CallExpr) -> T:
+    raise NotImplementedError()
+
+  def visit_get_expr(self, expr: GetExpr) -> T:
+    raise NotImplementedError()
+
+  def visit_set_expr(self, expr: SetExpr) -> T:
     raise NotImplementedError()
 
   def visit_unary_op_expr(self, expr: UnaryOpExpr) -> T:

@@ -268,26 +268,28 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
   # Visit a call expression
   def visit_call_expr(self, expr: ast.CallExpr) -> internals.Obj:
     # Evaluate the expression
-    callee = self.evaluate(expr.callee)
+    expression = self.evaluate(expr.expression)
+
+    # Check if the expression is callable
+    if not isinstance(expression, internals.Callable):
+      raise internals.RuntimeException(f"The expression '{expr.expression}' is not callable", expr.paren.location)
+
+    # Evaluate the arguments
     args = self.evaluate(expr.arguments.args)
     kwargs = self.evaluate(expr.arguments.kwargs)
 
-    # Check if the callee is callable
-    if not isinstance(callee, internals.Callable):
-      raise internals.RuntimeException(f"The expression '{expr.callee}' is not callable", expr.paren.location)
-
     # Check the signature of the callable
-    signature = callee.signature()
+    signature = expression.signature()
 
     # Check the arguments
     # TODO: Print correct types instead of internal names
     args_types = [type(arg) for arg in args]
     if len(args_types) != len(signature.args_types):
-      raise internals.InvalidCallException(f"Expected {len(signature.arguments_types)} arguments, got {len(argument_types)}", expr.paren.location)
+      raise internals.InvalidCallException(f"Expected {len(signature.arguments_types)} arguments, got {len(argument_types)}", expr.token.location)
     for i, arg_type in enumerate(signature.args_types):
       # Check if the argument is the valid type
       if not issubclass(check_type := args_types[i], arg_type):
-        raise internals.InvalidCallException(f"Expected argument {i+1} of type {arg_type}, got type {check_type}", expr.paren.location)
+        raise internals.InvalidCallException(f"Expected argument {i+1} of type {arg_type}, got type {check_type}", expr.token.location)
 
     # Check the keywords
     # TODO: Print correct types instead of internal names
@@ -295,13 +297,43 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     for name, kwarg_type in signature.kwargs_types.items():
       # Check if the keyword is provided
       if not name in kwargs_types:
-        raise internals.InvalidCallException(f"Expected keyword '{name}' of type {kwarg_type}", expr.paren.location)
+        raise internals.InvalidCallException(f"Expected keyword '{name}' of type {kwarg_type}", expr.token.location)
       # Check if the keyword is the valid type
       if not issubclass(check_type := kwargs_types[name], kwarg_type):
-        raise internals.InvalidCallException(f"Expected keyword '{name}' of type {kwarg_type}, got type {check_type}", expr.paren.location)
+        raise internals.InvalidCallException(f"Expected keyword '{name}' of type {kwarg_type}, got type {check_type}", expr.token.location)
 
     # Call the callable
-    return callee.call(self, args, kwargs)
+    return expression.call(self, args, kwargs)
+
+  # Visit a get expression
+  def visit_get_expr(self, expr: ast.GetExpr) -> internals.Obj:
+    # Evaluate the expression
+    expression = self.evaluate(expr.expression)
+
+    # Check if the object is a record
+    if not isinstance(expression, internals.ObjRecord):
+      raise internals.RuntimeException(f"The expression '{expr.expression}' is not a record", expr.token.location)
+
+    # Return the field of the record
+    return expression.get_field(expr.name)
+
+  # Visit a set expression
+  def visit_set_expr(self, expr: ast.GetExpr) -> internals.Obj:
+    # Evaluate the expression
+    expression = self.evaluate(expr.expression)
+
+    # Check if the object is a record
+    if not isinstance(expression, internals.ObjRecord):
+      raise internals.RuntimeException(f"The expression '{expr.expression}' is not a record", expr.token.location)
+
+    # Evaluate the value
+    value = self.evaluate(expr.value)
+
+    # Set the field of the record
+    expression.set_field(expr.name, value)
+
+    # Return the value
+    return value
 
   # Visit a unary operator expression
   def visit_unary_op_expr(self, expr: ast.UnaryOpExpr) -> internals.Obj:
