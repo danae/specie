@@ -36,6 +36,8 @@ def main(args):
     # Start the read-eval-print loop
     while True:
       line = input("> ")
+      while line[-1] == "\\":
+        line = line[:-1] + "\n" + input(". ")
       if line == "exit":
         break
 

@@ -29,6 +29,7 @@ rules = [
   Rule('symbol_dot', r'\.', None),
   Rule('symbol_comma', r'\,', None),
   Rule('symbol_colon', r'\:', None),
+  Rule('symbol_pipe', r'\|', None),
 
   # Operator tokens
   Rule('operator_add', r'\+'),
@@ -49,10 +50,12 @@ rules = [
   Rule('operator_assign', r'='),
 
   # Keyword tokens
+  Rule('keyword_do', r'do', None),
+  Rule('keyword_if', r'if', None),
+  Rule('keyword_end', r'end', None),
+  Rule('keyword_from', r'from', None),
   Rule('keyword_regex', r'regex', None),
   Rule('keyword_var', r'var', None),
-  Rule('keyword_from', r'from', None),
-  Rule('keyword_if', r'if', None),
 
   # Literal tokens
   Rule('literal_false', r'false', None),
@@ -133,19 +136,19 @@ literal_date = describe('literal_date', LITERAL_DATE.map(lambda t: internals.Obj
 literal = describe('literal', (literal_false | literal_true | literal_int | literal_float | literal_string | literal_regex | literal_date).map(ast.LiteralExpr))
 
 # List primitives
-list_arg = describe('list_arg', lazy(lambda: expr))
-list = describe('list', SQUARE_BRACKET_LEFT >> list_arg.many_separated(SYMBOL_COMMA).map(ast.ListExpr) << SQUARE_BRACKET_RIGHT)
+list_item = describe('list_item', lazy(lambda: expr))
+list = describe('list', SQUARE_BRACKET_LEFT >> list_item.many_separated(SYMBOL_COMMA).map(ast.ListExpr) << SQUARE_BRACKET_RIGHT)
 
 # Record primitives
-record_arg = describe('record_arg', concat(IDENTIFIER, SYMBOL_COLON >> lazy(lambda: expr), lambda name, value: (name, value)))
-record = describe('record', CURLY_BRACKET_LEFT >> record_arg.many_separated(SYMBOL_COMMA).map(ast.RecordExpr) << CURLY_BRACKET_RIGHT)
+record_item = describe('record_item', concat(IDENTIFIER, SYMBOL_COLON >> lazy(lambda: expr), lambda name, value: (name, value)))
+record = describe('record', CURLY_BRACKET_LEFT >> record_item.many_separated(SYMBOL_COMMA).map(ast.RecordExpr) << CURLY_BRACKET_RIGHT)
 
 # Primary expressions
 primary = describe('primary', literal | list | record | IDENTIFIER.map(ast.VariableExpr) | (PARENTHESIS_LEFT >> lazy(lambda: expr).map(ast.GroupingExpr) << PARENTHESIS_RIGHT))
 
 # Arguments
-arguments_arg = describe('arguments_arg', record_arg | list_arg)
-arguments = describe('arguments', arguments_arg.many_separated(SYMBOL_COMMA).optional([]).map(map_arguments))
+arguments_item = describe('arguments_item', record_item | list_item)
+arguments = describe('arguments', arguments_item.many_separated(SYMBOL_COMMA).optional([]).map(map_arguments))
 
 # Call expressions
 call = describe('call', primary.reduce(map_call, concat(PARENTHESIS_LEFT, arguments << PARENTHESIS_RIGHT) | concat(SYMBOL_DOT, IDENTIFIER)))
@@ -174,9 +177,13 @@ query_action = describe('query_action', concat(IDENTIFIER, arguments, ast.Call))
 query_where = describe('query_where', KEYWORD_IF >> lazy(lambda: expr))
 query = describe('query', concat_multiple(ast.QueryExpr, KEYWORD_FROM >> IDENTIFIER.map(ast.VariableExpr), query_action, query_where.optional()) | logic_or)
 
+# Block expressions
+block_contents = describe('block_contents', lazy(lambda: expr).many_separated(token('newline')).map(ast.BlockExpr))
+block = describe('block', KEYWORD_DO >> token('newline') >> block_contents << token('newline') << KEYWORD_END | query)
+
 # Assignment expressions
 assignment_op = describe('assignment_op', OPERATOR_ASSIGN)
-assignment = describe('assignment', concat_multiple(map_assignment, call, assignment_op, lazy(lambda: assignment)) | query)
+assignment = describe('assignment', concat_multiple(map_assignment, call, assignment_op, lazy(lambda: assignment)) | block)
 
 # Declaration expressions
 declaration_op = describe('declaration_op', OPERATOR_ASSIGN)
@@ -185,8 +192,5 @@ declaration = describe('declaration', KEYWORD_VAR >> concat_multiple(ast.Declara
 # Expressions
 expr = describe('expr', declaration)
 
-# Expression lists
-expr_list = describe('expr_list', expr.many_separated(token('newline')).map(lambda exprs: ast.BlockExpr(exprs, False)))
-
 # Grammar
-grammar = describe('grammar', expr_list.phrase())
+grammar = describe('grammar', expr.many_separated(token('newline')).phrase())

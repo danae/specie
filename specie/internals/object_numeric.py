@@ -127,6 +127,8 @@ class ObjFloat(ObjNumeric):
 
     if isinstance(float_value, float):
       self.float_value = float_value
+    elif isinstance(float_value, int):
+       self.float_value = float(float_value)
     elif isinstance(float_value, str):
       self.float_value = float(float_value)
     else:

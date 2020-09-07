@@ -117,12 +117,14 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
       ast = parser.parse(string)
 
       # Cache literal constants
-      self.cache_analyzer.analyze(ast)
+      for expr in ast:
+        self.cache_analyzer.analyze(expr)
 
       # Interpret the abstract syntax tree
-      result = self.evaluate(ast)
-      if not self.includes[-1] and result is not None:
-        output.print_object(result)
+      for expr in ast:
+        result = self.evaluate(expr)
+        if not self.includes[-1] and result is not None:
+          output.print_object(result)
 
     # Catch syntax errors
     except parser.SyntaxError as err:
