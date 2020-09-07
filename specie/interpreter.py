@@ -350,43 +350,56 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
   def visit_binary_op_expr(self, expr: ast.BinaryOpExpr) -> internals.Obj:
     op = expr.op.value
 
+    # Evaluate the operands
+    left = self.evaluate(expr.left)
+    right = self.evaluate(expr.right)
+
     # Arithmetic operations
     if op == '*':
-      return self.evaluate(expr.left).call('mul', self.evaluate(expr.right))
+      return left.call('mul', right)
     elif op == '/':
-      return self.evaluate(expr.left).call('div', self.evaluate(expr.right))
+      return left.call('div', right)
     elif op == '+':
-      return self.evaluate(expr.left).call('add', self.evaluate(expr.right))
+      return left.call('add', right)
     elif op == '-':
-      return self.evaluate(expr.left).call('sub', self.evaluate(expr.right))
+      return left.call('sub', right)
 
     # Comparison operations
     elif op == '<':
-      return self.evaluate(expr.left).call('lt', self.evaluate(expr.right))
+      return left.call('lt', right)
     elif op == '<=':
-      return self.evaluate(expr.left).call('lte', self.evaluate(expr.right))
+      return left.call('lte', right)
     elif op == '>':
-      return self.evaluate(expr.left).call('gt', self.evaluate(expr.right))
+      return left.call('gt', right)
     elif op == '>=':
-      return self.evaluate(expr.left).call('gte', self.evaluate(expr.right))
+      return left.call('gte', right)
     elif op == '~':
-      return self.evaluate(expr.left).call('match', self.evaluate(expr.right))
+      return left.call('match', right)
 
     # Containment operations
     elif op == 'in':
-      return self.evaluate(expr.right).call('contains', self.evaluate(expr.left))
+      return right.call('contains', left)
 
     # Equality operations
     elif op == '==':
-      return self.evaluate(expr.left).call('eq', self.evaluate(expr.right))
+      return left.call('eq', right)
     elif op == '!=':
-      return self.evaluate(expr.left).call('neq', self.evaluate(expr.right))
+      return left.call('neq', right)
 
-    # Logic operations
-    elif op == 'and':
-      return internals.ObjBool(self.evaluate(expr.left).truthy() and self.evaluate(expr.right).truthy())
+    # No matching operation found
+    raise internals.RuntimeException("Undefined binary operator '{}'".format(op), expr.op.location)
+
+  # Visit a logical expression
+  def visit_logical_expr(self, expr: ast.LogicalExpr) -> internals.Obj:
+    op = expr.op.value
+
+    # Logical and
+    if op == 'and':
+      return left.truthy() if not (left := self.evaluate(expr.left)).truthy() else self.evaluate(expr.right).truthy()
+
+    # Logical or
     elif op == 'or':
-      return internals.ObjBool(self.evaluate(expr.left).truthy() or self.evaluate(expr.right).truthy())
+      return left.truthy() if (left := self.evaluate(expr.left)).truthy() else self.evaluate(expr.right).truthy()
 
     # No matching operation found
     raise internals.RuntimeException("Undefined binary operator '{}'".format(op), expr.op.location)

@@ -197,6 +197,20 @@ class BinaryOpExpr(Expr):
     return visitor.visit_binary_op_expr(self)
 
 
+# Class that defines a logical expression
+class LogicalExpr(Expr):
+  def __init__(self, left, op, right):
+    self.left = left
+    self.op = op
+    self.right = right
+
+  def __str__(self):
+    return f"{self.left} {self.op.value} {self.right}"
+
+  def accept(self, visitor):
+    return visitor.visit_logical_expr(self)
+
+
 # Class that defines a query expression
 class QueryExpr(Expr):
   def __init__(self, table, action, predicate):
@@ -290,6 +304,9 @@ class ExprVisitor(Generic[T]):
     raise NotImplementedError()
 
   def visit_binary_op_expr(self, expr: BinaryOpExpr) -> T:
+    raise NotImplementedError()
+
+  def visit_logical_expr(self, expr: LogicalExpr) -> T:
     raise NotImplementedError()
 
   def visit_query_expr(self, expr: QueryExpr) -> T:

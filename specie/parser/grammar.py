@@ -166,8 +166,8 @@ equality = describe('equality', concat_multiple(ast.BinaryOpExpr, comparison, eq
 
 # Logic expressions
 logic_not = describe('logic_not', concat(OPERATOR_NOT, lazy(lambda: logic_not), ast.UnaryOpExpr) | equality)
-logic_and = describe('logic_and', logic_not.reduce(ast.BinaryOpExpr, OPERATOR_AND, logic_not))
-logic_or = describe('logic_or', logic_and.reduce(ast.BinaryOpExpr, OPERATOR_OR, logic_and))
+logic_and = describe('logic_and', logic_not.reduce(ast.LogicalExpr, OPERATOR_AND, logic_not))
+logic_or = describe('logic_or', logic_and.reduce(ast.LogicalExpr, OPERATOR_OR, logic_and))
 
 # Query expressions
 query_action = describe('query_action', concat(IDENTIFIER, arguments, ast.Call))

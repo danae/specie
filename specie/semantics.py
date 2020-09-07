@@ -69,6 +69,11 @@ class CacheAnalyzer(ast.ExprVisitor[None]):
     self.analyze(expr.left)
     self.analyze(expr.right)
 
+  # Visit a logical expression
+  def visit_logical_expr(self, expr: ast.BinaryOpExpr) -> None:
+    self.analyze(expr.left)
+    self.analyze(expr.right)
+
   # Visit a query expression
   def visit_query_expr(self, expr: ast.QueryExpr) -> None:
     self.analyze(expr.table)
