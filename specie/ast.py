@@ -258,12 +258,11 @@ class DeclarationExpr(Expr):
 
 # Class that defines a block expression
 class BlockExpr(Expr):
-  def __init__(self, expressions, new_scope = True):
+  def __init__(self, expressions):
     self.expressions = expressions
-    self.new_scope = new_scope
 
   def __str__(self):
-    return "<block>"
+    return "do\n" + "\n".join(f"{expression}" for expression in self.expressions) + "\nend"
 
   def accept(self, visitor):
     return visitor.visit_block_expr(self)
