@@ -172,12 +172,12 @@ class SetExpr(Expr):
 
 # Class that defines an unary operator expression
 class UnaryOpExpr(Expr):
-  def __init__(self, op, expr):
+  def __init__(self, op, expression):
     self.op = op
-    self.expr = expr
+    self.expression = expression
 
   def __str__(self):
-    return f"{self.op.value} {self.expr}"
+    return f"{self.op.value} {self.expression}"
 
   def accept(self, visitor):
     return visitor.visit_unary_op_expr(self)

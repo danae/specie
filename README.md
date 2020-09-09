@@ -11,7 +11,7 @@
 * [X] Replace print statement with native function
 * [X] Grammar: add record field get and set expressions
 * [X] Grammar: add function definitions
-* [ ] Add resolver for correct closure handling
+* [X] Add resolver for correct closure handling
 * [ ] Add methods as get expression
 * [ ] Give type errors a meaningful type instead of the Python types
 * [ ] Buffer print output (so it does not print if e.g. the function is an invalid assignment target)

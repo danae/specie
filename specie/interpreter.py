@@ -1,4 +1,5 @@
 import os.path
+import traceback
 
 from colorama import Fore, Back, Style
 
@@ -35,13 +36,13 @@ class Environment:
     if name in self.variables:
       self.variables[name] = value
 
-    # Set a variable in the previous environment
+    # Get a variable from the previous environment
     elif self.previous is not None:
       self.previous[name] = value
 
     # No matching variable found
     else:
-      raise IndexError(f"Undefined field '{name}'")
+      raise KeyError(f"Undefined field '{name}'")
 
   # Return is a variable exists in the environment
   def __contains__(self, name):
@@ -57,18 +58,31 @@ class Environment:
     else:
       return False
 
+  # Return the ancestor of this environment at the specified distance
+  def ancestor(self, distance):
+    environment = self
+    for _ in range(distance):
+      environment = environment.previous
+    return environment
+
   # Get a variable in the environment by means of a lexer token
-  def get_variable(self, name):
+  def get_variable(self, name, distance = 0):
     try:
-      return self[name.value]
-    except IndexError:
+      if distance == 0:
+        return self.variables[name.value]
+      else:
+        return self.ancestor(distance).variables[name.value]
+    except KeyError:
       raise internals.UndefinedFieldException(name.value, name.location)
 
   # Set a variable in the environment by means of a lexer token
-  def set_variable(self, name, value):
+  def set_variable(self, name, value, distance = 0):
     try:
-      self[name.value] = value
-    except IndexError:
+      if distance == 0:
+        self.variables[name.value] = value
+      else:
+        self.ancestor(distance).variables[name.value] = value
+    except KeyError:
       raise internals.UndefinedFieldException(name.value, name.location)
 
   # Declare a varable in the environment by means of a lexer token
@@ -161,7 +175,11 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     # Define the include stack; the first file is the interactive console
     self.includes = [None]
 
+    # Define the map of local variables
+    self.locals = {}
+
     # Define the static analyzers
+    self.resolver = semantics.Resolver(self)
     self.cache_analyzer = semantics.CacheAnalyzer(self)
 
   # Parse a string into an abstract syntax tree and interpret it
@@ -175,8 +193,9 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
       # Parse the string into an abstract syntax tree
       ast = parser.parse(string)
 
-      # Cache literal constants
+      # Semantically analyse the tree
       for expr in ast:
+        self.resolver.resolve(expr)
         self.cache_analyzer.analyze(expr)
 
       # Interpret the abstract syntax tree
@@ -253,7 +272,6 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Add the file to the include stack
     self.begin_include(resolved_file_name)
-    self.begin_scope()
 
     # Open the file and execute the contents
     with open(resolved_file_name, 'r') as file:
@@ -264,7 +282,6 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     variables = self.environment.variables
 
     # Remove the file from the include stack
-    self.end_scope()
     self.end_include()
 
     # Return the variables
@@ -320,7 +337,14 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
   # Visit a variable expression
   def visit_variable_expr(self, expr: ast.VariableExpr) -> internals.Obj:
-    return self.environment.get_variable(expr.name)
+    # Get the distance of the local variable, or otherwise assume it's global
+    distance = self.locals.get(expr)
+    if distance is not None:
+      # Get a local variable
+      return self.environment.get_variable(expr.name, distance)
+    else:
+      # Get a global variable
+      return self.globals.get_variable(expr.name)
 
   # Visit a grouping expression
   def visit_grouping_expr(self, expr: ast.GroupingExpr) -> internals.Obj:
@@ -378,7 +402,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Logic operations
     if op == 'not':
-      return internals.ObjBool(not self.evaluate(expr.expr).truthy())
+      return internals.ObjBool(not self.evaluate(expr.expression).truthy())
 
     # No matching operation found
     raise internals.RuntimeException("Undefined unary operator '{}'".format(op), expr.op.location)
@@ -462,8 +486,16 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     # Evaluate the value
     value = self.evaluate(expr.value)
 
-    # Set the value and return it
-    self.environment.set_variable(expr.name, value)
+    # Get the distance of the local variable, or otherwise assume it's global
+    distance = self.locals.get(expr)
+    if distance is not None:
+      # Get a local variable
+      self.environment.set_variable(expr.name, value, distance)
+    else:
+      # Get a global variable
+      self.globals.set_variable(expr.name, value)
+
+    # Return the value
     return value
 
   # Visit a declaration expression
@@ -479,17 +511,15 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
   def visit_block_expr(self, expr: ast.BlockExpr) -> internals.Obj:
     result = None
 
-    # Start a new scope if applicable
-    if expr.new_scope:
-      self.begin_scope()
+    # Start a new scope
+    self.begin_scope()
 
     # Evaluate the sub-expressions
     for expression in expr.expressions:
       result = self.evaluate(expression)
 
-    # End the current scope if applicable
-    if expr.new_scope:
-      self.end_scope()
+    # End the current scope
+    self.end_scope()
 
     # Return the last result
     return result
