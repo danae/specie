@@ -57,7 +57,7 @@ class Obj:
     return ObjBool(self is other)
 
 
-  ## Definition of conversion functions
+  ### Definition of conversion functions ###
 
   # Convert to representation
   def __repr__(self):
@@ -65,7 +65,7 @@ class Obj:
 
   # Convert to string
   def __str__(self):
-    return "object"
+    return "<object>"
 
 
 # Class that defines a null object

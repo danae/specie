@@ -4,10 +4,14 @@ from . import internals, output
 
 
 # Class that defines the print function
-class PrintFunction(internals.Callable):
-  # Return the signature of this function
-  def signature(self):
-    return internals.CallableSignature([internals.Obj])
+class PrintFunction(internals.ObjCallable):
+  # Return the required arguments of the function
+  def required_args(self):
+    return [internals.Obj]
+
+  # Return the required keywords of the function
+  def required_kwargs(self):
+    return {}
 
   # Call the function
   def call(self, interpreter, arguments, keywords):
@@ -15,33 +19,41 @@ class PrintFunction(internals.Callable):
 
 
 # Class that defines the print_title function
-class PrintTitleFunction(internals.Callable):
-  # Return the signature of this function
-  def signature(self):
-    return internals.CallableSignature([internals.Obj])
+class PrintTitleFunction(internals.ObjCallable):
+  # Return the required arguments of the function
+  def required_args(self):
+    return [internals.Obj]
+
+  # Return the required keywords of the function
+  def required_kwargs(self):
+    return {}
 
   # Call the function
-  def call(self, interpreter, arguments, keywords):
-    output.title(*arguments.value(), **keywords.value())
+  def call(self, interpreter, args, kwargs):
+    output.title(*args.value(), **kwargs.value())
 
 
 # Class that defines the include function
-class IncludeFunction(internals.Callable):
-  # Return the signature of this function
-  def signature(self):
-    return internals.CallableSignature([internals.ObjString])
+class IncludeFunction(internals.ObjCallable):
+  # Return the required arguments of the function
+  def required_args(self):
+    return [internals.ObjString]
 
   # Call the function
-  def call(self, interpreter, arguments, keywords):
-    return interpreter.execute_include(*arguments.value(), **keywords.value())
+  def call(self, interpreter, args, kwargs):
+    return interpreter.execute_include(*args.value(), **kwargs.value())
 
 
 # Class that defines the import function
-class ImportFunction(internals.Callable):
-  # Return the signature of this function
-  def signature(self):
-    return internals.CallableSignature([internals.ObjString], {'type': internals.ObjString})
+class ImportFunction(internals.ObjCallable):
+  # Return the required arguments of the function
+  def required_args(self):
+    return [internals.ObjString]
+
+  # Return the required keywords of the function
+  def required_kwargs(self):
+    return {'type': ObjString}
 
   # Call the function
-  def call(self, interpreter, arguments, keywords):
-    return interpreter.execute_import(*arguments.value(), **keywords.value())
+  def call(self, interpreter, args, kwargs):
+    return interpreter.execute_import(*args.value(), **kwargs.value())

@@ -3,7 +3,7 @@ from typing import TypeVar, Generic
 
 ### Definition of helper classes
 
-# Class that holds a set of arguments and keyword arguments
+# Class that holds a set of arguments and keywords
 class Arguments:
   # Constructor
   def __init__(self, args, kwargs):
@@ -228,6 +228,19 @@ class QueryExpr(Expr):
     return visitor.visit_query_expr(self)
 
 
+# Class that defines a function expression
+class FunctionExpr(Expr):
+  def __init__(self, parameters, body):
+    self.parameters = parameters
+    self.body = body
+
+  def __str__(self):
+    return '(' + ', '.join(parameter.value for parameter in self.parameters) + '): ' + f"{self.body}"
+
+  def accept(self, visitor):
+    return visitor.visit_function_expr(self)
+
+
 # Class that defines an assignment expression
 class AssignmentExpr(Expr):
   def __init__(self, name, op, value):
@@ -309,6 +322,9 @@ class ExprVisitor(Generic[T]):
     raise NotImplementedError()
 
   def visit_query_expr(self, expr: QueryExpr) -> T:
+    raise NotImplementedError()
+
+  def visit_function_expr(self, expr: FunctionExpr) -> T:
     raise NotImplementedError()
 
   def visit_assignment_expr(self, expr: AssignmentExpr) -> T:

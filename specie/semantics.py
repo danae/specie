@@ -82,6 +82,10 @@ class CacheAnalyzer(ast.ExprVisitor[None]):
     if expr.predicate:
       self.analyze(expr.predicate)
 
+  # Visit a function expression
+  def visit_function_expr(self, expr: ast.FunctionExpr) -> None:
+    self.analyze(expr.body)
+
   # Visit an assignment expression
   def visit_assignment_expr(self, expr: ast.AssignmentExpr) -> None:
     self.analyze(expr.value)

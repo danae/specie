@@ -181,13 +181,20 @@ query = describe('query', concat_multiple(ast.QueryExpr, KEYWORD_FROM >> IDENTIF
 block_contents = describe('block_contents', lazy(lambda: expr).many_separated(token('newline')).map(ast.BlockExpr))
 block = describe('block', KEYWORD_DO >> token('newline') >> block_contents << token('newline') << KEYWORD_END | query)
 
+# Parameters
+parameters_arg = describe('parameters_arg', IDENTIFIER)
+parameters = describe('parameters', parameters_arg.many_separated(SYMBOL_COMMA))
+
+# Function expressions
+function = describe('function', concat_multiple(ast.FunctionExpr, PARENTHESIS_LEFT >> parameters << PARENTHESIS_RIGHT << SYMBOL_COLON, block)) | block
+
 # Assignment expressions
 assignment_op = describe('assignment_op', OPERATOR_ASSIGN)
-assignment = describe('assignment', concat_multiple(map_assignment, call, assignment_op, lazy(lambda: assignment)) | block)
+assignment = describe('assignment', concat_multiple(map_assignment, call, assignment_op, lazy(lambda: assignment)) | function)
 
 # Declaration expressions
 declaration_op = describe('declaration_op', OPERATOR_ASSIGN)
-declaration = describe('declaration', KEYWORD_VAR >> concat_multiple(ast.DeclarationExpr, IDENTIFIER, declaration_op, query) | assignment)
+declaration = describe('declaration', KEYWORD_VAR >> concat_multiple(ast.DeclarationExpr, IDENTIFIER, declaration_op, function) | assignment)
 
 # Expressions
 expr = describe('expr', declaration)

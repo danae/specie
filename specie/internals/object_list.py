@@ -37,11 +37,13 @@ class ObjList(Obj):
   def __getitem__(self, index):
     if isinstance(index, ObjInt):
       try:
-        return self.items[index.value]
+        return self.items[index.value()]
       except IndexError:
         raise UndefinedIndexException(index)
+    elif isinstance(index, int):
+      return self.items[index]
     else:
-      raise InvalidTypeException(index)
+      raise InvalidTypeException(type(index))
 
   # Return the length of the list
   def count(self):
