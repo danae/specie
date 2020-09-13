@@ -4,7 +4,7 @@ from . import internals, output
 
 
 # Class that defines the print function
-class PrintFunction(internals.ObjCallable):
+class PrintFunction(internals.ObjNativeCallable, name = 'print'):
   # Return the required arguments of the function
   def required_args(self):
     return [internals.Obj]
@@ -19,10 +19,10 @@ class PrintFunction(internals.ObjCallable):
 
 
 # Class that defines the print_title function
-class PrintTitleFunction(internals.ObjCallable):
+class PrintTitleFunction(internals.ObjNativeCallable, name = 'print_title'):
   # Return the required arguments of the function
   def required_args(self):
-    return [internals.Obj]
+    return [internals.ObjString]
 
   # Return the required keywords of the function
   def required_kwargs(self):
@@ -34,10 +34,14 @@ class PrintTitleFunction(internals.ObjCallable):
 
 
 # Class that defines the include function
-class IncludeFunction(internals.ObjCallable):
+class IncludeFunction(internals.ObjNativeCallable, name = 'include'):
   # Return the required arguments of the function
   def required_args(self):
     return [internals.ObjString]
+
+  # Return the required keywords of the function
+  def required_kwargs(self):
+    return {}
 
   # Call the function
   def call(self, interpreter, args, kwargs):
@@ -45,14 +49,14 @@ class IncludeFunction(internals.ObjCallable):
 
 
 # Class that defines the import function
-class ImportFunction(internals.ObjCallable):
+class ImportFunction(internals.ObjNativeCallable, name = 'import'):
   # Return the required arguments of the function
   def required_args(self):
     return [internals.ObjString]
 
   # Return the required keywords of the function
   def required_kwargs(self):
-    return {'type': ObjString}
+    return {'type': internals.ObjString}
 
   # Call the function
   def call(self, interpreter, args, kwargs):

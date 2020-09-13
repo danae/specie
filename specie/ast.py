@@ -19,6 +19,10 @@ class Arguments:
       string += (', ' if string else '') + str(self.kwargs)[1:-1]
     return string
 
+  # Convert to representation
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.args!r}, {self.kwargs!r})"
+
   # Convert to boolean
   def __bool__(self):
     return bool(self.args) and bool(self.kwargs)
@@ -38,6 +42,10 @@ class Call:
     else:
       return f"{self.name.value}"
 
+  # Convert to representation
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.name!r}, {self.arguments!r})"
+
 
 ### Definition of the expressions ###
 
@@ -56,6 +64,9 @@ class LiteralExpr(Expr):
   def __str__(self):
     return str(self.object)
 
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.object!r})"
+
   def accept(self, visitor):
     return visitor.visit_literal_expr(self)
 
@@ -67,6 +78,9 @@ class ListExpr(Expr):
 
   def __str__(self):
     return '[' + ', '.join(f"{item}" for item in self.items) + ']'
+
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.items!r})"
 
   def __getitem__(self, index):
     return self.items[index]
@@ -89,6 +103,9 @@ class RecordExpr(Expr):
   def __str__(self):
     return '{' + ', '.join(f"{name.value}: {value}" for name, value in self.fields) + '}'
 
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.fields!r})"
+
   def __getitem__(self, index):
     return self.fields[index]
 
@@ -110,6 +127,9 @@ class VariableExpr(Expr):
   def __str__(self):
     return self.name.value
 
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.name!r})"
+
   def accept(self, visitor):
     return visitor.visit_variable_expr(self)
 
@@ -121,6 +141,9 @@ class GroupingExpr(Expr):
 
   def __str__(self):
     return f"({self.expression})"
+
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.expression!r})"
 
   def accept(self, visitor):
     return visitor.visit_grouping_expr(self)
@@ -136,6 +159,9 @@ class CallExpr(Expr):
   def __str__(self):
     return f"{self.expression}({self.arguments})"
 
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.expression!r}, {self.token!r}, {self.arguments!r})"
+
   def accept(self, visitor):
     return visitor.visit_call_expr(self)
 
@@ -148,7 +174,10 @@ class GetExpr(Expr):
     self.name = name
 
   def __str__(self):
-    return f"{self.expression}.{self.name}"
+    return f"{self.expression}.{self.name.value}"
+
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.expression!r}, {self.token!r}, {self.name!r})"
 
   def accept(self, visitor):
     return visitor.visit_get_expr(self)
@@ -164,7 +193,10 @@ class SetExpr(Expr):
     self.value = value
 
   def __str__(self):
-    return f"{self.expression}.{self.name} {self.op} {self.value}"
+    return f"{self.expression}.{self.name.value} {self.op} {self.value}"
+
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.expression!r}, {self.token!r}, {self.name!r}, {self.op!r}, {self.value!r})"
 
   def accept(self, visitor):
     return visitor.visit_set_expr(self)
@@ -178,6 +210,9 @@ class UnaryOpExpr(Expr):
 
   def __str__(self):
     return f"{self.op.value} {self.expression}"
+
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.op!r}, {self.expression!r})"
 
   def accept(self, visitor):
     return visitor.visit_unary_op_expr(self)
@@ -193,6 +228,9 @@ class BinaryOpExpr(Expr):
   def __str__(self):
     return f"{self.left} {self.op.value} {self.right}"
 
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.left!r}, {self.op!r}, {self.right!r})"
+
   def accept(self, visitor):
     return visitor.visit_binary_op_expr(self)
 
@@ -206,6 +244,9 @@ class LogicalExpr(Expr):
 
   def __str__(self):
     return f"{self.left} {self.op.value} {self.right}"
+
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.left!r}, {self.op!r}, {self.right!r})"
 
   def accept(self, visitor):
     return visitor.visit_logical_expr(self)
@@ -224,6 +265,9 @@ class QueryExpr(Expr):
     else:
       return f"from {self.table} {self.action}"
 
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.table!r}, {self.action!r}, {self.predicate!r})"
+
   def accept(self, visitor):
     return visitor.visit_query_expr(self)
 
@@ -235,7 +279,10 @@ class FunctionExpr(Expr):
     self.body = body
 
   def __str__(self):
-    return '(' + ', '.join(parameter.value for parameter in self.parameters) + '): ' + f"{self.body}"
+    return '(' + ', '.join(parameter.value for parameter in self.parameters) + ') -> ' + f"{self.body}"
+
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.parameters!r}, {self.body!r})"
 
   def accept(self, visitor):
     return visitor.visit_function_expr(self)
@@ -251,6 +298,9 @@ class AssignmentExpr(Expr):
   def __str__(self):
     return f"{self.name.value} {self.op.value} {self.value}"
 
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.name!r}, {self.op!r}, {self.value!r})"
+
   def accept(self, visitor):
     return visitor.visit_assignment_expr(self)
 
@@ -265,6 +315,9 @@ class DeclarationExpr(Expr):
   def __str__(self):
     return f"var {self.name.value} {self.op.value} {self.value}"
 
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.name!r}, {self.op!r}, {self.value!r})"
+
   def accept(self, visitor):
     return visitor.visit_declaration_expr(self)
 
@@ -277,9 +330,26 @@ class BlockExpr(Expr):
   def __str__(self):
     return "do\n" + "\n".join(f"{expression}" for expression in self.expressions) + "\nend"
 
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.expressions!r})"
+
   def accept(self, visitor):
     return visitor.visit_block_expr(self)
 
+
+# Class that defines a module expression
+class ModuleExpr(Expr):
+  def __init__(self, expressions):
+    self.expressions = expressions
+
+  def __str__(self):
+    return "\n".join(f"{expression}" for expression in self.expressions)
+
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.expressions!r})"
+
+  def accept(self, visitor):
+    return visitor.visit_module_expr(self)
 
 ### Definition of the expression visitor ###
 
@@ -334,4 +404,7 @@ class ExprVisitor(Generic[T]):
     raise NotImplementedError()
 
   def visit_block_expr(self, expr: BlockExpr) -> T:
+    raise NotImplementedError()
+
+  def visit_module_expr(self, expr: ModuleExpr) -> T:
     raise NotImplementedError()

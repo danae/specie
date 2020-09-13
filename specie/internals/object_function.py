@@ -5,9 +5,10 @@ from .object_callable import ObjCallable
 # Class that defines a function object
 class ObjFunction(ObjCallable):
   # Constructor
-  def __init__(self, expr):
+  def __init__(self, expr, closure):
     ObjCallable.__init__(self)
     self.expr = expr
+    self.closure = closure
 
 
   ### Definition of callable functions ###
@@ -22,21 +23,15 @@ class ObjFunction(ObjCallable):
 
   # Call the function
   def call(self, interpreter, args, kwargs):
-    # Begin a new scope for this function
-    interpreter.begin_scope()
+    # Create a new environment for this function
+    environment = self.closure.nested()
 
     # Declare the arguments
     for i, parameter in enumerate(self.expr.parameters):
-      interpreter.environment.declare_variable(parameter, args[i])
+      environment.declare_variable(parameter, args[i])
 
-    # Execute the body
-    result = interpreter.evaluate(self.expr.body)
-
-    # End the function scope
-    interpreter.end_scope()
-
-    # Return the result
-    return result
+    # Execute the body and return the result
+    return interpreter.evaluate_with(environment, self.expr.body)
 
 
   ## Definition of conversion functions

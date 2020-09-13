@@ -117,3 +117,11 @@ class ObjRecord(Obj):
   # Convert to string
   def __str__(self):
     return '{' + ', '.join(f"{name}: {value}" for name, value in self.fields.items()) + '}'
+
+  # Convert from dict
+  @classmethod
+  def from_dict(cls, dict):
+    record = cls()
+    for name, value in dict.items():
+      record[name] = value
+    return record

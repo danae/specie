@@ -57,8 +57,8 @@ class CacheAnalyzer(ast.ExprVisitor[None]):
 
   # Visit a set expression
   def visit_set_expr(self, expr: ast.SetExpr) -> None:
-    self.analyze(expr.expression)
     self.analyze(expr.value)
+    self.analyze(expr.expression)
 
   # Visit a unary operator expression
   def visit_unary_op_expr(self, expr: ast.UnaryOpExpr) -> None:
@@ -96,6 +96,11 @@ class CacheAnalyzer(ast.ExprVisitor[None]):
 
   # Visit a block expression
   def visit_block_expr(self, expr: ast.BlockExpr) -> None:
+    for expression in expr.expressions:
+      self.analyze(expression)
+
+  # Visit a module expression
+  def visit_module_expr(self, expr: ast.ModuleExpr) -> None:
     for expression in expr.expressions:
       self.analyze(expression)
 
@@ -170,15 +175,17 @@ class Resolver(ast.ExprVisitor[None]):
   # Visit a call expression
   def visit_call_expr(self, expr: ast.CallExpr) -> None:
     self.resolve(expr.expression)
+    self.resolve(expr.arguments.args)
+    self.resolve(expr.arguments.kwargs)
 
   # Visit a get expression
   def visit_get_expr(self, expr: ast.GetExpr) -> None:
-    self.resolve(expr.object)
+    self.resolve(expr.expression)
 
   # Visit a set expression
   def visit_set_expr(self, expr: ast.SetExpr) -> None:
     self.resolve(expr.value)
-    self.resolve(expr.object)
+    self.resolve(expr.expression)
 
   # Visit a unary operator expression
   def visit_unary_op_expr(self, expr: ast.UnaryOpExpr) -> None:
@@ -214,7 +221,7 @@ class Resolver(ast.ExprVisitor[None]):
   # Visit an assignment expression
   def visit_assignment_expr(self, expr: ast.AssignmentExpr) -> None:
     self.resolve(expr.value)
-    self.resolve_variable(expr.name.value)
+    self.resolve_variable(expr, expr.name.value)
 
   # Visit a declaration expression
   def visit_declaration_expr(self, expr: ast.DeclarationExpr) -> None:
@@ -224,6 +231,13 @@ class Resolver(ast.ExprVisitor[None]):
 
   # Visit a block expression
   def visit_block_expr(self, expr: ast.BlockExpr) -> None:
+    self.begin_scope()
+    for expression in expr.expressions:
+      self.resolve(expression)
+    self.end_scope()
+
+  # Visit a module expression
+  def visit_module_expr(self, expr: ast.ModuleExpr) -> None:
     self.begin_scope()
     for expression in expr.expressions:
       self.resolve(expression)

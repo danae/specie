@@ -31,7 +31,7 @@ class Query:
   # Return a table that adheres to the predicate
   def test(self, interpreter):
     if self.predicate is not None:
-      return self.table.filter(lambda item: interpreter.evaluate_scope(self.predicate, item))
+      return self.table.filter(lambda item: self.predicate.call_internal(interpreter, item))
     else:
       return self.table
 

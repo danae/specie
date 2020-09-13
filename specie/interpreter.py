@@ -3,8 +3,8 @@ import traceback
 
 from colorama import Fore, Back, Style
 
-from . import (ast, functions, internals, output, parser, query, semantics,
-  transactions)
+from . import (ast, functions, grammar, internals, output, parser, query,
+  semantics, transactions)
 
 
 ### Definition of the environment ###
@@ -58,6 +58,10 @@ class Environment:
     else:
       return False
 
+  # Create a nested environment with this environment as previous environment
+  def nested(self):
+    return Environment(self)
+
   # Return the ancestor of this environment at the specified distance
   def ancestor(self, distance):
     environment = self
@@ -73,7 +77,7 @@ class Environment:
       else:
         return self.ancestor(distance).variables[name.value]
     except KeyError:
-      raise internals.UndefinedFieldException(name.value, name.location)
+      raise internals.UndefinedFieldException(f"{name.value}", name.location)
 
   # Set a variable in the environment by means of a lexer token
   def set_variable(self, name, value, distance = 0):
@@ -92,6 +96,19 @@ class Environment:
       raise internals.RuntimeException(f"Variable '{name.value}' already exists in the current scope", name.location)
     self.variables[name.value] = value
 
+  # Return an iterator over this environment and its ancestors
+  def __iter__(self):
+    yield self
+    if self.previous is not None:
+      yield from self.previous
+
+  # Convert to string
+  def __str__(self):
+    string = '(' + ', '.join(self.variables.names()) + ')'
+    if self.previous is not None:
+      string += " -> " + str(self.previous)
+    return string
+
   # Return a global environment
   @classmethod
   def globals(cls):
@@ -109,8 +126,9 @@ class Environment:
 # Class that defines a call in the interpreter
 class Call:
   # Constructor
-  def __init__(self, expression, args, kwargs):
+  def __init__(self, expression, token, args, kwargs):
     self.expression = expression
+    self.token = token
     self.args = args
     self.kwargs = kwargs
 
@@ -122,7 +140,7 @@ class Call:
   # Return the types of the keywords
   @property
   def kwargs_types(self):
-    return {name: type(value) for name, value in kwargs}
+    return {name: type(value) for name, value in self.kwargs}
 
   # Validate the types of the arguments
   def validate_args_types(self, types):
@@ -130,13 +148,13 @@ class Call:
 
     # Check the length of the arguments
     if len(self.args_types) != len(types):
-      raise internals.InvalidCallException(f"Expected {len(types)} arguments, got {len(self.args_types)}", self.expression.token.location)
+      raise internals.InvalidCallException(f"Expected {len(types)} arguments, got {len(self.args_types)}", self.token.location)
 
     # Iterate over the argument types
     for i, type in enumerate(types):
       # Check if the argument is the valid type
       if not issubclass(check_type := self.args_types[i], type):
-        raise internals.InvalidCallException(f"Expected argument {i+1} of type {type}, got type {check_type}", self.expression.token.location)
+        raise internals.InvalidCallException(f"Expected argument {i+1} of type {type}, got type {check_type}", self.token.location)
 
   # Validate the types of the keywords
   def validate_kwargs_types(self, types):
@@ -191,37 +209,33 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     # Parse and interpret the string
     try:
       # Parse the string into an abstract syntax tree
-      ast = parser.parse(string)
+      ast = grammar.parse(string)
 
       # Semantically analyse the tree
-      for expr in ast:
-        self.resolver.resolve(expr)
-        self.cache_analyzer.analyze(expr)
+      self.resolver.resolve(ast)
+      self.cache_analyzer.analyze(ast)
+
+      #for expr, depth in self.locals.items():
+        #print(f"  {expr!r}: {depth}")
 
       # Interpret the abstract syntax tree
-      for expr in ast:
-        result = self.evaluate(expr)
-        if not self.includes[-1] and result is not None:
-          output.print_object(result)
+      result = self.evaluate(ast)
+      if not self.includes[-1] and result is not None:
+        output.print_object(result)
 
     # Catch syntax errors
     except parser.SyntaxError as err:
-      if self.includes[-1]:
-        print(f"In file '{self.includes[-1]}':")
       print(f"{Style.BRIGHT}{Fore.RED}{err}{Style.RESET_ALL}")
       print(err.location.point(string, 2))
 
     # Catch unexpected token errors
-    except parser.UnexpectedToken as err:
-      if self.includes[-1]:
-        print(f"In file '{self.includes[-1]}':")
+    except parser.ParserError as err:
       print(f"{Style.BRIGHT}{Fore.RED}{err}{Style.RESET_ALL}")
-      print(err.token.location.point(string, 2))
+      if err.location:
+        print(err.location.point(string, 2))
 
     # Catch runtime errors
     except internals.RuntimeException as err:
-      if self.includes[-1]:
-        print(f"In file '{self.includes[-1]}':")
       print(f"{Style.BRIGHT}{Fore.RED}{err}{Style.RESET_ALL}")
       if err.location:
         print(err.location.point(string, 2))
@@ -236,15 +250,8 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
       raise RuntimeError("Could not end the current scope")
     self.environment = self.environment.previous
 
-  # Begin an included file
-  def begin_include(self, file):
-    self.includes.append(file)
 
-  # End an included file
-  def end_include(self):
-    if not self.includes:
-      raise RuntimeError("Could not end the current included file")
-    self.includes.pop()
+  ### Definition of helper functions
 
   # Resolve a file name
   def resolve_file_name(self, file_name):
@@ -271,7 +278,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
       raise internals.RuntimeException(f"Include failed: the file '{file_name}' could not be found")
 
     # Add the file to the include stack
-    self.begin_include(resolved_file_name)
+    self.includes.append(resolved_file_name)
 
     # Open the file and execute the contents
     with open(resolved_file_name, 'r') as file:
@@ -282,7 +289,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     variables = self.environment.variables
 
     # Remove the file from the include stack
-    self.end_include()
+    self.includes.pop()
 
     # Return the variables
     return variables
@@ -309,12 +316,21 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
   def evaluate(self, expr: ast.Expr) -> internals.Obj:
     return expr.accept(self)
 
-  # Evaluate an expression in a new scope
-  def evaluate_scope(self, expr: ast.Expr, locals = None) -> internals.Obj:
-    self.begin_scope(locals)
-    result = self.evaluate(expr)
-    self.end_scope()
+  # Evaluate an expression with the given environment
+  def evaluate_with(self, environment: Environment, *exprs: ast.Expr) -> internals.Obj:
+    # Set the new environment
+    previous = self.environment
+    self.environment = environment
 
+    # Evaluate the expressions
+    result = None
+    for expr in exprs:
+      result = self.evaluate(expr)
+
+    # Reset the environment
+    self.environment = previous
+
+    # Return the result
     return result
 
   # Visit a literal expression
@@ -357,14 +373,14 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Check if the expression is callable
     if not isinstance(expression, internals.ObjCallable):
-      raise internals.RuntimeException(f"The expression '{expr.expression}' is not callable", expr.paren.location)
+      raise internals.RuntimeException(f"The expression '{expr.expression}' is not callable", expr.token.location)
 
     # Evaluate the arguments
     args = self.evaluate(expr.arguments.args)
     kwargs = self.evaluate(expr.arguments.kwargs)
 
     # Create a call and execute that
-    return Call(expression, args, kwargs).execute(self)
+    return Call(expression, expr.token, args, kwargs).execute(self)
 
   # Visit a get expression
   def visit_get_expr(self, expr: ast.GetExpr) -> internals.Obj:
@@ -467,19 +483,24 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
   # Visit a query expression
   def visit_query_expr(self, expr: ast.QueryExpr) -> internals.Obj:
-    # Evaluate the table
+    # Evaluate the expression
     table = self.evaluate(expr.table)
+    predicate = self.evaluate(expr.predicate) if expr.predicate else None
 
     # Check if the collection is of the right type
     if not isinstance(table, internals.ObjList):
       raise internals.InvalidTypeException(f"Queries can only operate on tables")
 
+    # Check if the predicate, if provided, is a callable
+    if predicate and not isinstance(predicate, internals.ObjCallable):
+      raise internals.InvalidTypeException(f"A query predicate must be callable")
+
     # Create a query and execute that
-    return query.Query(table, expr.action, expr.predicate).execute(self)
+    return query.Query(table, expr.action, predicate).execute(self)
 
   # Visit a function expression
   def visit_function_expr(self, expr: ast.FunctionExpr) -> internals.Obj:
-    return internals.ObjFunction(expr)
+    return internals.ObjFunction(expr, self.environment)
 
   # Visit an assignment expression
   def visit_assignment_expr(self, expr: ast.AssignmentExpr) -> internals.Obj:
@@ -509,17 +530,10 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
   # Visit a block expression
   def visit_block_expr(self, expr: ast.BlockExpr) -> internals.Obj:
-    result = None
+    # Evaluate the sub-expressions in an environment relative to the CURRENT environment
+    return self.evaluate_with(self.environment.nested(), *expr.expressions)
 
-    # Start a new scope
-    self.begin_scope()
-
-    # Evaluate the sub-expressions
-    for expression in expr.expressions:
-      result = self.evaluate(expression)
-
-    # End the current scope
-    self.end_scope()
-
-    # Return the last result
-    return result
+  # Visit a module expression
+  def visit_module_expr(self, expr: ast.ModuleExpr) -> internals.Obj:
+    # Evaluate the sub-expressions in an environment relative to the GLOBAL environment
+    return self.evaluate_with(self.globals.nested(), *expr.expressions)

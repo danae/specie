@@ -11,7 +11,7 @@ from .object_regex import ObjRegex
 from .object_date import ObjDate
 from .object_list import ObjList, ObjSortedList
 from .object_record import ObjRecord
-from .object_callable import ObjCallable
+from .object_callable import ObjCallable, ObjNativeCallable
 from .object_function import ObjFunction
 
 # Import derived objects

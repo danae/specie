@@ -1,4 +1,6 @@
 from .object import Obj, ObjNull, ObjBool
+from .object_list import ObjList
+from .object_record import ObjRecord
 from .errors import InvalidCallException
 
 
@@ -25,6 +27,12 @@ class ObjCallable(Obj):
   def call(self, interpreter, args, kwargs):
     raise NotImplementedError()
 
+  # Call the callable, but with internal arguments and keywords
+  def call_internal(self, interpreter, *args, **kwargs):
+    args = ObjList(args)
+    kwargs = ObjRecord.from_dict(kwargs)
+    return self.call(interpreter, args, kwargs)
+
 
   ### Definition of conversion functions ###
 
@@ -35,3 +43,15 @@ class ObjCallable(Obj):
   # Convert to string
   def __str__(self):
     return "<callable>"
+
+
+# Class that defines a native callable object
+class ObjNativeCallable(ObjCallable):
+  # Initialize a subclass
+  def __init_subclass__(cls, /, name, **kwargs):
+    super().__init_subclass__(**kwargs)
+    cls.name = name
+
+  # Convert to string
+  def __str__(self):
+    return f"<native callable '{type(self).name}'>"
