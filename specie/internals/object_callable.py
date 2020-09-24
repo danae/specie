@@ -1,57 +1,101 @@
-from .object import Obj, ObjNull, ObjBool
-from .object_list import ObjList
-from .object_record import ObjRecord
-from .errors import InvalidCallException
+from .object import Obj, ObjBool, ObjInt, ObjString
 
 
-# Class that defines a callable object
-class ObjCallable(Obj):
+###############################################
+### Definition of the callable object class ###
+###############################################
+
+class ObjCallable(Obj, typename = "Callable"):
   # Constructor
   def __init__(self):
     Obj.__init__(self)
 
-
-  ### Definition of callable functions ###
-
-  # Return the required arguments of the function
+  # Return the required arguments of the callable as a tuple
   def required_args(self):
-    # Return a tuple of type objects
     raise NotImplementedError()
 
-  # Return the required keywords of the function
+  # Return the required keywords of the callable as a dict
   def required_kwargs(self):
-    # Return a dict of (name, type object) pairs
     raise NotImplementedError()
 
-  # Call the callable
-  def call(self, interpreter, args, kwargs):
+  # Return the result of calling the callable
+  def call(self, interpreter, *args, **kwargs):
     raise NotImplementedError()
 
-  # Call the callable, but with internal arguments and keywords
-  def call_internal(self, interpreter, *args, **kwargs):
-    args = ObjList(args)
-    kwargs = ObjRecord.from_dict(kwargs)
-    return self.call(interpreter, args, kwargs)
+  # Return a callable with its first argument bound to an object
+  def bind(self, this_arg):
+    return ObjBoundCallable(self, this_arg)
 
 
-  ### Definition of conversion functions ###
-
-  # Convert to representation
+  # Return the Python representation for this object
   def __repr__(self):
     return f"{self.__class__.__name__}()"
 
-  # Convert to string
-  def __str__(self):
-    return "<callable>"
+
+#####################################################
+### Definition of the bound callable object class ###
+#####################################################
+
+class ObjBoundCallable(ObjCallable, typename = "BoundCallable"):
+  # Constructor
+  def __init__(self, callable, this_arg):
+    ObjCallable.__init__(self)
+
+    self.callable = callable
+    self.this_arg = this_arg
+
+  # Return the required arguments of the function
+  def required_args(self):
+    return self.callable.required_args()[1:]
+
+  # Return the required keywords of the function
+  def required_kwargs(self):
+    return self.callable.required_kwargs()
+
+  # Call the callable
+  def call(self, interpreter, *args, **kwargs):
+    return self.callable.call(interpreter, self.this_arg, *args, **kwargs)
 
 
-# Class that defines a native callable object
-class ObjNativeCallable(ObjCallable):
-  # Initialize a subclass
-  def __init_subclass__(cls, /, name, **kwargs):
-    super().__init_subclass__(**kwargs)
-    cls.name = name
+  # Return the Python result of calling the callable
+  def _py_call(self, *args, **kwargs):
+    return self.callable._py_call(self.this_arg, *args, **kwargs)
 
-  # Convert to string
-  def __str__(self):
-    return f"<native callable '{type(self).name}'>"
+  # Return the Python representation for this object
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.callable!r}, {self.this_arg!r})"
+
+
+######################################################
+### Definition of the native callable object class ###
+######################################################
+
+class ObjNativeCallable(ObjCallable, typename = "NativeCallable"):
+  # Constructor
+  def __init__(self, function, required_args, required_kwargs):
+    ObjCallable.__init__(self)
+
+    self.function = function
+    self._required_args = required_args
+    self._required_kwargs = required_kwargs
+
+  # Return the required arguments of the callable as a tuple
+  def required_args(self):
+    return self._required_args
+
+  # Return the required keywords of the callable as a dict
+  def required_kwargs(self):
+    return self._required_kwargs
+
+  # Return the result of calling the callable
+  def call(self, interpreter, *args, **kwargs):
+    return self.function(*args, **kwargs)
+
+
+  # Call the callable as an internal function
+  def _py_call(self, *args, **kwargs):
+    return self.function(*args, **kwargs)
+
+  # Return the Python representation for this object
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.function!r}, {self._required_args!r}, {self._required_kwargs!r})"

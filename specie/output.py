@@ -103,14 +103,14 @@ class Table:
 ### Definition of functions to print objects ###
 
 # Print a title
-def title(string):
-  string = string.upper()
+def title(string: 'ObjString'):
+  string = string.value.upper()
   print()
   print(string)
   print("=" * (len(string)))
 
 # Print an object
-def print_object(object, **kwargs):
+def print_object(object: 'Obj', **kwargs):
   if isinstance(object, internals.ObjRecord):
     print_record(object, **kwargs)
   elif isinstance(object, internals.ObjList):
@@ -119,7 +119,7 @@ def print_object(object, **kwargs):
     print(object)
 
 # Print a record oject
-def print_record(record, **kwargs):
+def print_record(record: 'ObjRecord', **kwargs):
   tbl = Table()
   tbl.append_row(['field', 'value'])
   tbl.append_separator_row()
@@ -131,7 +131,7 @@ def print_record(record, **kwargs):
     print(tbl)
 
 # Print a list object
-def print_list(list, **kwargs):
+def print_list(list: 'ObjList', **kwargs):
   # Check if the list is empty
   if not list:
     print("No items in the list")
@@ -146,7 +146,7 @@ def print_list(list, **kwargs):
         print(f"- {item}")
 
 # print a table object
-def print_table(table, **kwargs):
+def print_table(table: 'ObjList', **kwargs):
   # Get all fields
   fields = functools.reduce(utils.distinct_append, (record.names(only_visible = True) for record in table), [])
 

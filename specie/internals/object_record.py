@@ -1,8 +1,12 @@
 from enum import Flag
 
-from .object import Obj, ObjNull, ObjBool
+from .object import Obj, ObjBool, ObjInt, ObjString
 from .errors import InvalidTypeException, UndefinedFieldException
 
+
+############################################
+### Definition of record object helpeers ###
+############################################
 
 # Class that defines options for a field
 class ObjRecordFieldOptions(Flag):
@@ -20,16 +24,22 @@ class ObjRecordFieldInfo:
     self.options = options
 
 
+#############################################
+### Definition of the record object class ###
+#############################################
+
 # Class that defines a record object
-class ObjRecord(Obj):
+class ObjRecord(Obj, typename = "Record"):
   # Constructor
-  def __init__(self):
-    Obj.__init__(self)
+  def __init__(self, **fields):
+    super().__init__()
+
     self.fields = {}
     self.fields_info = {}
 
+    for name, value in fields.items():
+      self[name] = value
 
-  ### Definition of field access functions ###
 
   # Get a field in the record
   def __getitem__(self, name):
@@ -41,6 +51,10 @@ class ObjRecord(Obj):
       value, *info = value
       self.fields_info[name] = ObjRecordFieldInfo(*info)
     self.fields[name] = value
+
+  # Delete a field from the record
+  def __delitem__(self, name):
+    del self.fields[name]
 
   # Return if a field exists in the record
   def __contains__(self, name):
@@ -70,58 +84,70 @@ class ObjRecord(Obj):
       self.fields_info[name] = ObjRecordFieldInfo()
     return self.fields_info[name]
 
-
-  ### Definition of field access functions for lexer tokens ###
-
-  # Get a field in the record by means of a lexer token
+  # Get a field in the record
   def get_field(self, name):
     try:
-      return self[name.value]
-    except IndexError:
+      return self[name]
+    except KeyError:
       raise UndefinedFieldException(name.value, name.location)
 
-  # Set a field in the record by means of a lexer token
+  # Set a field in the record
   def set_field(self, name, value):
-    self[name.value] = value
+    self[name] = value
+
+  # Delete a field from the record
+  def delete_field(self, name):
+    del self[name]
 
   # Return if a field with the specified name exists
   def has_field(self, name):
+    return name in self
+
+
+  # Return if this record object is equal to another object
+  def method_eq(self, other: 'Obj') -> 'ObjBool':
+    return ObjBool(isinstance(other, ObjRecord) and self.fields == other.fields)
+
+  # Return the bool representation of this object
+  def method_as_bool(self) -> 'ObjBool':
+    return ObjBool(bool(self.fields))
+
+  # Return the string representation of this object
+  def method_as_string(self) -> 'ObjString':
+    return ObjString('{' + ', '.join(f"{name}: {value}" for name, value in self.fields.items()) + '}')
+
+  # Return the hash of this object
+  def method_as_hash(self) -> 'ObjInt':
+    return ObjInt(hash(self.fields))
+
+  # Return the field in this record object with the specified name
+  def method_get(self, name: 'ObjString') -> 'Obj':
+    return self[name.value]
+
+  # Set the field in this record object with the specified name to a value
+  def method_set(self, name: 'ObjString', value: 'Obj') -> 'Obj':
+    self[name.value] = value
+    return value
+
+  # Return if this record object contains a field with the specified name
+  def method_contains(self, name: 'ObjString') -> 'ObjBool':
     return name.value in self
 
 
-  ### Definition of object functions ###
+  # Return the Python value for this object
+  def _py_value(self):
+    return {name: value._py_value() for name, value in self.fields.items()}
 
-  # Return the primitive value of this object
-  def value(self):
-    return {name: value.value() for name, value in self.fields.items()}
+  # Return the Python dict for this object
+  def _py_dict(self):
+    return self.fields
 
-  # Return the truthiness of this object
-  def truthy(self):
-    return ObjBool(bool(self.fields))
-
-  # Return if this record object is equal to another object
-  def __eq__(self, other):
-    return ObjBool(isinstance(other, ObjRecord) and self.fields == other.fields)
-
-
-  ### Definition of conversion functions ###
-
-  # Convert to hash
-  def __hash__(self):
-    return hash((self.fields))
-
-  # Convert to representation
+  # Return the Python representation for this object
   def __repr__(self):
-    return f"{self.__class__.__name__}({self.fields!r})"
+    return f"{self.__class__.__name__}(**{self.fields!r})"
 
-  # Convert to string
-  def __str__(self):
-    return '{' + ', '.join(f"{name}: {value}" for name, value in self.fields.items()) + '}'
 
-  # Convert from dict
+  # Convert a Python dict to a record object
   @classmethod
-  def from_dict(cls, dict):
-    record = cls()
-    for name, value in dict.items():
-      record[name] = value
-    return record
+  def from_py(cls, dict):
+    return cls(**dict)

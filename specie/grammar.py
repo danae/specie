@@ -130,7 +130,7 @@ def curly_bracketed(p):
   return parser.between(p, CURLY_BRACKET_LEFT, CURLY_BRACKET_RIGHT)
 
 # Literals
-literal_false = parser.describe('literal_false',parser. map_value(internals.ObjBool(False), LITERAL_FALSE))
+literal_false = parser.describe('literal_false', parser.map_value(internals.ObjBool(False), LITERAL_FALSE))
 literal_true = parser.describe('literal_true', parser.map_value(internals.ObjBool(True), LITERAL_TRUE))
 literal_int = parser.describe('literal_int', parser.map(lambda t: internals.ObjInt(t.value), LITERAL_INT))
 literal_float = parser.describe('literal_float', parser.map(lambda t: internals.ObjFloat(t.value), LITERAL_FLOAT))
@@ -211,12 +211,9 @@ expr = parser.describe('expr', parser.synchronize(declaration, 'newline'))
 # Modules
 module = parser.describe('module', parser.map(ast.ModuleExpr, expr * parser.token('newline')))
 
-# Grammar
-grammar = parser.describe('grammar', module)
-
 
 # Parse an input string to an abstract syntax tree
-def parse(string):
+def parse(string, is_module = True):
   # Create the lexer
   lexer = parser.Lexer(rules, comment_inline = '#', comment_block = ('#-', '-#'), comment_ignore_pattern = r'"((?:[^"\\]|\\.)*)"')
 
@@ -224,7 +221,12 @@ def parse(string):
   tokens = lexer.tokenize(string)
 
   # Parse the list of tokens to an abstract syntax tree
-  result = grammar.parse_strict(tokens, 0)
+  if is_module:
+    result = module.parse_strict(tokens, 0)
+  else:
+    result = expr.parse_strict(tokens, 0)
+
+  # Check the result
   if result:
     return result.value
   else:

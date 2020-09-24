@@ -4,7 +4,11 @@ from . import internals, output
 
 
 # Class that defines the print function
-class PrintFunction(internals.ObjNativeCallable, name = 'print'):
+class PrintFunction(internals.ObjCallable, typename = "Native_print"):
+  # Constructor
+  def __init__(self):
+    super().__init__()
+
   # Return the required arguments of the function
   def required_args(self):
     return [internals.Obj]
@@ -14,12 +18,16 @@ class PrintFunction(internals.ObjNativeCallable, name = 'print'):
     return {}
 
   # Call the function
-  def call(self, interpreter, arguments, keywords):
-    output.print_object(*arguments, **keywords.value())
+  def call(self, interpreter, *args, **kwargs):
+    output.print_object(*args, **kwargs)
 
 
 # Class that defines the print_title function
-class PrintTitleFunction(internals.ObjNativeCallable, name = 'print_title'):
+class PrintTitleFunction(internals.ObjCallable, typename = 'Native_print_title'):
+  # Constructor
+  def __init__(self):
+    super().__init__()
+
   # Return the required arguments of the function
   def required_args(self):
     return [internals.ObjString]
@@ -29,12 +37,16 @@ class PrintTitleFunction(internals.ObjNativeCallable, name = 'print_title'):
     return {}
 
   # Call the function
-  def call(self, interpreter, args, kwargs):
-    output.title(*args.value(), **kwargs.value())
+  def call(self, interpreter, *args, **kwargs):
+    output.title(*args, **kwargs)
 
 
 # Class that defines the include function
-class IncludeFunction(internals.ObjNativeCallable, name = 'include'):
+class IncludeFunction(internals.ObjCallable, typename = 'Native_include'):
+  # Constructor
+  def __init__(self):
+    super().__init__()
+
   # Return the required arguments of the function
   def required_args(self):
     return [internals.ObjString]
@@ -44,12 +56,18 @@ class IncludeFunction(internals.ObjNativeCallable, name = 'include'):
     return {}
 
   # Call the function
-  def call(self, interpreter, args, kwargs):
-    return interpreter.execute_include(*args.value(), **kwargs.value())
+  def call(self, interpreter, *args, **kwargs):
+    args = [arg._py_value() if isinstance(arg, internals.Obj) else arg for arg in args]
+    kwargs = {name: kwarg._py_value() if isinstance(kwarg, internals.Obj) else kwarg for name, kwarg in kwargs.items()}
+    return interpreter.execute_include(*args, **kwargs)
 
 
 # Class that defines the import function
-class ImportFunction(internals.ObjNativeCallable, name = 'import'):
+class ImportFunction(internals.ObjCallable, typename = 'Native_import'):
+  # Constructor
+  def __init__(self):
+    super().__init__()
+
   # Return the required arguments of the function
   def required_args(self):
     return [internals.ObjString]
@@ -59,5 +77,7 @@ class ImportFunction(internals.ObjNativeCallable, name = 'import'):
     return {'type': internals.ObjString}
 
   # Call the function
-  def call(self, interpreter, args, kwargs):
-    return interpreter.execute_import(*args.value(), **kwargs.value())
+  def call(self, interpreter, *args, **kwargs):
+    args = [arg._py_value() if isinstance(arg, internals.Obj) else arg for arg in args]
+    kwargs = {name: kwarg._py_value() if isinstance(kwarg, internals.Obj) else kwarg for name, kwarg in kwargs.items()}
+    return interpreter.execute_import(*args, **kwargs)

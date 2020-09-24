@@ -1,5 +1,4 @@
 import os.path
-import traceback
 
 from colorama import Fore, Back, Style
 
@@ -7,7 +6,9 @@ from . import (ast, functions, grammar, internals, output, parser, query,
   semantics, transactions)
 
 
+#####################################
 ### Definition of the environment ###
+#####################################
 
 # Class that defines an environment
 class Environment:
@@ -121,7 +122,9 @@ class Environment:
     return cls(None, globals)
 
 
+############################
 ### Definition of a call ###
+############################
 
 # Class that defines a call in the interpreter
 class Call:
@@ -177,10 +180,14 @@ class Call:
     self.validate_kwargs_types(self.expression.required_kwargs())
 
     # Call the callable
-    return self.expression.call(interpreter, self.args, self.kwargs)
+    args = self.args._py_list()
+    kwargs = self.kwargs._py_dict()
+    return self.expression.call(interpreter, *args, **kwargs)
 
 
+#####################################
 ### Definition of the interpreter ###
+#####################################
 
 # Class that defines an interpreter
 class Interpreter(ast.ExprVisitor[internals.Obj]):
@@ -198,10 +205,9 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Define the static analyzers
     self.resolver = semantics.Resolver(self)
-    self.cache_analyzer = semantics.CacheAnalyzer(self)
 
   # Parse a string into an abstract syntax tree and interpret it
-  def execute(self, string):
+  def execute(self, string, is_module = True):
     # Check if the string is empty
     if not string.strip():
       return
@@ -209,19 +215,18 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     # Parse and interpret the string
     try:
       # Parse the string into an abstract syntax tree
-      ast = grammar.parse(string)
+      ast = grammar.parse(string, is_module)
 
       # Semantically analyse the tree
       self.resolver.resolve(ast)
-      self.cache_analyzer.analyze(ast)
-
-      #for expr, depth in self.locals.items():
-        #print(f"  {expr!r}: {depth}")
 
       # Interpret the abstract syntax tree
       result = self.evaluate(ast)
       if not self.includes[-1] and result is not None:
         output.print_object(result)
+
+      # Return the result
+      return result
 
     # Catch syntax errors
     except parser.SyntaxError as err:
@@ -236,7 +241,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Catch runtime errors
     except internals.RuntimeException as err:
-      print(f"{Style.BRIGHT}{Fore.RED}{err}{Style.RESET_ALL}")
+      print(f"{Style.BRIGHT}{Fore.RED}{err.__class__.__name__}: {err}{Style.RESET_ALL}")
       if err.location:
         print(err.location.point(string, 2))
 
@@ -250,8 +255,6 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
       raise RuntimeError("Could not end the current scope")
     self.environment = self.environment.previous
 
-
-  ### Definition of helper functions
 
   # Resolve a file name
   def resolve_file_name(self, file_name):
@@ -269,8 +272,6 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     return None
 
 
-  ### Definition of native functions ###
-
   # Include a file
   def execute_include(self, file_name):
     # Check if the file exists
@@ -283,16 +284,13 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     # Open the file and execute the contents
     with open(resolved_file_name, 'r') as file:
       string = file.read()
-      self.execute(string)
-
-    # Get the current defined variables
-    variables = self.environment.variables
+      result = self.execute(string)
 
     # Remove the file from the include stack
     self.includes.pop()
 
-    # Return the variables
-    return variables
+    # Return the result
+    return result
 
   # Import a file
   def execute_import(self, file_name, **keywords):
@@ -305,12 +303,8 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     self.environment['_'].insert_all(new_transactions)
 
     # Return a result object
-    result = internals.ObjRecord()
-    result['count'] = internals.ObjInt(len(new_transactions))
-    return result
+    return internals.ObjRecord(count = internals.ObjInt(len(new_transactions)))
 
-
-  ### Definition of the expression visitor functions ###
 
   # Evaluate an expression
   def evaluate(self, expr: ast.Expr) -> internals.Obj:
@@ -387,12 +381,17 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     # Evaluate the expression
     expression = self.evaluate(expr.expression)
 
-    # Check if the object is a record
-    if not isinstance(expression, internals.ObjRecord):
-      raise internals.RuntimeException(f"The expression '{expr.expression}' is not a record", expr.token.location)
-
     # Return the field of the record
-    return expression.get_field(expr.name)
+    if isinstance(expression, internals.ObjRecord):
+      if expression.has_field(expr.name.value):
+        return expression.get_field(expr.name.value)
+
+    # Return the method of the object
+    if expression.has_method(expr.name.value):
+      return expression.get_method(expr.name.value)
+
+    # Nothing found to get
+    raise internals.RuntimeException(f"The expression '{expr.expression}' is either not a record or the specified method is undefined", expr.token.location)
 
   # Visit a set expression
   def visit_set_expr(self, expr: ast.GetExpr) -> internals.Obj:
@@ -418,7 +417,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Logic operations
     if op == 'not':
-      return internals.ObjBool(not self.evaluate(expr.expression).truthy())
+      return internals.ObjBool(not bool(self.evaluate(expr.expression)))
 
     # No matching operation found
     raise internals.RuntimeException("Undefined unary operator '{}'".format(op), expr.op.location)
@@ -433,35 +432,35 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Arithmetic operations
     if op == '*':
-      return left.call('mul', right)
+      return left.call_method('mul', right)
     elif op == '/':
-      return left.call('div', right)
+      return left.call_method('div', right)
     elif op == '+':
-      return left.call('add', right)
+      return left.call_method('add', right)
     elif op == '-':
-      return left.call('sub', right)
+      return left.call_method('sub', right)
 
     # Comparison operations
     elif op == '<':
-      return left.call('lt', right)
+      return left.call_method('lt', right)
     elif op == '<=':
-      return left.call('lte', right)
+      return left.call_method('lte', right)
     elif op == '>':
-      return left.call('gt', right)
+      return left.call_method('gt', right)
     elif op == '>=':
-      return left.call('gte', right)
+      return left.call_method('gte', right)
     elif op == '~':
-      return left.call('match', right)
+      return left.call_method('match', right)
 
     # Containment operations
     elif op == 'in':
-      return right.call('contains', left)
+      return right.call_method('contains', left)
 
     # Equality operations
     elif op == '==':
-      return left.call('eq', right)
+      return left.call_method('eq', right)
     elif op == '!=':
-      return left.call('neq', right)
+      return left.call_method('neq', right)
 
     # No matching operation found
     raise internals.RuntimeException("Undefined binary operator '{}'".format(op), expr.op.location)
@@ -472,11 +471,11 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Logical and
     if op == 'and':
-      return left.truthy() if not (left := self.evaluate(expr.left)).truthy() else self.evaluate(expr.right).truthy()
+      return internals.ObjBool(self.evaluate(expr.left)) and internals.ObjBool(self.evaluate(expr.right))
 
     # Logical or
     elif op == 'or':
-      return left.truthy() if (left := self.evaluate(expr.left)).truthy() else self.evaluate(expr.right).truthy()
+      return internals.ObjBool(self.evaluate(expr.left)) or internals.ObjBool(self.evaluate(expr.right))
 
     # No matching operation found
     raise internals.RuntimeException("Undefined binary operator '{}'".format(op), expr.op.location)

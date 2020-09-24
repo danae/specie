@@ -1,17 +1,18 @@
-from .object import Obj, ObjNull, ObjBool
+from .object import Obj, ObjBool, ObjInt, ObjString
 from .object_callable import ObjCallable
 
 
-# Class that defines a function object
-class ObjFunction(ObjCallable):
+###############################################
+### Definition of the function object class ###
+###############################################
+
+class ObjFunction(ObjCallable, typename = "Function"):
   # Constructor
   def __init__(self, expr, closure):
-    ObjCallable.__init__(self)
+    super().__init__()
+
     self.expr = expr
     self.closure = closure
-
-
-  ### Definition of callable functions ###
 
   # Return the required arguments of the function
   def required_args(self):
@@ -22,7 +23,7 @@ class ObjFunction(ObjCallable):
     return {}
 
   # Call the function
-  def call(self, interpreter, args, kwargs):
+  def call(self, interpreter, *args, **kwargs):
     # Create a new environment for this function
     environment = self.closure.nested()
 
@@ -32,10 +33,3 @@ class ObjFunction(ObjCallable):
 
     # Execute the body and return the result
     return interpreter.evaluate_with(environment, self.expr.body)
-
-
-  ## Definition of conversion functions
-
-  # Convert to string
-  def __str__(self):
-    return f"<function: {self.expr}>"

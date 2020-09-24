@@ -1,111 +1,126 @@
 from bisect import insort
 
-from .object import Obj, ObjNull, ObjBool
-from .object_numeric import ObjInt
+from .object import Obj, ObjBool, ObjInt, ObjString
 from .errors import InvalidTypeException, UndefinedIndexException
 
+###########################################
+### Definition of the list object class ###
+###########################################
 
-# Class that defines a list object
-class ObjList(Obj):
+class ObjList(Obj, typename = "List"):
   # Constructor
-  def __init__(self, iterable = []):
-    Obj.__init__(self)
+  def __init__(self, *items):
+    super().__init__()
 
     self.items = []
-    self.insert_all(iterable)
+    self.insert_all(items)
 
-    self.set_method('at', self.__getitem__)
-    self.set_method('count', self.count)
-    self.set_method('contains', self.__contains__)
-
-
-  ### Definition of object functions ###
-
-  # Return the primitive value of this object
-  def value(self):
-    return [value.value() for value in self.items]
-
-  # Return the truthyness of this object
-  def truthy(self):
-    return ObjBool(bool(self.items))
 
   # Return if this list object is equal to another object
-  def __eq__(self, other):
+  def method_eq(self, other: 'Obj') -> 'ObjBool':
     return ObjBool(isinstance(other, ObjList) and self.items == other.items)
 
-  # Return the item in the list at the specified index
-  def __getitem__(self, index):
-    if isinstance(index, ObjInt):
-      try:
-        return self.items[index.value()]
-      except IndexError:
-        raise UndefinedIndexException(index)
-    elif isinstance(index, int):
-      return self.items[index]
-    else:
-      raise InvalidTypeException(type(index))
+  # Return the bool representation of this object
+  def method_as_bool(self) -> 'ObjBool':
+    return ObjBool(bool(self.items))
 
-  # Return the length of the list
-  def count(self):
+  # Return the string representation of this object
+  def method_as_string(self) -> 'ObjString':
+    return ObjString('[' + ', '.join(f"{item}" for item in self.items) + ']')
+
+  # Return the hash of this object
+  def method_as_hash(self) -> 'ObjInt':
+    return ObjInt(hash(self.value))
+
+  # Return the length of this list object
+  def method_count(self) -> 'ObjInt':
     return ObjInt(len(self.items))
 
-  # Return if the specified item exists in the list
+  # Return the item in this list object at the specified index
+  def method_at(self, index: 'ObjInt') -> 'Obj':
+    if isinstance(index, ObjInt):
+      try:
+        return self.items[index.value]
+      except IndexError:
+        raise UndefinedIndexException(index)
+    raise InvalidTypeException(type(index))
+
+  # Return a slice of this list object
+  def method_slice(self, start: 'ObjInt', end: 'ObjInt') -> 'ObjList':
+    if isinstance(start, ObjInt):
+      if isinstance(end, ObjInt):
+        return ObjList(self.items[start.value:end.value])
+      raise InvalidTypeException(end)
+    raise InvalidTypeException(start)
+
+  # Return if this list object contains the specified item
   def __contains__(self, item):
-    return ObjBool(item in self.items)
+    return item in self.items
 
-  # Insert an item into the list
-  def insert(self, item):
-    if isinstance(item, Obj):
-      self.items.append(item)
-    else:
-      raise InvalidTypeException(item)
+  def method_contains(self, item: 'Obj') -> 'ObjBool':
+    return ObjBool(self.__contains__(item))
 
-  # Add several items to the list
-  def insert_all(self, iterable):
+
+  # Insert an item into this object
+  def insert(self, item: 'Obj') -> 'ObjList':
+    self.items.append(item)
+
+  # Insert several items into this list object
+  def insert_all(self, iterable) -> 'ObjList':
     for item in iterable:
       self.insert(item)
 
   # Delete an item from the list
-  def delete(self, item):
+  def delete(self, item: 'Obj') -> 'ObjList':
     self.items.remove(item)
 
   # Map the items of the list
-  def map(self, func):
-    return ObjList(func(item) for item in self)
+  def map(self, func: 'ObjCallable') -> 'ObjList':
+    return ObjList.from_py(func(item) for item in self)
 
   # Filter the items of the list
-  def filter(self, func):
-    return ObjList(item for item in self if func(item))
+  def filter(self, func: 'ObjCallable') -> 'ObjList':
+    return ObjList.from_py(item for item in self if func(item))
 
 
-  ### Definition of conversion functions
+  # Return the Python value for this object
+  def _py_value(self):
+    return [value._py_value() for value in self.items]
+
+  # Return the Python list for this object
+  def _py_list(self):
+    return self.items
+
+  # Return the Python representation for this object
+  def __repr__(self):
+    return f"{self.__class__.__name__}(*{self.items!r})"
+
+
+  # Overload functions for container operators
+  def __getitem__(self, index):
+    index = ObjInt(index) if isinstance(index, int) else index
+    return self.call_method('at', index)
 
   # Convert to iterator
   def __iter__(self):
     return iter(self.items)
 
-  # Cnvert to length
-  def __len__(self):
-    return int(self.count())
 
-  # Convert to representation
-  def __repr__(self):
-    return f"{self.__class__.__name__}({self.items!r})"
-
-  # Convert to string
-  def __str__(self):
-    return '[' + ', '.join(f"{item}" for item in self.items) + ']'
+  # Convert a Python iterable to a list object
+  @classmethod
+  def from_py(cls, iterable):
+    return cls(*iterable)
 
 
-# Class that defines a sorted list object
-class ObjSortedList(ObjList):
+##################################################
+### Definition of the sorted list object class ###
+##################################################
+
+class ObjSortedList(ObjList, typename = "SortedList"):
   # Constructor
-  def __init__(self, iterable = []):
-    ObjList.__init__(self, iterable)
+  def __init__(self, *items):
+    ObjList.__init__(self, *items)
 
   # Insert an item into the list
-  def insert(self, item):
-    if isinstance(item, Obj):
-      insort(self.items, item)
-    else:
-      raise InvalidTypeException(item)
+  def insert(self, item: 'Obj') -> 'ObjList':
+    insort(self.items, item)

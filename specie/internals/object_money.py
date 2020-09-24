@@ -1,62 +1,76 @@
-from .object import Obj, ObjNull, ObjBool
-from .object_numeric import ObjFloat
-from .object_string import ObjString
+from .object import Obj, ObjBool, ObjInt, ObjFloat, ObjString
 from .object_record import ObjRecord
 
 
+############################################
+### Definition of the money object class ###
+############################################
+
 # Class that defines a money object
-class ObjMoney(ObjRecord):
+class ObjMoney(ObjRecord, typename = "Money"):
   # Constructor
-  def __init__(self, **kwargs):
-    ObjRecord.__init__(self)
-
-    self.set_method('lt', self.__lt__)
-    self.set_method('lte', self.__le__)
-    self.set_method('gt', self.__gt__)
-    self.set_method('gte', self.__ge__)
-
-    self['amount'] = ObjFloat()
-    self['currency'] = ObjString('EUR')
-
-    for name, value in kwargs.items():
-      self[name] = value
-
-
-  ### Definition of object functions ###
-
-  # Return the truthyness of this object
-  def truthy(self):
-    return ObjBool(self['amount'] != 0)
+  def __init__(self, **fields):
+    super().__init__(
+      amount = fields.get('amount', ObjFloat()),
+      currency = fields.get('currency', ObjString('EUR')))
 
   # Return if this money object is equal to another object
   def __eq__(self, other):
-    return ObjBool(isinstance(other, ObjMoney) and (self['currency'], self['amount']) == (other['currency'], other['amount']))
+    return isinstance(other, ObjMoney) and (self['currency'], self['amount']) == (other['currency'], other['amount'])
 
-  # Compare this money object with another object
-  def __lt__(self, other):
-    if isinstance(other, MoneyObject):
-      return ObjBool(self['amount'] < other['amount'])
-    raise InvalidTypeException(other)
-  def __le__(self, other):
-    if isinstance(other, MoneyObject):
-      return ObjBool(self['amount'] <= other['amount'])
-    raise InvalidTypeException(other)
-  def __gt__(self, other):
-    if isinstance(other, MoneyObject):
-      return ObjBool(self['amount'] > other['amount'])
-    raise InvalidTypeException(other)
-  def __ge__(self, other):
-    if isinstance(other, MoneyObject):
-      return ObjBool(self['amount'] >= other['amount'])
-    raise InvalidTypeException(other)
+  def method_eq(self, other: 'Obj') -> 'ObjBool':
+    return ObjBool(self.__eq__(other))
 
+  # Return the bool representation of this object
+  def __bool__(self):
+    return self['amount'] != 0
 
-  ### Definition of conversion functions ###
+  def method_as_bool(self):
+    return ObjBool(self.__bool__())
 
-  # Convert to hash
+  # Return the string representation of this object
+  def __str__(self):
+    return f"{self['currency']} {self['amount']:.2f}"
+
+  def method_as_string(self) -> 'ObjString':
+    return ObjString(self.__str__())
+
+  # Return the hash of this object
   def __hash__(self):
     return hash((self['currency'], self['amount']))
 
-  # Convert to string
-  def __str__(self):
-    return f"{self['currency']} {self['amount']:.2f}"
+  def method_as_hash(self) -> 'ObjInt':
+    return ObjInt(self.__hash__())
+
+  # Compare this money object with another object
+  def __lt__(self, other):
+    if isinstance(other, ObjMoney):
+      return (self['date'], self['id']) < (other['date'], other['id'])
+    raise InvalidTypeException(other)
+
+  def method_lt(self, other: 'ObjMoney') -> 'ObjBool':
+    return ObjBool(self.__lt__(other))
+
+  def __le__(self, other):
+    if isinstance(other, ObjMoney):
+      return self['amount'] < other['amount']
+    raise InvalidTypeException(other)
+
+  def method_lte(self, other: 'ObjMoney') -> 'ObjBool':
+    return ObjBool(self.__le__(other))
+
+  def __gt__(self, other):
+    if isinstance(other, ObjMoney):
+      return self['amount'] > other['amount']
+    raise InvalidTypeException(other)
+
+  def method_gt(self, other: 'ObjMoney') -> 'ObjBool':
+    return ObjBool(self.__gt__(other))
+
+  def __ge__(self, other):
+    if isinstance(other, ObjMoney):
+      return self['amount'] >= other['amount']
+    raise InvalidTypeException(other)
+
+  def method_gte(self, other: 'ObjMoney') -> 'ObjBool':
+    return ObjBool(self.__ge__(other))

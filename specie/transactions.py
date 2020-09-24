@@ -4,20 +4,19 @@ import codecs
 import csv
 import re
 
-from . import ast, internals
-
 from collections import OrderedDict
 from colorama import Fore, Back, Style
 from datetime import date, datetime, timedelta
 from functools import total_ordering
-from os.path import isfile
+
+from . import ast, internals
 
 
 # Transaction list class
-class TransactionList(internals.ObjSortedList):
+class TransactionList(internals.ObjSortedList, typename = "TransactionList"):
   # Constructor
-  def __init__(self, iterable = []):
-    super().__init__(iterable)
+  def __init__(self, *items):
+    super().__init__(*items)
 
   # Return the date boundaries of this list
   def first_date(self):
@@ -57,7 +56,7 @@ class TransactionList(internals.ObjSortedList):
 
 
 # Transaction reader class
-class TransactionReader(TransactionList):
+class TransactionReader(TransactionList, typename = "TransactionReader"):
   # Return a transaction list that has been read
   def __new__(cls, filename, **kwargs):
     # Check the type
@@ -70,7 +69,7 @@ class TransactionReader(TransactionList):
 
 
 # Rabobank transaction reader class
-class RabobankTransactionReader(TransactionReader):
+class RabobankTransactionReader(TransactionReader, typename = "RabobankTransactionReader"):
   # Return a transaction list that has bean read
   def __new__(cls, filename, **kwargs):
     # Create a new transaction list
@@ -80,6 +79,7 @@ class RabobankTransactionReader(TransactionReader):
     with codecs.open(filename,'r','cp1252') as file:
       # Create a dict reader
       reader = csv.DictReader(file, delimiter=',', quotechar='"')
+
       # Iterate over the records and parse and append them
       for record in reader:
         transactions.insert(cls.parse_transaction(record))
@@ -92,7 +92,7 @@ class RabobankTransactionReader(TransactionReader):
   def parse_transaction(record):
     return internals.ObjTransaction(
       # Standard fields
-      id = internals.ObjString("rabobank:{}".format(record['Volgnr'])),
+      id = (internals.ObjString("rabobank:{}".format(record['Volgnr'])), False, False),
       date = internals.ObjDate(datetime.strptime(record['Datum'], '%Y-%m-%d').date()),
       amount = internals.ObjMoney(currency = internals.ObjString(record['Munt']), amount = internals.ObjFloat(record['Bedrag'].replace(',', '.'))),
       name = internals.ObjString(record['Naam tegenpartij'].upper()),
@@ -108,7 +108,7 @@ class RabobankTransactionReader(TransactionReader):
 
 
 # Paypal transaction reader class
-class PaypalTransactionReader(TransactionReader):
+class PaypalTransactionReader(TransactionReader, typename = "PaypalTransactionReader"):
   # Return a transaction list that has bean read
   def __new__(cls, filename, currency = 'EUR', **kwargs):
     # Create a new transaction list
@@ -118,6 +118,7 @@ class PaypalTransactionReader(TransactionReader):
     with codecs.open(filename, 'r', 'utf-8-sig') as file:
       # Create a dict reader
       reader = csv.DictReader(file, delimiter=',', quotechar='"')
+
       # Iterate over the records and parse and append them
       for index, record in enumerate(reader):
         transactions.insert(cls.parse_transaction(record, index))
@@ -170,7 +171,7 @@ class PaypalTransactionReader(TransactionReader):
 
     return internals.ObjTransaction(
       # Standard fields
-      id = internals.ObjString("paypal:{:04d}".format(index)),
+      id = (internals.ObjString("paypal:{:04d}".format(index)), False, False),
       date = internals.ObjDate(datetime.strptime(record['Datum'], '%d-%m-%Y').date()),
       amount = amount,
       name = internals.ObjString(record['Naam'].upper()),

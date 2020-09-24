@@ -31,7 +31,7 @@ class Query:
   # Return a table that adheres to the predicate
   def test(self, interpreter):
     if self.predicate is not None:
-      return self.table.filter(lambda item: self.predicate.call_internal(interpreter, item))
+      return self.table.filter(lambda item: self.predicate.call(interpreter, item))
     else:
       return self.table
 
@@ -100,6 +100,7 @@ class Query:
     table_test = self.test(interpreter)
 
     # Return a list of distinct matches
+    return internals.ObjList()
     return internals.ObjList(utils.distinct(interpreter.evaluate_scope(arguments.args[0], item) for item in table_test))
 
     # Iterate over the tested table
