@@ -43,31 +43,39 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
   def __lt__(self, other):
     if isinstance(other, ObjTransaction):
       return (self['date'], self['id']) < (other['date'], other['id'])
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_lt(self, other: 'ObjTransaction') -> 'ObjBool':
-    return ObjBool(self.__lt__(other))
+    if (result := self.__lt__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __le__(self, other):
     if isinstance(other, ObjTransaction):
       return (self['date'], self['id']) <= (other['date'], other['id'])
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_lte(self, other: 'ObjTransaction') -> 'ObjBool':
-    return ObjBool(self.__le__(other))
+    if (result := self.__le__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __gt__(self, other):
     if isinstance(other, ObjTransaction):
       return (self['date'], self['id']) > (other['date'], other['id'])
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_gt(self, other: 'ObjTransaction') -> 'ObjBool':
-    return ObjBool(self.__gt__(other))
+    if (result := self.__gt__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __ge__(self, other):
     if isinstance(other, ObjTransaction):
       return (self['date'], self['id']) >= (other['date'], other['id'])
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_gte(self, other: 'ObjTransaction') -> 'ObjBool':
-    return ObjBool(self.__ge__(other))
+    if (result := self.__ge__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)

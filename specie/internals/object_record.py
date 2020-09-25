@@ -105,20 +105,32 @@ class ObjRecord(Obj, typename = "Record"):
 
 
   # Return if this record object is equal to another object
+  def __eq__(self, other):
+    return isinstance(other, ObjRecord) and self.fields == other.fields
+
   def method_eq(self, other: 'Obj') -> 'ObjBool':
-    return ObjBool(isinstance(other, ObjRecord) and self.fields == other.fields)
+    return ObjBool(self.__eq__(other))
 
   # Return the bool representation of this object
+  def __bool__(self):
+    return bool(self.fields)
+
   def method_as_bool(self) -> 'ObjBool':
-    return ObjBool(bool(self.fields))
+    return ObjBool(self.__bool__())
 
   # Return the string representation of this object
-  def method_as_string(self) -> 'ObjString':
-    return ObjString('{' + ', '.join(f"{name}: {value}" for name, value in self.fields.items()) + '}')
+  def __str__(self):
+    return '{' + ', '.join(f"{name}: {value}" for name, value in self.fields.items()) + '}'
 
-  # Return the hash of this object
+  def method_as_string(self) -> 'ObjString':
+    return ObjString(self.__str__())
+
+  # Return the hash of this objet
+  def __hash__(self):
+    return hash(self.fields)
+
   def method_as_hash(self) -> 'ObjInt':
-    return ObjInt(hash(self.fields))
+    return ObjInt(self.__hash__())
 
   # Return the field in this record object with the specified name
   def method_get(self, name: 'ObjString') -> 'Obj':

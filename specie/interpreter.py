@@ -317,7 +317,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Check the length of the arguments
     if len(args_types) != len(required_args):
-      raise internals.InvalidCallException(f"Expected {len(types)} arguments, got {len(args_types)}", expr.token.location)
+      raise internals.InvalidCallException(f"Expected {len(required_args)} arguments, got {len(args_types)}", expr.token.location)
 
     # Iterate over the argument types
     for i, required_type in enumerate(required_args):

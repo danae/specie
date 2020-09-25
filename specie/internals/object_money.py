@@ -9,10 +9,9 @@ from .object_record import ObjRecord
 # Class that defines a money object
 class ObjMoney(ObjRecord, typename = "Money"):
   # Constructor
-  def __init__(self, **fields):
-    super().__init__(
-      amount = fields.get('amount', ObjFloat()),
-      currency = fields.get('currency', ObjString('EUR')))
+  def __init__(self, currency, amount):
+    super().__init__(currency = currency, amount = amount)
+
 
   # Return if this money object is equal to another object
   def __eq__(self, other):
@@ -46,31 +45,39 @@ class ObjMoney(ObjRecord, typename = "Money"):
   def __lt__(self, other):
     if isinstance(other, ObjMoney):
       return (self['date'], self['id']) < (other['date'], other['id'])
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_lt(self, other: 'ObjMoney') -> 'ObjBool':
-    return ObjBool(self.__lt__(other))
+    if (result := self.__lt__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __le__(self, other):
     if isinstance(other, ObjMoney):
       return self['amount'] < other['amount']
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_lte(self, other: 'ObjMoney') -> 'ObjBool':
-    return ObjBool(self.__le__(other))
+    if (result := self.__le__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __gt__(self, other):
     if isinstance(other, ObjMoney):
       return self['amount'] > other['amount']
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_gt(self, other: 'ObjMoney') -> 'ObjBool':
-    return ObjBool(self.__gt__(other))
+    if (result := self.__gt__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __ge__(self, other):
     if isinstance(other, ObjMoney):
       return self['amount'] >= other['amount']
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_gte(self, other: 'ObjMoney') -> 'ObjBool':
-    return ObjBool(self.__ge__(other))
+    if (result := self.__ge__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)

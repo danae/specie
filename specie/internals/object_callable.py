@@ -62,6 +62,13 @@ class ObjBoundCallable(ObjCallable, typename = "BoundCallable"):
   def __call__(self, *args, **kwargs):
     return self.callable(self.this_arg, *args, **kwargs)
 
+  # Return the string representation of this object
+  def __str__(self):
+    return f"<{self.__class__.typename}: bound to {self.this_arg}>"
+
+  def method_string(self) -> 'ObjString':
+    return ObjString(self.__str__())
+
 
   # Return the Python representation for this object
   def __repr__(self):
