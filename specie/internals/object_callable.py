@@ -29,9 +29,6 @@ class ObjCallable(Obj, typename = "Callable"):
   def bind(self, this_arg):
     return ObjBoundCallable(self, this_arg)
 
-  def method_bind(self, this_arg: 'Obj') -> 'ObjCallable':
-    return self.bind(this_arg)
-
 
   # Return the Python representation for this object
   def __repr__(self):
