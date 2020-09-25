@@ -39,14 +39,14 @@ class ObjDate(Obj, typename = 'Date'):
   def __str__(self):
     return self.value.strftime(self.format)
 
-  def method_as_string(self) -> 'ObjString':
+  def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())
 
   # Return the hash of this object
   def __hash__(self):
     return hash(self.value)
 
-  def method_as_hash(self) -> 'ObjInt':
+  def method_asHash(self) -> 'ObjInt':
     return ObjInt(self.__hash__())
 
   # Compare this date object with another object

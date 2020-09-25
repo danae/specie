@@ -135,21 +135,21 @@ class Obj(metaclass = ObjMeta, typename = "Object"):
   def __bool__(self):
     return True
 
-  def method_as_bool(self) -> 'ObjBool':
+  def method_asBool(self) -> 'ObjBool':
     return ObjBool(self.__bool__())
 
   # Return the string representation of this object
   def __str__(self):
     return f"<{self.__class__.typename}>"
 
-  def method_as_string(self) -> 'ObjString':
+  def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())
 
   # Return the hash of this object
   def __hash__(self):
     return id(self)
 
-  def method_as_hash(self) -> 'ObjInt':
+  def method_asHash(self) -> 'ObjInt':
     return ObjInt(self.__hash__())
 
   # Return the defined methods of this object
@@ -188,7 +188,7 @@ class ObjNull(Obj, typename = "Null"):
   def __bool__(self):
     return False
 
-  def method_as_bool(self) -> 'ObjBool':
+  def method_asBool(self) -> 'ObjBool':
     return ObjBool(self.__bool__())
 
   # Return the string representation of this object
@@ -231,14 +231,14 @@ class ObjBool(Obj, typename = "Bool"):
   def __bool__(self):
     return self.value
 
-  def method_as_bool(self) -> 'ObjBool':
+  def method_asBool(self) -> 'ObjBool':
     return self
 
   # Return the string representation of this object
   def __str__(self):
     return 'true' if self.value else 'false'
 
-  def method_as_string(self):
+  def method_asString(self):
     return ObjString(self.__str__())
 
 
@@ -272,35 +272,35 @@ class ObjNumber(Obj, typename = "Number"):
   def __bool__(self):
     return bool(self.value)
 
-  def method_as_bool(self) -> 'ObjBool':
+  def method_asBool(self) -> 'ObjBool':
     return ObjBool(bool(self))
 
   # Return the string representation of this object
   def __str__(self):
     return str(self.value)
 
-  def method_as_string(self) -> 'ObjString':
+  def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())
 
   # Return the hash of this object
   def __hash__(self):
     return hash(self.value)
 
-  def method_as_hash(self) -> 'ObjInt':
+  def method_asHash(self) -> 'ObjInt':
     return ObjInt(self.__hash__())
 
   # Return the int representation of this object
   def __int__(self):
     return int(self.value)
 
-  def method_as_int(self) -> 'ObjInt':
+  def method_asInt(self) -> 'ObjInt':
     return ObjInt(self.__int__())
 
   # Return the float representation of this object
   def __float__(self):
     return float(self.value)
 
-  def method_as_float(self) -> 'ObjFloat':
+  def method_asFloat(self) -> 'ObjFloat':
     return ObjFloat(self.__float__())
 
   # Compare this number object with another object
@@ -542,21 +542,21 @@ class ObjString(Obj, typename = "String"):
   def __bool__(self):
     return bool(self.value)
 
-  def method_as_bool(self) -> 'ObjBool':
+  def method_asBool(self) -> 'ObjBool':
     return ObjBool(self.__bool__())
 
   # Return the string representation of this object
   def __str__(self):
     return self.value
 
-  def method_as_string(self) -> 'ObjString':
+  def method_asString(self) -> 'ObjString':
     return self
 
   # Return the hash of this object
   def __hash__(self):
     return hash(self.value)
 
-  def method_as_hash(self) -> 'ObjInt':
+  def method_asHash(self) -> 'ObjInt':
     return ObjInt(self.__hash__())
 
   # Compare this string object to another object
@@ -688,14 +688,14 @@ class ObjRegex(Obj, typename = "Regex"):
   def __str__(self):
     return f"regex \"{self.pattern.pattern}\""
 
-  def method_as_string(self) -> 'ObjString':
+  def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())
 
   # Return the hash of this object
   def __hash__(self):
     return hash(self.pattern)
 
-  def method_as_hash(self) -> 'ObjInt':
+  def method_asHash(self) -> 'ObjInt':
     return ObjInt(self.__hash__())
 
   # Return the pattern of this regex object

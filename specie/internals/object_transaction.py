@@ -36,7 +36,7 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
   def __hash__(self):
     return hash((self['id']))
 
-  def method_as_hash(self) -> 'ObjInt':
+  def method_asHash(self) -> 'ObjInt':
     return ObjInt(self.__hash__())
 
   # Compare this transaction object with another object

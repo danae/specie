@@ -24,21 +24,21 @@ class ObjMoney(ObjRecord, typename = "Money"):
   def __bool__(self):
     return self['amount'] != 0
 
-  def method_as_bool(self):
+  def method_asBool(self):
     return ObjBool(self.__bool__())
 
   # Return the string representation of this object
   def __str__(self):
     return f"{self['currency']} {self['amount']:.2f}"
 
-  def method_as_string(self) -> 'ObjString':
+  def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())
 
   # Return the hash of this object
   def __hash__(self):
     return hash((self['currency'], self['amount']))
 
-  def method_as_hash(self) -> 'ObjInt':
+  def method_asHash(self) -> 'ObjInt':
     return ObjInt(self.__hash__())
 
   # Compare this money object with another object

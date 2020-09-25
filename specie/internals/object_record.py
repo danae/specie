@@ -115,21 +115,21 @@ class ObjRecord(Obj, typename = "Record"):
   def __bool__(self):
     return bool(self.fields)
 
-  def method_as_bool(self) -> 'ObjBool':
+  def method_asBool(self) -> 'ObjBool':
     return ObjBool(self.__bool__())
 
   # Return the string representation of this object
   def __str__(self):
     return '{' + ', '.join(f"{name}: {value}" for name, value in self.fields.items()) + '}'
 
-  def method_as_string(self) -> 'ObjString':
+  def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())
 
   # Return the hash of this objet
   def __hash__(self):
     return hash(self.fields)
 
-  def method_as_hash(self) -> 'ObjInt':
+  def method_asHash(self) -> 'ObjInt':
     return ObjInt(self.__hash__())
 
   # Return the field in this record object with the specified name

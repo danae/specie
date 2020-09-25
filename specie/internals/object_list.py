@@ -27,21 +27,21 @@ class ObjList(Obj, typename = "List"):
   def __bool__(self):
     return bool(self.items)
 
-  def method_as_bool(self) -> 'ObjBool':
+  def method_asBool(self) -> 'ObjBool':
     return ObjBool(self.__bool__())
 
   # Return the string representation of this object
   def __str__(self):
     return '[' + ', '.join(f"{item}" for item in self.items) + ']'
 
-  def method_as_string(self) -> 'ObjString':
+  def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())
 
   # Return the hash of this object
   def __hash__(self):
     return hash(self.value)
 
-  def method_as_hash(self) -> 'ObjInt':
+  def method_asHash(self) -> 'ObjInt':
     return ObjInt(self.__hash__())
 
   # Return the length of this list object
@@ -83,7 +83,7 @@ class ObjList(Obj, typename = "List"):
     for item in list:
       self.insert(item)
 
-  def method_insert_all(self, list: 'ObjList') -> 'ObjList':
+  def method_insertAll(self, list: 'ObjList') -> 'ObjList':
     self.insert_all(list)
     return self
 
