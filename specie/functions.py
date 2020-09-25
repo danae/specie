@@ -18,7 +18,7 @@ class PrintFunction(internals.ObjCallable, typename = "Native_print"):
     return {}
 
   # Call the function
-  def call(self, interpreter, *args, **kwargs):
+  def __call__(self, *args, **kwargs):
     output.print_object(*args, **kwargs)
 
 
@@ -37,15 +37,16 @@ class PrintTitleFunction(internals.ObjCallable, typename = 'Native_print_title')
     return {}
 
   # Call the function
-  def call(self, interpreter, *args, **kwargs):
+  def __call__(self, *args, **kwargs):
     output.title(*args, **kwargs)
 
 
 # Class that defines the include function
 class IncludeFunction(internals.ObjCallable, typename = 'Native_include'):
   # Constructor
-  def __init__(self):
+  def __init__(self, interpreter):
     super().__init__()
+    self.interpreter = interpreter
 
   # Return the required arguments of the function
   def required_args(self):
@@ -56,17 +57,18 @@ class IncludeFunction(internals.ObjCallable, typename = 'Native_include'):
     return {}
 
   # Call the function
-  def call(self, interpreter, *args, **kwargs):
+  def __call__(self, *args, **kwargs):
     args = [arg._py_value() if isinstance(arg, internals.Obj) else arg for arg in args]
     kwargs = {name: kwarg._py_value() if isinstance(kwarg, internals.Obj) else kwarg for name, kwarg in kwargs.items()}
-    return interpreter.execute_include(*args, **kwargs)
+    return self.interpreter.execute_include(*args, **kwargs)
 
 
 # Class that defines the import function
 class ImportFunction(internals.ObjCallable, typename = 'Native_import'):
   # Constructor
-  def __init__(self):
+  def __init__(self, interpreter):
     super().__init__()
+    self.interpreter = interpreter
 
   # Return the required arguments of the function
   def required_args(self):
@@ -77,7 +79,7 @@ class ImportFunction(internals.ObjCallable, typename = 'Native_import'):
     return {'type': internals.ObjString}
 
   # Call the function
-  def call(self, interpreter, *args, **kwargs):
+  def __call__(self, *args, **kwargs):
     args = [arg._py_value() if isinstance(arg, internals.Obj) else arg for arg in args]
     kwargs = {name: kwarg._py_value() if isinstance(kwarg, internals.Obj) else kwarg for name, kwarg in kwargs.items()}
-    return interpreter.execute_import(*args, **kwargs)
+    return self.interpreter.execute_import(*args, **kwargs)

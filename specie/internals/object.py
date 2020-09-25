@@ -158,55 +158,6 @@ class Obj(metaclass = ObjMeta, typename = "Object"):
     return ObjRecord(**{name: method.create_callable(self) for name, method in self.methods.items()})
 
 
-  # Overload functions for equality testing
-  #def __eq__(self, other):
-  #  return bool(self.call_method('eq', other))
-  #def __ne__(self, other):
-  #  return bool(self.call_method('neq', other))
-
-  # Overload functions for truth value testing
-  #def __bool__(self):
-  #  return bool(self.call_method('as_bool'))
-
-  # Overload functions for object properties
-  #def __str__(self):
-  #  return str(self.call_method('as_string'))
-  #def __hash__(self):
-  #  return int(self.call_method('as_hash'))
-
-  # Overload functions for conversions
-  #def __int__(self):
-  #  return int(self.call_method('as_int')) if self.has_method('as_int') else NotImplemented
-  #def __float__(self):
-  #  return float(self.call_method('as_float')) if self.has_method('as_float') else NotImplemented
-
-  # Overload functions for comparison operators
-  #def __lt__(self, other):
-  #  return bool(self.call_method('lt', other)) if self.has_method('lt') else NotImplemented
-  #def __le__(self, other):
-  #  return bool(self.call_method('lte', other)) if self.has_method('lte') else NotImplemented
-  #def __gt__(self, other):
-  #  return bool(self.call_method('gt', other)) if self.has_method('gt') else NotImplemented
-  #def __ge__(self, other):
-  #  return bool(self.call_method('gte', other)) if self.has_method('gte') else NotImplemented
-
-  # Overload functions for arithmetic operators
-  def __add__(self, other):
-    return self.call_method('add', other) if self.has_method('add') else NotImplemented
-  def __sub__(self, other):
-    return self.call_method('sub', other) if self.has_method('sub') else NotImplemented
-  def __mul__(self, other):
-    return self.call_method('mul', other) if self.has_method('mul') else NotImplemented
-  def __truediv__(self, other):
-    return self.call_method('div', other) if self.has_method('div') else NotImplemented
-
-  # Overload functions for container operators
-  def __len__(self):
-    return int(self.call_method('count')) if self.has_method('count') else NotImplemented
-  def __contains__(self, other):
-    return bool(self.call_method('contains', other)) if self.has_method('contains') else NotImplemented
-
-
   # Return the Python value of this object (empty for standard objects)
   def _py_value(self):
     return None
@@ -227,16 +178,25 @@ class ObjNull(Obj, typename = "Null"):
 
 
   # Return if this null object is equal to another object
-  def method_eq(self, other: 'Obj') -> 'ObjBool':
+  def __eq__(self, other):
     return isinstance(other, ObjNull)
 
+  def method_eq(self, other: 'Obj') -> 'ObjBool':
+    return ObjBool(self.__eq__(other))
+
   # Return the bool representation of this object
+  def __bool__(self):
+    return False
+
   def method_as_bool(self) -> 'ObjBool':
-    return ObjBool(False)
+    return ObjBool(self.__bool__())
 
   # Return the string representation of this object
-  def method_as_string(self):
+  def __str__(self):
     return "null"
+
+  def method_as_string(self):
+    return ObjString(self.__str__())
 
 
 ###########################################
@@ -347,34 +307,42 @@ class ObjNumber(Obj, typename = "Number"):
   def __lt__(self, other):
     if isinstance(other, ObjNumber):
       return self.value < other.value
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_lt(self, other: 'ObjNumber') -> 'ObjBool':
-    return ObjBool(self.__lt__(other))
+    if (result := self.__lt__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __le__(self, other):
     if isinstance(other, ObjNumber):
       return self.value <= other.value
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_lte(self, other: 'ObjNumber') -> 'ObjBool':
-    return ObjBool(self.__le__(other))
+    if (result := self.__le__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __gt__(self, other):
     if isinstance(other, ObjNumber):
       return self.value > other.value
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_gt(self, other: 'ObjNumber') -> 'ObjBool':
-    return ObjBool(self.__gt__(other))
+    if (result := self.__gt__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __ge__(self, other):
     if isinstance(other, ObjNumber):
       return self.value >= other.value
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_gte(self, other: 'ObjNumber') -> 'ObjBool':
-    return ObjBool(self.__ge__(other))
+    if (result := self.__ge__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
 
   # Return the Python value of this object
@@ -414,33 +382,53 @@ class ObjInt(ObjNumber, typename = "Int"):
 
 
   # Return the addition of two numeric objects
-  def method_add(self, other: 'ObjNumber') -> 'ObjNumber':
+  def __add__(self, other):
     if isinstance(other, ObjFloat):
       return ObjFloat(self.value + other.value)
     elif isinstance(other, ObjInt):
       return ObjInt(self.value + other.value)
+    return NotImplemented
+
+  def method_add(self, other: 'ObjNumber') -> 'ObjNumber':
+    if (result := self.__add__(other)) != NotImplemented:
+      return result
     raise InvalidTypeException(other)
 
   # Return the suntraction of two numeric objects
-  def method_sub(self, other: 'ObjNumber') -> 'ObjNumber':
+  def __sub__(self, other):
     if isinstance(other, ObjFloat):
       return ObjFloat(self.value - other.value)
     elif isinstance(other, ObjInt):
       return ObjInt(self.value - other.value)
+    return NotImplemented
+
+  def method_sub(self, other: 'ObjNumber') -> 'ObjNumber':
+    if (result := self.__sub__(other)) != NotImplemented:
+      return result
     raise InvalidTypeException(other)
 
   # Return the multiplication of two numeric objects
-  def method_mul(self, other: 'ObjNumber') -> 'ObjNumber':
+  def __mul__(self, other):
     if isinstance(other, ObjFloat):
       return ObjFloat(self.value * other.value)
     elif isinstance(other, ObjInt):
       return ObjInt(self.value * other.value)
+    return NotImplemented
+
+  def method_mul(self, other: 'ObjNumber') -> 'ObjNumber':
+    if (result := self.__mul__(other)) != NotImplemented:
+      return result
     raise InvalidTypeException(other)
 
   # Return the division of two numeric objects
-  def method_div(self, other: 'ObjNumber') -> 'ObjNumber':
+  def __truediv__(self, other):
     if isinstance(other, ObjNumber):
       return ObjFloat(self.value / other.value)
+    return NotImplemented
+
+  def method_div(self, other: 'ObjNumber') -> 'ObjNumber':
+    if (result := self.__truediv__(other)) != NotImplemented:
+      return result
     raise InvalidTypeException(other)
 
   # Return the Python int representation of this object (to avoid deadlocks)
@@ -475,27 +463,47 @@ class ObjFloat(ObjNumber, typename = "Float"):
 
 
   # Return the addition of two numeric objects
-  def method_add(self, other: 'ObjNumber') -> 'ObjNumber':
+  def __add__(self, other):
     if isinstance(other, ObjNumber):
       return ObjFloat(self.value + other.value)
+    return NotImplemented
+
+  def method_add(self, other: 'ObjNumber') -> 'ObjNumber':
+    if (result := self.__add__(other)) != NotImplemented:
+      return result
     raise InvalidTypeException(other)
 
   # Return the suntraction of two numeric objects
-  def method_sub(self, other: 'ObjNumber') -> 'ObjNumber':
+  def __sub__(self, other):
     if isinstance(other, ObjNumber):
       return ObjFloat(self.value - other.value)
+    return NotImplemented
+
+  def method_sub(self, other: 'ObjNumber') -> 'ObjNumber':
+    if (result := self.__sub__(other)) != NotImplemented:
+      return result
     raise InvalidTypeException(other)
 
   # Return the multiplication of two numeric objects
-  def method_mul(self, other: 'ObjNumber') -> 'ObjNumber':
+  def __mul__(self, other):
     if isinstance(other, ObjNumber):
       return ObjFloat(self.value * other.value)
+    return NotImplemented
+
+  def method_mul(self, other: 'ObjNumber') -> 'ObjNumber':
+    if (result := self.__mul__(other)) != NotImplemented:
+      return result
     raise InvalidTypeException(other)
 
   # Return the division of two numeric objects
-  def method_div(self, other: 'ObjNumber') -> 'ObjNumber':
+  def __truediv__(self, other):
     if isinstance(other, ObjNumber):
       return ObjFloat(self.value / other.value)
+    return NotImplemented
+
+  def method_div(self, other: 'ObjNumber') -> 'ObjNumber':
+    if (result := self.__truediv__(other)) != NotImplemented:
+      return result
     raise InvalidTypeException(other)
 
   # Return the Python float representation of this object (to avoid deadlocks)
@@ -555,47 +563,63 @@ class ObjString(Obj, typename = "String"):
   def __lt__(self, other):
     if isinstance(other, ObjString):
       return self.value < other.value
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_lt(self, other: 'ObjString') -> 'ObjBool':
-    return ObjBool(self.__lt__(other))
+    if (result := self.__lt__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __le__(self, other):
     if isinstance(other, ObjString):
       return self.value <= other.value
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_lte(self, other: 'ObjString') -> 'ObjBool':
-    return ObjBool(self.__le__(other))
+    if (result := self.__le__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __gt__(self, other):
     if isinstance(other, ObjString):
       return self.value > other.value
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_gt(self, other: 'ObjString') -> 'ObjBool':
-    return ObjBool(self.__gt__(other))
+    if (result := self.__gt__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __ge__(self, other):
     if isinstance(other, ObjString):
       return self.value >= other.value
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_gte(self, other: 'ObjString') -> 'ObjBool':
-    return ObjBool(self.__ge__(other))
+    if (result := self.__ge__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   # Return the concatenation of two string objects
-  def method_add(self, other: 'ObjString') -> 'ObjString':
+  def __add__(self, other):
     if isinstance(other, ObjString):
       return ObjString(self.value + other.value)
-    raise InvalidTypeException(pattern)
+    return NotImplemented
+
+  def method_add(self, other: 'ObjString') -> 'ObjString':
+    if (result := self.__add__(other)) != NotImplemented:
+      return result
+    raise InvalidTypeException(other)
 
   # Return the length of this string object
+  def __len__(self):
+    return len(self.value)
+
   def method_count(self) -> 'ObjInt':
-    return ObjInt(len(self.value))
+    return ObjInt(self.__len__())
 
   # Return the character in this string object at the specified index
-  def method_at(self, index: 'ObjInt') -> 'ObjString':
+  def __getitem__(self, index):
     if isinstance(index, ObjInt):
       try:
         return ObjString(self.value[index.value])
@@ -603,19 +627,17 @@ class ObjString(Obj, typename = "String"):
         raise UndefinedIndexException(index)
     raise InvalidTypeException(index)
 
-  # Return a slice of this string object
-  def method_slice(self, start: 'ObjInt', end: 'ObjInt') -> 'ObjString':
-    if isinstance(start, ObjInt):
-      if isinstance(end, ObjInt):
-        return ObjString(self.value[start.value:end.value])
-      raise InvalidTypeException(end)
-    raise InvalidTypeException(start)
+  def method_at(self, index: 'ObjInt') -> 'ObjString':
+    return self.__getitem__(index)
 
   # Return if this string object contains another string object
-  def method_contains(self, sub: 'ObjString') -> 'ObjBool':
-    if isinstance(sub, ObjString):
-      return ObjBool(self.value.find(sub.value) > -1)
-    raise InvalidTypeException(sub)
+  def __contains__(self, item):
+    if isinstance(item, ObjString):
+      return ObjBool(self.value.find(item.value) > -1)
+    raise InvalidTypeException(item)
+
+  def method_contains(self, item: 'ObjString') -> 'ObjBool':
+    return self.__contains__(item)
 
   # Return if this string object matches a pattern
   def method_match(self, pattern: 'Obj') -> 'ObjBool':

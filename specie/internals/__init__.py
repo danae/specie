@@ -9,10 +9,10 @@ from .object import (Obj, ObjNull, ObjBool, ObjNumber, ObjInt, ObjFloat,
 
 # Import native objects
 from .object_date import ObjDate
-from .object_list import ObjList, ObjSortedList
-from .object_record import ObjRecord
 from .object_callable import ObjCallable, ObjBoundCallable, ObjNativeCallable
 from .object_function import ObjFunction
+from .object_list import ObjList, ObjSortedList
+from .object_record import ObjRecord
 
 # Import derived objects
 from .object_money import ObjMoney

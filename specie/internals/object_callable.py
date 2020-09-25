@@ -19,12 +19,18 @@ class ObjCallable(Obj, typename = "Callable"):
     raise NotImplementedError()
 
   # Return the result of calling the callable
-  def call(self, interpreter, *args, **kwargs):
+  def __call__(self, *args, **kwargs):
     raise NotImplementedError()
+
+  def method_call(self, args: 'Obj', kwargs: 'Obj') -> 'Obj':
+    return self(*args._py_list(), **kwargs._py_dict())
 
   # Return a callable with its first argument bound to an object
   def bind(self, this_arg):
     return ObjBoundCallable(self, this_arg)
+
+  def method_bind(self, this_arg: 'Obj') -> 'ObjCallable':
+    return self.bind(this_arg)
 
 
   # Return the Python representation for this object
@@ -53,13 +59,9 @@ class ObjBoundCallable(ObjCallable, typename = "BoundCallable"):
     return self.callable.required_kwargs()
 
   # Call the callable
-  def call(self, interpreter, *args, **kwargs):
-    return self.callable.call(interpreter, self.this_arg, *args, **kwargs)
+  def __call__(self, *args, **kwargs):
+    return self.callable(self.this_arg, *args, **kwargs)
 
-
-  # Return the Python result of calling the callable
-  def _py_call(self, *args, **kwargs):
-    return self.callable._py_call(self.this_arg, *args, **kwargs)
 
   # Return the Python representation for this object
   def __repr__(self):
@@ -88,13 +90,9 @@ class ObjNativeCallable(ObjCallable, typename = "NativeCallable"):
     return self._required_kwargs
 
   # Return the result of calling the callable
-  def call(self, interpreter, *args, **kwargs):
+  def __call__(self, *args, **kwargs):
     return self.function(*args, **kwargs)
 
-
-  # Call the callable as an internal function
-  def _py_call(self, *args, **kwargs):
-    return self.function(*args, **kwargs)
 
   # Return the Python representation for this object
   def __repr__(self):

@@ -8,9 +8,9 @@ from .object_callable import ObjCallable
 
 class ObjFunction(ObjCallable, typename = "Function"):
   # Constructor
-  def __init__(self, expr, closure):
+  def __init__(self, interpreter, expr, closure):
     super().__init__()
-
+    self.interpreter = interpreter
     self.expr = expr
     self.closure = closure
 
@@ -23,7 +23,7 @@ class ObjFunction(ObjCallable, typename = "Function"):
     return {}
 
   # Call the function
-  def call(self, interpreter, *args, **kwargs):
+  def __call__(self, *args, **kwargs):
     # Create a new environment for this function
     environment = self.closure.nested()
 
@@ -32,4 +32,4 @@ class ObjFunction(ObjCallable, typename = "Function"):
       environment.declare_variable(parameter, args[i])
 
     # Execute the body and return the result
-    return interpreter.evaluate_with(environment, self.expr.body)
+    return self.interpreter.evaluate_with(environment, self.expr.body)

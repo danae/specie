@@ -29,9 +29,9 @@ class Query:
   ### Definition of query action functions ###
 
   # Return a table that adheres to the predicate
-  def test(self, interpreter):
+  def test(self):
     if self.predicate is not None:
-      return self.table.filter(lambda item: self.predicate.call(interpreter, item))
+      return self.table.filter(lambda item: self.predicate(item))
     else:
       return self.table
 
@@ -55,7 +55,7 @@ class Query:
   # Execute a get query
   def execute_get(self, interpreter, arguments):
     # Apply the predicate
-    table_test = self.test(interpreter)
+    table_test = self.test()
 
     # If there are arguments specified, then map the table
     if arguments.args:
@@ -68,7 +68,7 @@ class Query:
   # Execute a set query
   def execute_set(self, interpreter, arguments):
     # Apply the predicate
-    table_test = self.test(interpreter)
+    table_test = self.test()
 
     # Iterate over the tested table
     for item in table_test:
@@ -84,7 +84,7 @@ class Query:
   # Execute a delete query
   def execute_delete(self, interpreter, arguments):
     # Apply the predicate
-    table_test = self.test(interpreter)
+    table_test = self.test()
 
     # Iterate over the tested table
     for item in table_test:
@@ -97,16 +97,7 @@ class Query:
   # Execute a group query
   def execute_group(self, interpreter, arguments):
     # Apply the predicate
-    table_test = self.test(interpreter)
+    table_test = self.test()
 
     # Return a list of distinct matches
-    return internals.ObjList()
     return internals.ObjList(utils.distinct(interpreter.evaluate_scope(arguments.args[0], item) for item in table_test))
-
-    # Iterate over the tested table
-    for item in table_test:
-      # Delete the item from the original table
-      self.table.delete(item)
-
-    # Return the number of matched items
-    return internals.ObjInt(len(table_test))

@@ -53,47 +53,65 @@ class ObjDate(Obj, typename = 'Date'):
   def __lt__(self, other):
     if isinstance(other, ObjDate):
       return self.value < other.value
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_lt(self, other: 'ObjDate') -> 'ObjBool':
-    return ObjBool(self.__lt__(other))
+    if (result := self.__lt__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __le__(self, other):
     if isinstance(other, ObjDate):
       return self.value <= other.value
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_lte(self, other: 'ObjDate') -> 'ObjBool':
-    return ObjBool(self.__le__(other))
+    if (result := self.__le__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __gt__(self, other):
     if isinstance(other, ObjDate):
       return self.value > other.value
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_gt(self, other: 'ObjDate') -> 'ObjBool':
-    return ObjBool(self.__gt__(other))
+    if (result := self.__gt__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   def __ge__(self, other):
     if isinstance(other, ObjDate):
       return self.value >= other.value
-    raise InvalidTypeException(other)
+    return NotImplemented
 
   def method_gte(self, other: 'ObjDate') -> 'ObjBool':
-    return ObjBool(self.__ge__(other))
+    if (result := self.__ge__(other)) != NotImplemented:
+      return ObjBool(result)
+    raise InvalidTypeException(other)
 
   # Return this date with a specified amount of days added
-  def method_add(self, other: 'ObjInt') -> 'ObjDate':
+  def __add__(self, other):
     if isinstance(other, ObjInt):
       return ObjDate(self.value + timedelta(days = other.value))
+    return NotImplemented
+
+  def method_add(self, other: 'ObjInt') -> 'ObjDate':
+    if (result := self.__add__(other)) != NotImplemented:
+      return result
     raise InvalidTypeException(other)
 
   # Return this date with a specified amount of days subtracted
-  def method_sub(self, other: 'ObjInt, ObjDate') -> 'ObjDate, ObjInt':
+  def __sub__(self, other):
     if isinstance(other, ObjInt):
       return ObjDate(self.value - timedelta(days = other.value))
     elif isinstance(other, ObjDate):
       return ObjInt(self.value - other.value.days)
+    return NotImplemented
+
+  def method_sub(self, other: 'ObjInt, ObjDate') -> 'ObjDate, ObjInt':
+    if (result := self.__sub__(other)) != NotImplemented:
+      return result
     raise InvalidTypeException(other)
 
 

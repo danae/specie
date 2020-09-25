@@ -112,77 +112,14 @@ class Environment:
 
   # Return a global environment
   @classmethod
-  def globals(cls):
+  def globals(cls, interpreter):
     globals = internals.ObjRecord()
     globals['print'] = functions.PrintFunction()
     globals['print_title'] = functions.PrintTitleFunction()
-    globals['include'] = functions.IncludeFunction()
-    globals['import'] = functions.ImportFunction()
+    globals['include'] = functions.IncludeFunction(interpreter)
+    globals['import'] = functions.ImportFunction(interpreter)
     globals['_'] = transactions.TransactionList()
     return cls(None, globals)
-
-
-############################
-### Definition of a call ###
-############################
-
-# Class that defines a call in the interpreter
-class Call:
-  # Constructor
-  def __init__(self, expression, token, args, kwargs):
-    self.expression = expression
-    self.token = token
-    self.args = args
-    self.kwargs = kwargs
-
-  # Return the types of the arguments
-  @property
-  def args_types(self):
-    return [type(arg) for arg in self.args]
-
-  # Return the types of the keywords
-  @property
-  def kwargs_types(self):
-    return {name: type(value) for name, value in self.kwargs}
-
-  # Validate the types of the arguments
-  def validate_args_types(self, types):
-    # TODO: Print correct types instead of internal names
-
-    # Check the length of the arguments
-    if len(self.args_types) != len(types):
-      raise internals.InvalidCallException(f"Expected {len(types)} arguments, got {len(self.args_types)}", self.token.location)
-
-    # Iterate over the argument types
-    for i, type in enumerate(types):
-      # Check if the argument is the valid type
-      if not issubclass(check_type := self.args_types[i], type):
-        raise internals.InvalidCallException(f"Expected argument {i+1} of type {type}, got type {check_type}", self.token.location)
-
-  # Validate the types of the keywords
-  def validate_kwargs_types(self, types):
-    # TODO: Print correct types instead of internal names
-
-    # Iterate over the keyword types
-    for name, type in types.items():
-      # Check if the keyword is provided
-      if not name in self.kwargs_types:
-        raise internals.InvalidCallException(f"Expected keyword '{name}' of type {type}", self.expression.token.location)
-
-      # Check if the keyword is the valid type
-      if not issubclass(check_type := types[name], type):
-        raise internals.InvalidCallException(f"Expected keyword '{name}' of type {type}, got type {check_type}", self.expression.token.location)
-
-  # Execute the call
-  def execute(self, interpreter):
-    # Validate the arguments and keywords
-    self.validate_args_types(self.expression.required_args())
-    self.validate_kwargs_types(self.expression.required_kwargs())
-
-    # Call the callable
-    args = self.args._py_list()
-    kwargs = self.kwargs._py_dict()
-    return self.expression.call(interpreter, *args, **kwargs)
 
 
 #####################################
@@ -194,7 +131,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
   # Constructor
   def __init__(self):
     # Define the environment
-    self.globals = Environment.globals()
+    self.globals = Environment.globals(self)
     self.environment = self.globals
 
     # Define the include stack; the first file is the interactive console
@@ -363,18 +300,43 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
   # Visit a call expression
   def visit_call_expr(self, expr: ast.CallExpr) -> internals.Obj:
     # Evaluate the expression
-    expression = self.evaluate(expr.expression)
+    callable = self.evaluate(expr.expression)
 
     # Check if the expression is callable
-    if not isinstance(expression, internals.ObjCallable):
+    if not isinstance(callable, internals.ObjCallable):
       raise internals.RuntimeException(f"The expression '{expr.expression}' is not callable", expr.token.location)
 
     # Evaluate the arguments
     args = self.evaluate(expr.arguments.args)
+    args_types = [type(arg) for arg in args]
     kwargs = self.evaluate(expr.arguments.kwargs)
+    kwargs_types = {name: type(value) for name, value in kwargs}
 
-    # Create a call and execute that
-    return Call(expression, expr.token, args, kwargs).execute(self)
+    required_args = callable.required_args()
+    required_kwargs = callable.required_kwargs()
+
+    # Check the length of the arguments
+    if len(args_types) != len(required_args):
+      raise internals.InvalidCallException(f"Expected {len(types)} arguments, got {len(args_types)}", expr.token.location)
+
+    # Iterate over the argument types
+    for i, required_type in enumerate(required_args):
+      # Check if the argument is the valid type
+      if not issubclass(check_type := args_types[i], required_type):
+        raise internals.InvalidCallException(f"Expected argument {i+1} of type {required_type}, got type {check_type}", expr.token.location)
+
+    # Iterate over the keyword types
+    for name, required_type in required_kwargs.items():
+      # Check if the keyword is provided
+      if not name in kwargs_types:
+        raise internals.InvalidCallException(f"Expected keyword '{name}' of type {required_type}", expr.token.location)
+
+      # Check if the keyword is the valid type
+      if not issubclass(check_type := kwargs_types[name], required_type):
+        raise internals.InvalidCallException(f"Expected keyword '{name}' of type {required_type}, got type {check_type}", expr.token.location)
+
+    # Call the callable
+    return callable(*args._py_list(), **kwargs._py_dict())
 
   # Visit a get expression
   def visit_get_expr(self, expr: ast.GetExpr) -> internals.Obj:
@@ -499,7 +461,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
   # Visit a function expression
   def visit_function_expr(self, expr: ast.FunctionExpr) -> internals.Obj:
-    return internals.ObjFunction(expr, self.environment)
+    return internals.ObjFunction(self, expr, self.environment)
 
   # Visit an assignment expression
   def visit_assignment_expr(self, expr: ast.AssignmentExpr) -> internals.Obj:
