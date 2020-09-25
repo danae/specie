@@ -115,7 +115,7 @@ class Environment:
   def globals(cls, interpreter):
     globals = internals.ObjRecord()
     globals['print'] = functions.PrintFunction()
-    globals['print_title'] = functions.PrintTitleFunction()
+    globals['printTitle'] = functions.PrintTitleFunction()
     globals['include'] = functions.IncludeFunction(interpreter)
     globals['import'] = functions.ImportFunction(interpreter)
     globals['_'] = transactions.TransactionList()

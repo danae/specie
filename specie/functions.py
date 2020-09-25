@@ -23,7 +23,7 @@ class PrintFunction(internals.ObjCallable, typename = "Native_print"):
 
 
 # Class that defines the print_title function
-class PrintTitleFunction(internals.ObjCallable, typename = 'Native_print_title'):
+class PrintTitleFunction(internals.ObjCallable, typename = 'Native_printTitle'):
   # Constructor
   def __init__(self):
     super().__init__()
