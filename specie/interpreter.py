@@ -368,7 +368,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     value = self.evaluate(expr.value)
 
     # Set the field of the record
-    expression.set_field(expr.name, value)
+    expression.set_field(expr.name.value, value)
 
     # Return the value
     return value
