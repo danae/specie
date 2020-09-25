@@ -148,7 +148,7 @@ def print_list(list: 'ObjList', **kwargs):
 # print a table object
 def print_table(table: 'ObjList', **kwargs):
   # Get all fields
-  fields = functools.reduce(utils.distinct_append, (record.names(only_visible = True) for record in table), [])
+  fields = functools.reduce(utils.distinct_append, (record.list_field_names(only_public = True) for record in table), [])
 
   # Print the list in table form
   tbl = Table()
@@ -156,7 +156,7 @@ def print_table(table: 'ObjList', **kwargs):
   tbl.append_separator_row()
 
   for record in table:
-    tbl.append_row([record.get(name, "") for name in fields])
+    tbl.append_row([record.field_value(name, "") for name in fields])
 
   if tbl:
     print(tbl)

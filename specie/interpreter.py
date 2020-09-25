@@ -3,7 +3,7 @@ import os.path
 from colorama import Fore, Back, Style
 
 from . import (ast, functions, grammar, internals, output, parser, query,
-  semantics, transactions)
+  semantics, std, transactions)
 
 
 #####################################
@@ -237,7 +237,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Add the imported transactions
     new_transactions = transactions.TransactionReader(resolved_file_name, **keywords)
-    self.environment['_'].insert_all(new_transactions)
+    self.environment['_'].add_all(new_transactions)
 
     # Return a result object
     return internals.ObjRecord(count = internals.ObjInt(len(new_transactions)))
@@ -272,7 +272,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
   def visit_list_expr(self, expr: ast.ListExpr) -> internals.Obj:
     list_object = internals.ObjList()
     for item in expr:
-      list_object.insert(self.evaluate(item))
+      list_object.add(self.evaluate(item))
     return list_object
 
   # Visit a record expression

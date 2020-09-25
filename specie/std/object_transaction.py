@@ -1,25 +1,23 @@
-from .object import Obj, ObjBool, ObjInt, ObjFloat, ObjString
-from .object_date import ObjDate
-from .object_record import ObjRecord, ObjRecordFieldOptions
+from ..internals import *
+
 from .object_money import ObjMoney
-from .errors import InvalidTypeException
 
 
-##################################################
-### Definition of the transaction object class ###
-##################################################
+###########################################
+### Definition of the transaction class ###
+###########################################
 
-class ObjTransaction(ObjRecord, typename = "Transaction"):
+class ObjTransaction(ObjRecord, typename = "std.Transaction"):
   # Constructor
   def __init__(self, **fields):
     super().__init__(
-      id = fields.get('id', (ObjString(), False, False)),
+      id = Field(fields.get('id', ObjString()), public = False),
       date = fields.get('date', ObjDate()),
-      amount = fields.get('amount', (ObjMoney(currency = ObjString('EUR'), amount = ObjFloat()), True, True, ObjRecordFieldOptions.FORMAT_RIGHT)),
+      amount = Field(fields.get('amount', ObjMoney(ObjString('EUR'), ObjFloat())), options = FieldOptions.FORMAT_ALIGN_RIGHT),
       label = fields.get('label', ObjString()),
       name = fields.get('name', ObjString()),
       address = fields.get('address', ObjString()),
-      description = fields.get('description', (ObjString(), True, True, ObjRecordFieldOptions.FORMAT_ELLIPSIS)))
+      description = Field(fields.get('description', ObjString()), options = FieldOptions.FORMAT_ELLIPSIS))
 
     for name, field in fields.items():
       self[name] = field

@@ -78,7 +78,7 @@ class ObjBoundCallable(ObjCallable, typename = "BoundCallable"):
 
 class ObjNativeCallable(ObjCallable, typename = "NativeCallable"):
   # Constructor
-  def __init__(self, function, required_args, required_kwargs):
+  def __init__(self, function, required_args, required_kwargs = {}):
     ObjCallable.__init__(self)
 
     self.function = function

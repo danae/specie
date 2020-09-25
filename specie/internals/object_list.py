@@ -13,7 +13,29 @@ class ObjList(Obj, typename = "List"):
     super().__init__()
 
     self.items = []
-    self.insert_all(items)
+    self.add_all(items)
+
+
+  # Get an item in the list
+  def get_item_at(self, index):
+    try:
+      return self.items[index]
+    except IndexError:
+      raise UndefinedIndexException(index)
+
+  # Set an item in the list
+  def set_item_at(self, index, value):
+    try:
+      self.items[index] = value
+    except IndexError:
+      raise UndefinedIndexException(index)
+
+  # Delete an item from the list
+  def delete_item_at(self, index):
+    try:
+      del self.items[index]
+    except IndexError:
+      raise UndefinedIndexException(index)
 
 
   # Return if this list object is equal to another object
@@ -51,40 +73,31 @@ class ObjList(Obj, typename = "List"):
   def method_count(self) -> 'ObjInt':
     return ObjInt(self.__len__())
 
-  # Return the item in this list object at the specified index
+  # Get the item at the specified index in this list object
   def __getitem__(self, index):
-    if isinstance(index, ObjInt):
-      try:
-        return self.items[index.value]
-      except IndexError:
-        raise UndefinedIndexException(index)
-    raise InvalidTypeException(type(index))
+    if isinstance(index, (ObjInt, int)):
+      index = index.value if isinstance(index, ObjInt) else index
+      return self.get_item_at(index)
+    raise InvalidTypeException(index)
 
   def method_at(self, index: 'ObjInt') -> 'Obj':
     return self.__getitem__(index)
 
-  # Return if this list object contains the specified item
-  def __contains__(self, item):
-    return item in self.items
-
-  def method_contains(self, item: 'Obj') -> 'ObjBool':
-    return ObjBool(self.__contains__(item))
-
-  # Insert an item into this list object
-  def insert(self, item):
+  # Add an item to this list object
+  def add(self, item):
     self.items.append(item)
 
-  def method_insert(self, item: 'Obj') -> 'ObjList':
-    self.insert(item)
+  def method_add(self, item: 'Obj') -> 'ObjList':
+    self.add(item)
     return self
 
-  # Insert several items into this list object
-  def insert_all(self, list):
+  # Add several items to this list object
+  def add_all(self, list):
     for item in list:
-      self.insert(item)
+      self.add(item)
 
-  def method_insertAll(self, list: 'ObjList') -> 'ObjList':
-    self.insert_all(list)
+  def method_addAll(self, list: 'ObjList') -> 'ObjList':
+    self.add_all(list)
     return self
 
   # Delete an item from this list object
@@ -97,6 +110,13 @@ class ObjList(Obj, typename = "List"):
   def method_delete(self, item: 'Obj') -> 'ObjList':
     self.delete(item)
     return self
+
+  # Return if this list object contains the specified item
+  def __contains__(self, item):
+    return item in self.items
+
+  def method_contains(self, item: 'Obj') -> 'ObjBool':
+    return ObjBool(self.__contains__(item))
 
   # Map the items of the list
   def map(self, func):
@@ -145,6 +165,6 @@ class ObjSortedList(ObjList, typename = "SortedList"):
   def __init__(self, *items):
     ObjList.__init__(self, *items)
 
-  # Insert an item into this list object
-  def _py_insert(self):
+  # Add an item to this list object
+  def add(self, item):
     insort(self.items, item)

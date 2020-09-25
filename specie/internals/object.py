@@ -82,11 +82,6 @@ class ObjMeta(type):
 ######################################
 
 class Obj(metaclass = ObjMeta, typename = "Object"):
-  # Constructor
-  def __init__(self):
-    pass
-
-
   # Get a method in the object
   def get_method(self, name):
     try:
@@ -152,10 +147,14 @@ class Obj(metaclass = ObjMeta, typename = "Object"):
   def method_asHash(self) -> 'ObjInt':
     return ObjInt(self.__hash__())
 
-  # Return the defined methods of this object
-  def method_methods(self) -> 'ObjRecord':
-    from .object_record import ObjRecord
-    return ObjRecord(**{name: method.create_callable(self) for name, method in self.methods.items()})
+  # Return the type of this object as a string
+  def method_type(self) -> 'ObjString':
+    return ObjString(self.__class__.typename)
+
+  # Return the method names of this object as a list of strings
+  def method_methods(self) -> 'ObjList':
+    from .object_list import ObjList
+    return ObjList.from_py(list(self.methods))
 
 
   # Return the Python value of this object (empty for standard objects)
