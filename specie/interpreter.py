@@ -90,11 +90,15 @@ class Environment:
     except KeyError:
       raise internals.UndefinedFieldException(name.value, name.location)
 
-  # Declare a varable in the environment by means of a lexer token
+  # Return if the environment contains the specified variable
+  def has_variable(self, name, distance = 0):
+    if distance == 0:
+      return name.value in self.variables
+    else:
+      return name.value in self.ancestor(distance).variables
+
+  # Declare a varable in the CURRENT environment by means of a lexer token
   def declare_variable(self, name, value):
-    # Set the variable in the current environment if it doesn't yet exist
-    if name.value in self.variables:
-      raise internals.RuntimeException(f"Variable '{name.value}' already exists in the current scope", name.location)
     self.variables[name.value] = value
 
   # Return an iterator over this environment and its ancestors
@@ -471,11 +475,18 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     # Get the distance of the local variable, or otherwise assume it's global
     distance = self.locals.get(expr)
     if distance is not None:
-      # Get a local variable
-      self.environment.set_variable(expr.name, value, distance)
+      # Set a local variable
+      if self.environment.has_variable(expr.name, distance):
+        self.environment.set_variable(expr.name, value, distance)
+      else:
+        raise internals.RuntimeException(f"Variable '{expr.name.value}' does not exist in the current scope", expr.name.location)
+
     else:
-      # Get a global variable
-      self.globals.set_variable(expr.name, value)
+      # Set a global variable
+      if self.globals.has_variable(expr.name):
+        self.globals.set_variable(expr.name, value)
+      else:
+        raise internals.RuntimeException(f"Variable '{expr.name.value}' does not exist in the current scope", expr.name.location)
 
     # Return the value
     return value
@@ -486,7 +497,12 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     value = self.evaluate(expr.value)
 
     # Declare the value and return it
-    self.environment.declare_variable(expr.name, value)
+    if not self.environment.has_variable(expr.name):
+      self.environment.declare_variable(expr.name, value)
+    else:
+      raise internals.RuntimeException(f"Variable '{expr.name.value}' already exists in the current scope", expr.name.location)
+
+    # Return the value
     return value
 
   # Visit a block expression
