@@ -59,13 +59,6 @@ class ObjList(Obj, typename = "List"):
   def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())
 
-  # Return the hash of this object
-  def __hash__(self):
-    return hash(self.value)
-
-  def method_asHash(self) -> 'ObjInt':
-    return ObjInt(self.__hash__())
-
   # Return the length of this list object
   def __len__(self):
     return len(self.items)

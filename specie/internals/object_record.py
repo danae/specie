@@ -92,13 +92,6 @@ class ObjRecord(Obj, typename = "Record"):
   def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())
 
-  # Return the hash of this objet
-  def __hash__(self):
-    return hash(self.fields)
-
-  def method_asHash(self) -> 'ObjInt':
-    return ObjInt(self.__hash__())
-
   # Get the field with the specified name in this record object
   def __getitem__(self, name):
     if isinstance(name, (ObjString, str)):

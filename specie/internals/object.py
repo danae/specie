@@ -140,13 +140,6 @@ class Obj(metaclass = ObjMeta, typename = "Object"):
   def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())
 
-  # Return the hash of this object
-  def __hash__(self):
-    return id(self)
-
-  def method_asHash(self) -> 'ObjInt':
-    return ObjInt(self.__hash__())
-
   # Return the type of this object as a string
   def method_type(self) -> 'ObjString':
     return ObjString(self.__class__.typename)
@@ -693,13 +686,6 @@ class ObjRegex(Obj, typename = "Regex"):
 
   def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())
-
-  # Return the hash of this object
-  def __hash__(self):
-    return hash(self.pattern)
-
-  def method_asHash(self) -> 'ObjInt':
-    return ObjInt(self.__hash__())
 
   # Return the pattern of this regex object
   def method_pattern(self) -> 'ObjString':
