@@ -19,11 +19,11 @@ class Rule:
     if callable(replacement):
       self.replacement = replacement
     elif isinstance(replacement, int):
-      self.replacement = lambda m: m.group(replacement)
+      self.replacement = lambda m, _: m.group(replacement)
     elif isinstance(replacement, str):
-      self.replacement = lambda m: replacement
+      self.replacement = lambda m, _: replacement
     else:
-      self.replacement = lambda m: None
+      self.replacement = lambda m, _: None
     self.ignore = ignore
 
 
@@ -148,7 +148,7 @@ class Lexer:
       token_matches = []
       for rule_index, rule in enumerate(self.rules):
         if token_match := rule.pattern.match(string, pos):
-          value = rule.replacement(token_match)
+          value = rule.replacement(token_match, location)
           token = Token(rule.name, value, location)
           token_matches.append((token_match.end(), -rule_index, token, rule))
 

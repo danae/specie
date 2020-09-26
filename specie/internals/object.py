@@ -666,13 +666,17 @@ class ObjString(Obj, typename = "String"):
 
 class ObjRegex(Obj, typename = "Regex"):
   # Constructor
-  def __init__(self, pattern):
+  def __init__(self, pattern, flags = 0):
     super().__init__()
 
+    if isinstance(pattern, ObjRegex):
+      self.pattern = pattern.pattern
     if isinstance(pattern, ObjString):
-      self.pattern = re.compile(pattern.value, re.IGNORECASE)
+      self.pattern = re.compile(pattern.value, flags)
+    elif isinstance(pattern, re.Pattern):
+      self.pattern = pattern
     elif isinstance(pattern, str):
-      self.pattern = re.compile(pattern, re.IGNORECASE)
+      self.pattern = re.compile(pattern, flags)
     else:
       raise TypeError(f"Unexpected native type {type(pattern)}")
 
@@ -685,7 +689,7 @@ class ObjRegex(Obj, typename = "Regex"):
 
   # Return the string representation of this object
   def __str__(self):
-    return f"regex \"{self.pattern.pattern}\""
+    return f"/{self.pattern.pattern}/{self.flags()}"
 
   def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())
@@ -700,6 +704,17 @@ class ObjRegex(Obj, typename = "Regex"):
   # Return the pattern of this regex object
   def method_pattern(self) -> 'ObjString':
     return ObjString(self.pattern.pattern)
+
+  # Return the flags of this regex object:
+  def flags(self):
+    flags_string = ''
+    flags_string += 'i' if self.pattern.flags & re.IGNORECASE else ''
+    flags_string += 'm' if self.pattern.flags & re.MULTILINE else ''
+    flags_string += 's' if self.pattern.flags & re.DOTALL else ''
+    return flags_string
+
+  def method_flags(self) -> 'ObjString':
+    return ObjString(self.flags())
 
 
   # Return the Python value of this object

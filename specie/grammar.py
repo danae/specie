@@ -1,7 +1,38 @@
+import re
+
 from . import ast, internals, parser
 
 
+######################################
+### Definition of helper functions ###
+######################################
+
+# Create a regex value from a match result
+def token_regex(m, location):
+  # Get the pattern and the flags
+  pattern, flags_string = m.group(1, 2)
+
+  # Convert the flags string to flags
+  flags = re.RegexFlag(0)
+  if 'i' in flags_string:
+    flags = flags | re.RegexFlag.IGNORECASE
+  if 'm' in flags_string:
+    flags = flags | re.RegexFlag.MULTILINE
+  if 's' in flags_string:
+    flags = flags | re.RegexFlag.DOTALL
+
+  # Return a compiled pattern
+  try:
+    return re.compile(pattern, flags)
+  except re.error as err:
+    if err.lineno is not None and err.colno is not None:
+      location = parser.Location(location.line + err.lineno - 1, location.col + err.colno)
+    raise parser.SyntaxError(f"Invalid regex literal: {err.msg}", location)
+
+
+################################
 ### Definiton of token rules ###
+################################
 
 # List of token rules
 rules = [
@@ -51,7 +82,8 @@ rules = [
   # Literal tokens
   parser.Rule('literal_false', r'false', None),
   parser.Rule('literal_true', r'true', None),
-  parser.Rule('literal_string', r'"((?:[^"\\]|\\.)*)"', 1),
+  parser.Rule('literal_string', r'"((?:[^\\"]|\\.)*)"', 1),
+  parser.Rule('literal_regex', r'\/((?:[^\\\/]|\\.)*)\/([ims]*)', token_regex),
   parser.Rule('literal_date', r'\d{4}-\d{2}-\d{2}'),
   parser.Rule('literal_int', r'\-?(?:0|[1-9][0-9]*)'),
   parser.Rule('literal_float', r'\-?(?:0|[1-9][0-9]*)\.[0-9]+'),
@@ -61,7 +93,9 @@ rules = [
 ]
 
 
+###########################################
 ### Definition of parser helper methods ###
+###########################################
 
 # Map a list of arguments to positional and keyword arguments
 def map_arguments(list):
@@ -110,7 +144,9 @@ def map_assignment(expr, op, value):
   raise parser.ParserError(f"Invalid assignment target: {expr.token}")
 
 
+#################################
 ### Definiton of parser rules ###
+#################################
 
 # Register all token parsers in the global dictionary for easier access
 for rule in rules:
@@ -135,7 +171,7 @@ literal_true = parser.describe('literal_true', parser.map_value(internals.ObjBoo
 literal_int = parser.describe('literal_int', parser.map(lambda t: internals.ObjInt(t.value), LITERAL_INT))
 literal_float = parser.describe('literal_float', parser.map(lambda t: internals.ObjFloat(t.value), LITERAL_FLOAT))
 literal_string = parser.describe('literal_string', parser.map(lambda t: internals.ObjString(t.value), LITERAL_STRING))
-literal_regex = parser.describe('literal_regex', parser.map(lambda t: internals.ObjRegex(t.value), KEYWORD_REGEX >> LITERAL_STRING))
+literal_regex = parser.describe('literal_regex', parser.map(lambda t: internals.ObjRegex(t.value), LITERAL_REGEX))
 literal_date = parser.describe('literal_date', parser.map(lambda t: internals.ObjDate(t.value), LITERAL_DATE))
 literal = parser.describe('literal', parser.map(ast.LiteralExpr, literal_false | literal_true | literal_int | literal_float | literal_string | literal_regex | literal_date))
 
@@ -211,6 +247,10 @@ expr = parser.describe('expr', parser.synchronize(declaration, 'newline'))
 # Modules
 module = parser.describe('module', parser.map(ast.ModuleExpr, expr * parser.token('newline')))
 
+
+######################################
+### Definition of parser functions ###
+######################################
 
 # Parse an input string to an abstract syntax tree
 def parse(string, is_module = True):
