@@ -3,51 +3,29 @@ from typing import TypeVar, Generic
 
 ### Definition of helper classes
 
-# Class that holds a set of arguments and keywords
-class Arguments:
-  # Constructor
-  def __init__(self, args, kwargs):
-    self.args = args
-    self.kwargs = kwargs
-
-  # Convert to string
-  def __str__(self):
-    string = ""
-    if self.args:
-      string += str(self.args)[1:-1]
-    if self.kwargs:
-      string += (', ' if string else '') + str(self.kwargs)[1:-1]
-    return string
-
-  # Convert to representation
-  def __repr__(self):
-    return f"{self.__class__.__name__}({self.args!r}, {self.kwargs!r})"
-
-  # Convert to boolean
-  def __bool__(self):
-    return bool(self.args) and bool(self.kwargs)
-
-
-# Class that holds a
+# Class that holds a call
 class Call:
   # Constructor
-  def __init__(self, name, arguments):
+  def __init__(self, name, args):
     self.name = name
-    self.arguments = arguments
+    self.args = args
 
   # Convert to string
   def __str__(self):
-    if self.arguments:
-      return f"{self.name.value} {self.arguments}"
+    if self.args:
+      args = ', '.join(str(arg) for arg in self.args)
+      return f"{self.name.value} {args}"
     else:
       return f"{self.name.value}"
 
   # Convert to representation
   def __repr__(self):
-    return f"{self.__class__.__name__}({self.name!r}, {self.arguments!r})"
+    return f"{self.__class__.__name__}({self.name!r}, {self.args!r})"
 
 
+#####################################
 ### Definition of the expressions ###
+#####################################
 
 # Base class for an abstract sytax tree expression
 class Expr:
@@ -151,16 +129,16 @@ class GroupingExpr(Expr):
 
 # Class that defines a call expression
 class CallExpr(Expr):
-  def __init__(self, expression, token, arguments):
+  def __init__(self, expression, token, args):
     self.expression = expression
     self.token = token
-    self.arguments = arguments
+    self.args = args
 
   def __str__(self):
-    return f"{self.expression}({self.arguments})"
+    return f"{self.expression}({self.args})"
 
   def __repr__(self):
-    return f"{self.__class__.__name__}({self.expression!r}, {self.token!r}, {self.arguments!r})"
+    return f"{self.__class__.__name__}({self.expression!r}, {self.token!r}, {self.args!r})"
 
   def accept(self, visitor):
     return visitor.visit_call_expr(self)

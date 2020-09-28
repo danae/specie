@@ -306,20 +306,19 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
       raise internals.RuntimeException(f"The expression '{expr.expression}' is not callable", expr.token.location)
 
     # Evaluate the arguments
-    args = self.evaluate(expr.arguments.args)
-    args_types = [type(arg) for arg in args]
+    args = self.evaluate(expr.args)
 
     # Fetch the parameters
     params = callable.parameters()
 
     # Check the length of the arguments
-    if len(args_types) != len(params):
-      raise internals.InvalidCallException(f"Expected {len(params)} arguments, got {len(args_types)}", expr.token.location)
+    if len(args) != len(params):
+      raise internals.InvalidCallException(f"Expected {len(params)} arguments, got {len(args)}", expr.token.location)
 
     # Iterate over the argument types
     for i, param in enumerate(params):
       # Check if the argument is the valid type
-      if not issubclass(check_type := args_types[i], param):
+      if not issubclass(check_type := type(args[i]), param):
         raise internals.InvalidCallException(f"Expected argument {i+1} of type {param}, got type {check_type}", expr.token.location)
 
     # Call the callable

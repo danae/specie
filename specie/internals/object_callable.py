@@ -33,7 +33,7 @@ class ObjCallable(Obj, typename = "Callable"):
 
   # Return the string representation of this object
   def __str__(self):
-    params = [f"{param[0]} = {param[1]}" if instanceof(param, tuple) else f"{param}" for param in self.parameters]
+    params = [f"{param[0].typename} = {param[1]}" if isinstance(param, tuple) else f"{param.typename}" for param in self.parameters()]
     return f"<{self.__class__.typename} (" + ', '.join(params) + ")>"
 
   # Return the Python representation for this object

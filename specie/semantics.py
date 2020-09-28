@@ -70,8 +70,7 @@ class Resolver(ast.ExprVisitor[None]):
   # Visit a call expression
   def visit_call_expr(self, expr: ast.CallExpr) -> None:
     self.resolve(expr.expression)
-    self.resolve(expr.arguments.args)
-    self.resolve(expr.arguments.kwargs)
+    self.resolve(expr.args)
 
   # Visit a get expression
   def visit_get_expr(self, expr: ast.GetExpr) -> None:
@@ -99,8 +98,7 @@ class Resolver(ast.ExprVisitor[None]):
   # Visit a query expression
   def visit_query_expr(self, expr: ast.QueryExpr) -> None:
     self.resolve(expr.table)
-    self.resolve(expr.action.arguments.args)
-    self.resolve(expr.action.arguments.kwargs)
+    self.resolve(expr.action.args)
     if expr.predicate:
       self.resolve(expr.predicate)
 

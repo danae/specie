@@ -98,26 +98,6 @@ rules = [
 ### Definition of parser helper methods ###
 ###########################################
 
-# Map a list of arguments to positional and keyword arguments
-def map_arguments(list):
-  # Create two lists to store the arguments and keywords
-  args = []; kwargs = []
-
-  # Iterate over the arguments
-  for item in list:
-    if isinstance(item, tuple):
-      # The call argument is a keyword argument
-      kwargs.append(item)
-    elif not kwargs:
-      # The call argument is a positional argument
-      args.append(item)
-    else:
-      # A positional argument was found after a keyword argument, which is invalid
-      raise parser.ParserError(None, "A keyword argument cannot be followed by a positional argument")
-
-  # Return the lists as the appropriate expressions
-  return ast.Arguments(ast.ListExpr(args), ast.RecordExpr(kwargs))
-
 # Map a call expression
 def map_call(expr, token, value):
   # Check if the token is a left parenthesis
@@ -190,8 +170,8 @@ primary_grouping = parser.describe('primary_grouping', parser.map(ast.GroupingEx
 primary = parser.describe('primary', literal | list | record | primary_variable | primary_grouping)
 
 # Arguments
-arguments_item = parser.describe('arguments_item', record_item | list_item)
-arguments = parser.describe('arguments', parser.map(map_arguments, (arguments_item * SYMBOL_COMMA) ^ []))
+arguments_item = parser.describe('arguments_item', parser.lazy(lambda: expr))
+arguments = parser.describe('arguments', parser.map(ast.ListExpr, (arguments_item * SYMBOL_COMMA) ^ []))
 
 # Call expressions
 call = parser.describe('call', parser.reduce(map_call, (PARENTHESIS_LEFT + arguments << PARENTHESIS_RIGHT) | (SYMBOL_DOT + IDENTIFIER), primary))
