@@ -14,13 +14,9 @@ class ObjImporter(ObjCallable):
     super().__init__()
     self.interpreter = interpreter
 
-  # Return the required arguments of the callable as a tuple
-  def required_args(self):
+  # Return the parameters of the callable
+  def parameters(self):
     return [ObjString, ObjRecord]
-
-  # Return the required keywords of the callable as a dict
-  def required_kwargs(self):
-    return {}
 
   # Call the importer
   def __call__(self, file_name, options):

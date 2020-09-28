@@ -14,16 +14,15 @@ from .errors import RuntimeException, UndefinedMethodException, UndefinedIndexEx
 
 class Method:
   # Constructor
-  def __init__(self, func, required_args, required_kwargs):
+  def __init__(self, func, params):
     self.func = func
-    self.required_args = required_args
-    self.required_kwargs = required_kwargs
+    self.params = params
 
   # Resolve the method to a callable
   def create_callable(self, this_arg):
-    from .object_callable import ObjNativeCallable
+    from .object_callable import ObjPyCallable
 
-    callable = ObjNativeCallable(self.func, self.required_args, self.required_kwargs)
+    callable = ObjPyCallable(self.func, self.params)
     callable = callable.partial(this_arg)
     return callable
 
@@ -61,10 +60,8 @@ class ObjMeta(type):
       method_name = attr[7:]
 
       signature = inspect.signature(method_func)
-      required_args = [cls.resolve(param) for param in signature.parameters.values() if param.kind in [inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD]]
-      required_kwargs = {name: cls.resolve(param) for param in signature.parameters.values() if param.kind == inspect.Parameter.KEYWORD_ONLY}
-
-      cls.methods[method_name] = Method(method_func, required_args, required_kwargs)
+      params = [cls.resolve(param) for param in signature.parameters.values() if param.kind in [inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD]]
+      cls.methods[method_name] = Method(method_func, params)
 
   # Return a parameter resolved to a class
   @classmethod

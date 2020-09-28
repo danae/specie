@@ -1,3 +1,5 @@
+import typing
+
 from .object import Obj, ObjBool, ObjInt, ObjString
 
 
@@ -10,20 +12,16 @@ class ObjCallable(Obj, typename = "Callable"):
   def __init__(self):
     super().__init__()
 
-  # Return the required arguments of the callable as a tuple
-  def required_args(self):
-    raise NotImplementedError()
-
-  # Return the required keywords of the callable as a dict
-  def required_kwargs(self):
+  # Return the parameters of the callable
+  def parameters(self):
     raise NotImplementedError()
 
   # Return the result of calling the callable
-  def __call__(self, *args, **kwargs):
+  def __call__(self, *args):
     raise NotImplementedError()
 
-  def method_call(self, args: 'Obj', kwargs: 'Obj') -> 'Obj':
-    return self.__call__(*args._py_list(), **kwargs._py_dict())
+  def method_call(self, args: 'Obj') -> 'Obj':
+    return self.__call__(*args._py_list())
 
   # Return a callable with the first arguments substituted by the specified arguments
   def partial(self, *args):
@@ -32,6 +30,11 @@ class ObjCallable(Obj, typename = "Callable"):
   def method_partial(self, args: 'Obj') -> 'ObjCallable':
     return self.partial(args._py_list())
 
+
+  # Return the string representation of this object
+  def __str__(self):
+    params = [f"{param[0]} = {param[1]}" if instanceof(param, tuple) else f"{param}" for param in self.parameters]
+    return f"<{self.__class__.typename} (" + ', '.join(params) + ")>"
 
   # Return the Python representation for this object
   def __repr__(self):
@@ -42,25 +45,20 @@ class ObjCallable(Obj, typename = "Callable"):
 ### Definition of the partial callable object class ###
 #######################################################
 
-class ObjPartialCallable(ObjCallable, typename = "BoundCallable"):
+class ObjPartialCallable(ObjCallable, typename = "PartialCallable"):
   # Constructor
   def __init__(self, callable, *args):
     super().__init__()
-
     self.callable = callable
     self.args = args
 
-  # Return the required arguments of the function
-  def required_args(self):
-    return self.callable.required_args()[len(self.args):]
-
-  # Return the required keywords of the function
-  def required_kwargs(self):
-    return self.callable.required_kwargs()
+  # Return the parameters of the callable
+  def parameters(self):
+    return self.callable.arity()[len(self.args):]
 
   # Call the callable
-  def __call__(self, *args, **kwargs):
-    return self.callable(*self.args, *args, **kwargs)
+  def __call__(self, *args):
+    return self.callable(*self.args, *args)
 
   # Return the string representation of this object
   def __str__(self):
@@ -76,31 +74,25 @@ class ObjPartialCallable(ObjCallable, typename = "BoundCallable"):
 
 
 ######################################################
-### Definition of the native callable object class ###
+### Definition of the Python callable object class ###
 ######################################################
 
-class ObjNativeCallable(ObjCallable, typename = "NativeCallable"):
+class ObjPyCallable(ObjCallable, typename = "PyCallable"):
   # Constructor
-  def __init__(self, function, required_args, required_kwargs = {}):
+  def __init__(self, function, *params):
     super().__init__()
-
     self.function = function
-    self._required_args = required_args
-    self._required_kwargs = required_kwargs
+    self.params = params
 
-  # Return the required arguments of the callable as a tuple
-  def required_args(self):
-    return self._required_args
-
-  # Return the required keywords of the callable as a dict
-  def required_kwargs(self):
-    return self._required_kwargs
+  # Return the parameters of the callable
+  def parameters(self):
+    return self.params
 
   # Return the result of calling the callable
-  def __call__(self, *args, **kwargs):
-    return self.function(*args, **kwargs)
+  def __call__(self, *args):
+    return self.function(*args)
 
 
   # Return the Python representation for this object
   def __repr__(self):
-    return f"{self.__class__.__name__}({self.function!r}, {self._required_args!r}, {self._required_kwargs!r})"
+    return f"{self.__class__.__name__}({self.function!r}, *{self.params!r})"

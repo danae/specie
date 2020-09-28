@@ -25,7 +25,7 @@ def main(args):
     if args.include:
       for file_name in args.include:
         print(f"> include(\"{file_name}\")")
-        intp.execute_include(file_name)
+        intp.include(file_name)
 
     # Interpret each specified line
     if args.eval:

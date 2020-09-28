@@ -2,8 +2,7 @@ import os.path
 
 from colorama import Fore, Back, Style
 
-from . import (ast, functions, grammar, internals, output, parser, query,
-  semantics, transactions)
+from . import ast, grammar, internals, output, parser, query, semantics, transactions
 
 
 #####################################
@@ -118,11 +117,18 @@ class Environment:
   @classmethod
   def globals(cls, interpreter):
     globals = internals.ObjRecord()
-    globals['print'] = functions.PrintFunction()
-    globals['printTitle'] = functions.PrintTitleFunction()
-    globals['include'] = functions.IncludeFunction(interpreter)
+
+    # Global functions
+    globals['print'] = internals.ObjPyCallable(output.print_object, internals.Obj)
+    globals['printTitle'] = internals.ObjPyCallable(output.title, internals.ObjString)
+    globals['include'] = internals.ObjPyCallable(interpreter.include, internals.ObjString)
+
+    # Namespaces
     globals['import'] = internals.namespace_import(interpreter)
+
+    # Tables
     globals['_'] = transactions.TransactionList()
+
     return cls(None, globals)
 
 
@@ -214,7 +220,9 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
 
   # Include a file
-  def execute_include(self, file_name):
+  def include(self, file_name):
+    file_name = file_name._py_value() if isinstance(file_name, internals.ObjString) else file_name
+
     # Check if the file exists
     if (resolved_file_name := self.resolve_file_name(file_name)) is None:
       raise internals.RuntimeException(f"Include failed: the file '{file_name}' could not be found")
@@ -300,34 +308,22 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     # Evaluate the arguments
     args = self.evaluate(expr.arguments.args)
     args_types = [type(arg) for arg in args]
-    kwargs = self.evaluate(expr.arguments.kwargs)
-    kwargs_types = {name: type(value) for name, value in kwargs}
 
-    required_args = callable.required_args()
-    required_kwargs = callable.required_kwargs()
+    # Fetch the parameters
+    params = callable.parameters()
 
     # Check the length of the arguments
-    if len(args_types) != len(required_args):
-      raise internals.InvalidCallException(f"Expected {len(required_args)} arguments, got {len(args_types)}", expr.token.location)
+    if len(args_types) != len(params):
+      raise internals.InvalidCallException(f"Expected {len(params)} arguments, got {len(args_types)}", expr.token.location)
 
     # Iterate over the argument types
-    for i, required_type in enumerate(required_args):
+    for i, param in enumerate(params):
       # Check if the argument is the valid type
-      if not issubclass(check_type := args_types[i], required_type):
-        raise internals.InvalidCallException(f"Expected argument {i+1} of type {required_type}, got type {check_type}", expr.token.location)
-
-    # Iterate over the keyword types
-    for name, required_type in required_kwargs.items():
-      # Check if the keyword is provided
-      if not name in kwargs_types:
-        raise internals.InvalidCallException(f"Expected keyword '{name}' of type {required_type}", expr.token.location)
-
-      # Check if the keyword is the valid type
-      if not issubclass(check_type := kwargs_types[name], required_type):
-        raise internals.InvalidCallException(f"Expected keyword '{name}' of type {required_type}, got type {check_type}", expr.token.location)
+      if not issubclass(check_type := args_types[i], param):
+        raise internals.InvalidCallException(f"Expected argument {i+1} of type {param}, got type {check_type}", expr.token.location)
 
     # Call the callable
-    return callable(*args._py_list(), **kwargs._py_dict())
+    return callable(*args._py_list())
 
   # Visit a get expression
   def visit_get_expr(self, expr: ast.GetExpr) -> internals.Obj:

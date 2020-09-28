@@ -8,7 +8,7 @@ from .object import (Obj, ObjNull, ObjBool, ObjNumber, ObjInt, ObjFloat,
   ObjString, ObjRegex)
 
 # Import objects
-from .object_callable import ObjCallable, ObjPartialCallable, ObjNativeCallable
+from .object_callable import ObjCallable, ObjPartialCallable, ObjPyCallable
 from .object_function import ObjFunction
 from .object_list import ObjList, ObjSortedList
 from .object_record import FieldOptions, Field, ObjRecord

@@ -14,13 +14,9 @@ class ObjFunction(ObjCallable, typename = "Function"):
     self.expr = expr
     self.closure = closure
 
-  # Return the required arguments of the function
-  def required_args(self):
+  # Return the parameters of the callable
+  def parameters(self):
     return [Obj] * len(self.expr.parameters)
-
-  # Return the required keywords of the function
-  def required_kwargs(self):
-    return {}
 
   # Call the function
   def __call__(self, *args, **kwargs):
