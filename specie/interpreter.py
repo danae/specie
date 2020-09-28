@@ -402,6 +402,8 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
       return left.call_method('gt', right)
     elif op == '>=':
       return left.call_method('gte', right)
+    elif op == '<=>':
+      return left.call_method('cmp', right)
     elif op == '~':
       return left.call_method('match', right)
 

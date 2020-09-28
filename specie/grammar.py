@@ -61,6 +61,7 @@ rules = [
   parser.Rule('operator_eq', r'=='),
   parser.Rule('operator_neq', r'!='),
   parser.Rule('operator_match', r'~'),
+  parser.Rule('operator_cmp', r'<=>'),
   parser.Rule('operator_lte', r'<='),
   parser.Rule('operator_lt', r'<'),
   parser.Rule('operator_gte', r'>='),
@@ -202,7 +203,7 @@ addition_op = parser.describe('addition_op', OPERATOR_ADD | OPERATOR_SUB)
 addition = parser.describe('addition', parser.reduce(ast.BinaryOpExpr, addition_op + multiplication, multiplication))
 
 # Comparison expressions
-comparison_op = parser.describe('comparison_op', OPERATOR_LT | OPERATOR_LTE | OPERATOR_GT | OPERATOR_GTE | OPERATOR_MATCH | OPERATOR_IN)
+comparison_op = parser.describe('comparison_op', OPERATOR_LT | OPERATOR_LTE | OPERATOR_GT | OPERATOR_GTE | OPERATOR_CMP | OPERATOR_MATCH | OPERATOR_IN)
 comparison = parser.describe('comparison', parser.concat(ast.BinaryOpExpr, addition, comparison_op, addition) | addition)
 
 # Equality expressions

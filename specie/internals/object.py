@@ -346,6 +346,15 @@ class ObjNumber(Obj, typename = "Number"):
       return ObjBool(result)
     raise InvalidTypeException(other)
 
+  def method_cmp(self, other: 'ObjNumber') -> 'ObjInt':
+    if self.__eq__(other) == True:
+      return ObjInt(0)
+    if self.__lt__(other) == True:
+      return ObjInt(-1)
+    elif self.__gt__(other) == True:
+      return ObjInt(1)
+    raise InvalidTypeException(other)
+
 
   # Return the Python value of this object
   def _py_value(self):
@@ -610,6 +619,15 @@ class ObjString(Obj, typename = "String"):
   def method_gte(self, other: 'ObjString') -> 'ObjBool':
     if (result := self.__ge__(other)) != NotImplemented:
       return ObjBool(result)
+    raise InvalidTypeException(other)
+
+  def method_cmp(self, other: 'ObjString') -> 'ObjInt':
+    if self.__eq__(other) == True:
+      return ObjInt(0)
+    if self.__lt__(other) == True:
+      return ObjInt(-1)
+    elif self.__gt__(other) == True:
+      return ObjInt(1)
     raise InvalidTypeException(other)
 
   # Return the concatenation of two string objects

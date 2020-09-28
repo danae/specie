@@ -78,3 +78,12 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
     if (result := self.__ge__(other)) != NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
+
+  def method_cmp(self, other: 'ObjTransaction') -> 'ObjInt':
+    if self.__eq__(other) == True:
+      return ObjInt(0)
+    if self.__lt__(other) == True:
+      return ObjInt(-1)
+    elif self.__gt__(other) == True:
+      return ObjInt(1)
+    raise InvalidTypeException(other)
