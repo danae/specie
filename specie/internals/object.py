@@ -24,7 +24,7 @@ class Method:
     from .object_callable import ObjNativeCallable
 
     callable = ObjNativeCallable(self.func, self.required_args, self.required_kwargs)
-    callable = callable.bind(this_arg)
+    callable = callable.partial(this_arg)
     return callable
 
 

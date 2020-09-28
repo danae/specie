@@ -1,12 +1,12 @@
-from ..internals import *
+from .object import Obj, ObjBool, ObjInt, ObjString
+from .object_record import ObjRecord
 
 
 #####################################
 ### Definition of the money class ###
 #####################################
 
-# Class that defines a money object
-class ObjMoney(ObjRecord, typename = "std.Money"):
+class ObjMoney(ObjRecord, typename = "Money"):
   # Constructor
   def __init__(self, currency, amount):
     super().__init__(currency = currency, amount = amount)

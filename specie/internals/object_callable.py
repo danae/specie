@@ -8,7 +8,7 @@ from .object import Obj, ObjBool, ObjInt, ObjString
 class ObjCallable(Obj, typename = "Callable"):
   # Constructor
   def __init__(self):
-    Obj.__init__(self)
+    super().__init__()
 
   # Return the required arguments of the callable as a tuple
   def required_args(self):
@@ -23,11 +23,14 @@ class ObjCallable(Obj, typename = "Callable"):
     raise NotImplementedError()
 
   def method_call(self, args: 'Obj', kwargs: 'Obj') -> 'Obj':
-    return self(*args._py_list(), **kwargs._py_dict())
+    return self.__call__(*args._py_list(), **kwargs._py_dict())
 
-  # Return a callable with its first argument bound to an object
-  def bind(self, this_arg):
-    return ObjBoundCallable(self, this_arg)
+  # Return a callable with the first arguments substituted by the specified arguments
+  def partial(self, *args):
+    return ObjPartialCallable(self, *args)
+
+  def method_partial(self, args: 'Obj') -> 'ObjCallable':
+    return self.partial(args._py_list())
 
 
   # Return the Python representation for this object
@@ -35,21 +38,21 @@ class ObjCallable(Obj, typename = "Callable"):
     return f"{self.__class__.__name__}()"
 
 
-#####################################################
-### Definition of the bound callable object class ###
-#####################################################
+#######################################################
+### Definition of the partial callable object class ###
+#######################################################
 
-class ObjBoundCallable(ObjCallable, typename = "BoundCallable"):
+class ObjPartialCallable(ObjCallable, typename = "BoundCallable"):
   # Constructor
-  def __init__(self, callable, this_arg):
-    ObjCallable.__init__(self)
+  def __init__(self, callable, *args):
+    super().__init__()
 
     self.callable = callable
-    self.this_arg = this_arg
+    self.args = args
 
   # Return the required arguments of the function
   def required_args(self):
-    return self.callable.required_args()[1:]
+    return self.callable.required_args()[len(self.args):]
 
   # Return the required keywords of the function
   def required_kwargs(self):
@@ -57,11 +60,11 @@ class ObjBoundCallable(ObjCallable, typename = "BoundCallable"):
 
   # Call the callable
   def __call__(self, *args, **kwargs):
-    return self.callable(self.this_arg, *args, **kwargs)
+    return self.callable(*self.args, *args, **kwargs)
 
   # Return the string representation of this object
   def __str__(self):
-    return f"<{self.__class__.typename}: bound to {self.this_arg}>"
+    return f"<{self.__class__.typename} with {self.args}>"
 
   def method_string(self) -> 'ObjString':
     return ObjString(self.__str__())
@@ -69,7 +72,7 @@ class ObjBoundCallable(ObjCallable, typename = "BoundCallable"):
 
   # Return the Python representation for this object
   def __repr__(self):
-    return f"{self.__class__.__name__}({self.callable!r}, {self.this_arg!r})"
+    return f"{self.__class__.__name__}({self.callable!r}, *{self.args!r})"
 
 
 ######################################################
@@ -79,7 +82,7 @@ class ObjBoundCallable(ObjCallable, typename = "BoundCallable"):
 class ObjNativeCallable(ObjCallable, typename = "NativeCallable"):
   # Constructor
   def __init__(self, function, required_args, required_kwargs = {}):
-    ObjCallable.__init__(self)
+    super().__init__()
 
     self.function = function
     self._required_args = required_args

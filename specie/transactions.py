@@ -9,7 +9,7 @@ from colorama import Fore, Back, Style
 from datetime import date, datetime, timedelta
 from functools import total_ordering
 
-from . import ast, internals, std
+from . import ast, internals
 
 
 # Transaction list class
@@ -26,7 +26,7 @@ class TransactionList(internals.ObjSortedList, typename = "TransactionList"):
 
   # Get total balance
   def total(self, currency = "EUR"):
-    return sum(transaction['amount'] for transaction in self if transaction['amount']['currency'] == currency) or std.ObjMoney(currency = internals.ObjString(currency))
+    return sum(transaction['amount'] for transaction in self if transaction['amount']['currency'] == currency) or internals.ObjMoney(currency = internals.ObjString(currency))
 
   # Retain transactions that match the predicate
   def where(self, function):
@@ -90,17 +90,17 @@ class RabobankTransactionReader(TransactionReader, typename = "RabobankTransacti
   # Parse a transaction from a record
   @staticmethod
   def parse_transaction(record):
-    return std.ObjTransaction(
+    return internals.ObjTransaction(
       # Standard fields
       id = internals.ObjString("rabobank:{}".format(record['Volgnr'])),
       date = internals.ObjDate(datetime.strptime(record['Datum'], '%Y-%m-%d').date()),
-      amount = std.ObjMoney(currency = internals.ObjString(record['Munt']), amount = internals.ObjFloat(record['Bedrag'].replace(',', '.'))),
+      amount = internals.ObjMoney(currency = internals.ObjString(record['Munt']), amount = internals.ObjFloat(record['Bedrag'].replace(',', '.'))),
       name = internals.ObjString(record['Naam tegenpartij'].upper()),
       address = internals.ObjString(record['Tegenrekening IBAN/BBAN']),
       description = internals.ObjString(re.sub('\s+', ' ', ' '.join([record['Omschrijving-1'], record['Omschrijving-2'], record['Omschrijving-3']]).strip())),
 
       # Extension fields
-      balance = internals.Field(std.ObjMoney(currency = internals.ObjString(record['Munt']), amount = internals.ObjFloat(record['Saldo na trn'].replace(',','.'))), public = False),
+      balance = internals.Field(internals.ObjMoney(currency = internals.ObjString(record['Munt']), amount = internals.ObjFloat(record['Saldo na trn'].replace(',','.'))), public = False),
       own_address = internals.Field(internals.ObjString(record['IBAN/BBAN']), public = False),
       own_bic = internals.Field(internals.ObjString(record['BIC']), public = False),
       bic = internals.Field(internals.ObjString(record['BIC tegenpartij']), public = False),
@@ -162,14 +162,14 @@ class PaypalTransactionReader(TransactionReader, typename = "PaypalTransactionRe
   # Parse a transaction from a record
   @staticmethod
   def parse_transaction(record, index = 0):
-    amount = std.ObjMoney(currency = internals.ObjString(record['Valuta']), amount = internals.ObjFloat(record['Bruto'].replace(',','.')))
+    amount = internals.ObjMoney(currency = internals.ObjString(record['Valuta']), amount = internals.ObjFloat(record['Bruto'].replace(',','.')))
 
     from_email = record['Van e-mailadres'].lower()
     to_email = record['Naar e-mailadres'].lower()
     own_address = from_email if amount.amount < internals.ObjectFloat(0.0) else to_email
     address = to_email if amount.amount < internals.ObjFloat(0.0) else from_email
 
-    return std.ObjTransaction(
+    return internals.ObjTransaction(
       # Standard fields
       id = internals.ObjString("paypal:{:04d}".format(index)),
       date = internals.ObjDate(datetime.strptime(record['Datum'], '%d-%m-%Y').date()),

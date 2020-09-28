@@ -1,5 +1,6 @@
-from ..internals import *
-
+from .object import Obj, ObjBool, ObjInt, ObjFloat, ObjString
+from .object_record import FieldOptions, Field, ObjRecord
+from .object_date import ObjDate
 from .object_money import ObjMoney
 
 
@@ -7,7 +8,7 @@ from .object_money import ObjMoney
 ### Definition of the transaction class ###
 ###########################################
 
-class ObjTransaction(ObjRecord, typename = "std.Transaction"):
+class ObjTransaction(ObjRecord, typename = "Transaction"):
   # Constructor
   def __init__(self, **fields):
     super().__init__(

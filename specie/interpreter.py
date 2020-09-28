@@ -3,7 +3,7 @@ import os.path
 from colorama import Fore, Back, Style
 
 from . import (ast, functions, grammar, internals, output, parser, query,
-  semantics, std, transactions)
+  semantics, transactions)
 
 
 #####################################
@@ -121,7 +121,8 @@ class Environment:
     globals['print'] = functions.PrintFunction()
     globals['printTitle'] = functions.PrintTitleFunction()
     globals['include'] = functions.IncludeFunction(interpreter)
-    globals['import'] = functions.ImportFunction(interpreter)
+    globals['std'] = internals.namespace_std(interpreter)
+    globals['import'] = internals.namespace_import(interpreter)
     globals['_'] = transactions.TransactionList()
     return cls(None, globals)
 
@@ -232,19 +233,6 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Return the result
     return result
-
-  # Import a file
-  def execute_import(self, file_name, **keywords):
-    # Check if the file exists
-    if (resolved_file_name := self.resolve_file_name(file_name)) is None:
-      raise internals.RuntimeException(f"Import failed: the file '{file_name}' could not be found")
-
-    # Add the imported transactions
-    new_transactions = transactions.TransactionReader(resolved_file_name, **keywords)
-    self.environment['_'].add_all(new_transactions)
-
-    # Return a result object
-    return internals.ObjRecord(count = internals.ObjInt(len(new_transactions)))
 
 
   # Evaluate an expression

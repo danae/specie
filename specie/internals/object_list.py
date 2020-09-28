@@ -3,6 +3,7 @@ from bisect import insort
 from .object import Obj, ObjBool, ObjInt, ObjString
 from .errors import InvalidTypeException, UndefinedIndexException
 
+
 ###########################################
 ### Definition of the list object class ###
 ###########################################
