@@ -18,14 +18,22 @@ class ObjDate(Obj, typename = 'Date'):
 
     if isinstance(value, ObjDate):
       self.value = value.value
+    elif isinstance(value, ObjString):
+      try:
+        self.value = datetime.strptime(value.value, self.format).date()
+      except ValueError:
+        raise RuntimeException(f"Invalid date literal {value}")
     elif isinstance(value, date):
       self.value = value
     elif isinstance(value, datetime):
       self.value = value.date()
     elif isinstance(value, str):
-      self.value = datetime.strptime(value, self.format).date()
+      try:
+        self.value = datetime.strptime(value, self.format).date()
+      except ValueError:
+        raise RuntimeException(f"Invalid date literal {value}")
     else:
-      raise TypeError(f"Unexpected native type {type(value)}")
+      raise TypeError(f"Unexpected native type {value.__class__.__name__}")
 
 
   # Return if this date object is equal to another date object

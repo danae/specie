@@ -19,13 +19,6 @@ from .object_importer import ObjImporter
 from .object_importer_rabobank import ObjRabobankImporter
 
 
-# Create the std namespace
-def namespace_std(interpreter):
-  ns = ObjRecord()
-  ns['Money'] = ObjNativeCallable(ObjMoney, [ObjString, ObjInt])
-  ns['Transaction'] = ObjNativeCallable(ObjTransaction, [ObjRecord])
-  return ns
-
 # Create the import namespace
 def namespace_import(interpreter):
   ns = ObjRecord()

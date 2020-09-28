@@ -5,7 +5,7 @@ import re
 import sys
 import types
 
-from .errors import UndefinedMethodException, UndefinedIndexException
+from .errors import RuntimeException, UndefinedMethodException, UndefinedIndexException
 
 
 ######################################
@@ -202,14 +202,24 @@ class ObjBool(Obj, typename = "Bool"):
 
     if isinstance(value, ObjBool):
       self.value = value.value
+    elif isinstance(value, ObjString):
+      if value.value == "false":
+        self.value = False
+      elif value.value == "true":
+        self.value = True
+      else:
+        raise Valuerror(f"Unexpected native type {value.__class__.__name__} with value {value!r}")
     elif isinstance(value, bool):
       self.value = value
-    elif value == "false":
-      self.value = False
-    elif value == "true":
-      self.value = True
+    elif isinstance(value, str):
+      if value == "false":
+        self.value = False
+      elif value == "true":
+        self.value = True
+      else:
+        raise Valuerror(f"Unexpected native type {value.__class__.__name__} with value {value!r}")
     else:
-      raise TypeError(f"Unexpected native type {type(value)}")
+      raise TypeError(f"Unexpected native type {value.__class__.__name__}")
 
 
   # Return if this bool object is equal to another object
@@ -363,14 +373,20 @@ class ObjInt(ObjNumber, typename = "Int"):
       self.value = value.value
     elif isinstance(value, ObjFloat):
       self.value = int(value.value)
-    elif isinstance(value, Obj) and value.has_method('as_int'):
-      self.value = int(value.call_method('as_int'))
+    elif isinstance(value, ObjString):
+      try:
+        self.value = int(value.value)
+      except ValueError:
+        raise RuntimeException(f"Invalid int literal {value}")
     elif isinstance(value, int):
       self.value = value
     elif isinstance(value, str):
-      self.value = int(value)
+      try:
+        self.value = int(value)
+      except ValueError:
+        raise RuntimeException(f"Invalid int literal {value}")
     else:
-      raise TypeError(f"Unexpected native type {type(value)}")
+      raise TypeError(f"Unexpected native type {value.__class__.__name__}")
 
 
   # Return the addition of two numeric objects
@@ -442,16 +458,22 @@ class ObjFloat(ObjNumber, typename = "Float"):
       self.value = value.value
     elif isinstance(value, ObjInt):
       self.value = float(value.value)
-    elif isinstance(value, Obj) and value.has_method('as_float'):
-      self.value = float(value.call_method('as_float'))
+    elif isinstance(value, ObjString):
+      try:
+        self.value = float(value.value)
+      except ValueError:
+        raise RuntimeException(f"Invalid float literal {value}")
     elif isinstance(value, float):
       self.value = value
     elif isinstance(value, int):
       self.value = float(value)
     elif isinstance(value, str):
-      self.value = float(value)
+      try:
+        self.value = float(value)
+      except ValueError:
+        raise RuntimeException(f"Invalid int literal {value}")
     else:
-      raise TypeError(f"Unexpected native type {type(value)}")
+      raise TypeError(f"Unexpected native type {value.__class__.__name__}")
 
 
   # Return the addition of two numeric objects
@@ -515,12 +537,10 @@ class ObjString(Obj, typename = "String"):
 
     if isinstance(value, ObjString):
       self.value = value.value
-    elif isinstance(value, Obj) and value.has_method('as_string'):
-      self.value = str(value)
     elif isinstance(value, str):
       self.value = value
     else:
-      raise TypeError(f"Unexpected native type {type(value)}")
+      raise TypeError(f"Unexpected native type {value.__class__.__name__}")
 
 
   # Return if this string object is equal to another object
@@ -671,7 +691,7 @@ class ObjRegex(Obj, typename = "Regex"):
     elif isinstance(pattern, str):
       self.pattern = re.compile(pattern, flags)
     else:
-      raise TypeError(f"Unexpected native type {type(pattern)}")
+      raise TypeError(f"Unexpected native type {pattern.__class__.__name__}")
 
   # Return if this regex object is equal to another object
   def __eq__(self):

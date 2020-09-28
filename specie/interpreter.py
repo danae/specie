@@ -121,7 +121,6 @@ class Environment:
     globals['print'] = functions.PrintFunction()
     globals['printTitle'] = functions.PrintTitleFunction()
     globals['include'] = functions.IncludeFunction(interpreter)
-    globals['std'] = internals.namespace_std(interpreter)
     globals['import'] = internals.namespace_import(interpreter)
     globals['_'] = transactions.TransactionList()
     return cls(None, globals)
