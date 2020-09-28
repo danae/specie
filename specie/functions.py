@@ -61,25 +61,3 @@ class IncludeFunction(internals.ObjCallable, typename = 'Native_include'):
     args = [arg._py_value() if isinstance(arg, internals.Obj) else arg for arg in args]
     kwargs = {name: kwarg._py_value() if isinstance(kwarg, internals.Obj) else kwarg for name, kwarg in kwargs.items()}
     return self.interpreter.execute_include(*args, **kwargs)
-
-
-# Class that defines the import function
-class ImportFunction(internals.ObjCallable, typename = 'Native_import'):
-  # Constructor
-  def __init__(self, interpreter):
-    super().__init__()
-    self.interpreter = interpreter
-
-  # Return the required arguments of the function
-  def required_args(self):
-    return [internals.ObjString]
-
-  # Return the required keywords of the function
-  def required_kwargs(self):
-    return {'type': internals.ObjString}
-
-  # Call the function
-  def __call__(self, *args, **kwargs):
-    args = [arg._py_value() if isinstance(arg, internals.Obj) else arg for arg in args]
-    kwargs = {name: kwarg._py_value() if isinstance(kwarg, internals.Obj) else kwarg for name, kwarg in kwargs.items()}
-    return self.interpreter.execute_import(*args, **kwargs)
