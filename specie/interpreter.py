@@ -469,9 +469,10 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     if not isinstance(traversable, internals.ObjTraversable):
       raise internals.InvalidTypeException(f"{traversable} is not traversable")
 
-    # Traverse the expression
-    results = []
+    # Create a list to store the results
+    results = internals.ObjList()
 
+    # Traverse the expression
     traversable.rewind()
     while traversable.valid():
       # Create a new environment with the capture variable
@@ -480,14 +481,13 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
       # Evaluate the body
       result = self.evaluate_with(capture, expr.body)
-      results.append(result)
+      results.insert(result)
 
       # Advance the traversable
       traversable.advance()
 
     # Return the results
-    return internals.ObjList.from_py(results)
-
+    return results
 
   # Visit a function expression
   def visit_function_expr(self, expr: ast.FunctionExpr) -> internals.Obj:
