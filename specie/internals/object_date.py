@@ -57,6 +57,47 @@ class ObjDate(Obj, typename = 'Date'):
   def method_asHash(self) -> 'ObjInt':
     return ObjInt(self.__hash__())
 
+  # Return the date components of this date object
+  def year(self):
+    return self.value.year
+
+  def method_year(self) -> 'ObjInt':
+    return ObjInt(self.year())
+
+  def month(self):
+    return self.value.month
+
+  def method_month(self) -> 'ObjInt':
+    return ObjInt(self.month())
+
+  def day(self):
+    return self.value.day
+
+  def method_day(self) -> 'ObjInt':
+    return ObjInt(self.day())
+
+  def year_date(self):
+    return date(self.value.year, 1, 1)
+
+  def method_yearDate(self) -> 'ObjDate':
+    return ObjDate(self.year_date())
+
+  def month_date(self):
+    return date(self.value.year, self.value.month, 1)
+
+  def method_monthDate(self) -> 'ObjDate':
+    return ObjDate(self.month_date())
+
+  # Return a formatted string representation of this date object
+  def __format__(self, format_spec):
+    if isinstance(format_spec, (ObjString, str)):
+      format_spec = format_spec.value if isinstance(format_spec, ObjString) else format_spec
+      return format(self.value, format_spec)
+    raise InvalidTypeException(format_spec)
+
+  def method_asFormat(self, format_spec: 'ObjString') -> 'ObjString':
+    return ObjString(self.__format__(format_spec))
+
   # Compare this date object with another object
   def __lt__(self, other):
     if isinstance(other, ObjDate):
@@ -139,7 +180,3 @@ class ObjDate(Obj, typename = 'Date'):
   # Return the Python representation for this object
   def __repr__(self):
     return f"{self.__class__.__name__}({self.value!r})"
-
-  # Return a formatted Python representation of this object
-  def __format__(self, spec):
-    return format(self.value, spec)

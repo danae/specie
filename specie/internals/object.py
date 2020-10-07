@@ -648,9 +648,10 @@ class ObjString(Obj, typename = "String"):
 
   # Return the character in this string object at the specified index
   def __getitem__(self, index):
-    if isinstance(index, ObjInt):
+    if isinstance(index, (ObjInt, int)):
+      index = index.value if isinstance(index, ObjInt) else index
       try:
-        return ObjString(self.value[index.value])
+        return ObjString(self.value[index])
       except IndexError:
         raise UndefinedIndexException(index)
     raise InvalidTypeException(index)
@@ -660,8 +661,9 @@ class ObjString(Obj, typename = "String"):
 
   # Return if this string object contains another string object
   def __contains__(self, item):
-    if isinstance(item, ObjString):
-      return ObjBool(self.value.find(item.value) > -1)
+    if isinstance(item, (ObjString, str)):
+      item = item.value if isinstance(item, ObjString) else item
+      return ObjBool(self.value.find(item) > -1)
     raise InvalidTypeException(item)
 
   def method_contains(self, item: 'ObjString') -> 'ObjBool':
