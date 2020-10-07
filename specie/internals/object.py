@@ -22,7 +22,7 @@ class Method:
   def create_callable(self, this_arg):
     from .object_callable import ObjPyCallable
 
-    callable = ObjPyCallable(self.func, self.params)
+    callable = ObjPyCallable(self.func, *self.params)
     callable = callable.partial(this_arg)
     return callable
 
@@ -64,12 +64,13 @@ class ObjMeta(type):
       cls.methods[method_name] = Method(method_func, params)
 
   # Return a parameter resolved to a class
-  @classmethod
   def resolve(cls, param):
     if param.name == "self":
       return cls
     elif param.annotation == inspect.Parameter.empty:
       return cls.obj_classes['Obj']
+    elif ',' not in param.annotation:
+      return cls.obj_classes[param.annotation]
     else:
       return tuple(cls.obj_classes[annot.strip()] for annot in param.annotation.split(','))
 

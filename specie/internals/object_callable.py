@@ -27,14 +27,11 @@ class ObjCallable(Obj, typename = "Callable"):
   def partial(self, *args):
     return ObjPartialCallable(self, *args)
 
-  def method_partial(self, args: 'Obj') -> 'ObjCallable':
-    return self.partial(args._py_list())
-
 
   # Return the string representation of this object
   def __str__(self):
-    params = [f"{param[0].typename} = {param[1]}" if isinstance(param, tuple) else f"{param.typename}" for param in self.parameters()]
-    return f"<{self.__class__.typename} (" + ', '.join(params) + ")>"
+    params = [' | '.join(p.typename for p in param) if isinstance(param, tuple) else param.typename for param in self.parameters()]
+    return f"<{self.__class__.typename}(" + ', '.join(params) + ")>"
 
   # Return the Python representation for this object
   def __repr__(self):
@@ -54,7 +51,7 @@ class ObjPartialCallable(ObjCallable, typename = "PartialCallable"):
 
   # Return the parameters of the callable
   def parameters(self):
-    return self.callable.arity()[len(self.args):]
+    return self.callable.parameters()[len(self.args):]
 
   # Call the callable
   def __call__(self, *args):
@@ -62,7 +59,9 @@ class ObjPartialCallable(ObjCallable, typename = "PartialCallable"):
 
   # Return the string representation of this object
   def __str__(self):
-    return f"<{self.__class__.typename} with {self.args}>"
+    params = [' | '.join(p.typename for p in param) if isinstance(param, tuple) else param.typename for param in self.parameters()]
+    args = [str(arg) for arg in self.args]
+    return f"<{self.__class__.typename}(" + ', '.join(params) + ") bound to (" + ', '.join(args) + ")>"
 
   def method_string(self) -> 'ObjString':
     return ObjString(self.__str__())
