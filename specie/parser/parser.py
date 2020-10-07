@@ -30,8 +30,11 @@ class Parser:
   # Parse the iterable of tokens, but fail if not all tokens are consumed
   def parse_strict(self, tokens, index):
     result = self.parse(tokens, index)
-    #if result.index != len(tokens):
-      #raise ParserError(f"Unexpected token {tokens[index]}, the parser didn't consume all tokens")
+    if result.index != len(tokens):
+      if not result:
+        raise result.errors[0]
+      else:
+        raise ParserError(f"Unexpected token {tokens[result.index]}, the parser didn't consume all tokens")
     return result
 
   # Convert to representation
