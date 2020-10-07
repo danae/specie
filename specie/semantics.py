@@ -106,7 +106,8 @@ class Resolver(ast.ExprVisitor[None]):
   def visit_if_expr(self, expr: ast.IfExpr) -> None:
     self.resolve(expr.condition)
     self.resolve(expr.then_clause)
-    self.resolve(expr.else_clause)
+    if expr.else_clause is not None:
+      self.resolve(expr.else_clause)
 
   # Visit a for expression
   def visit_for_expr(self, expr: ast.ForExpr) -> None:

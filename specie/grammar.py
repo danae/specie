@@ -217,7 +217,7 @@ parameters_arg = parser.describe('parameters_arg', IDENTIFIER)
 parameters = parser.describe('parameters', parameters_arg * SYMBOL_COMMA)
 
 # Function expressions
-function_parameters = parser.describe('function_parameters', parenthesized(parameters) | parser.map(lambda param: [param], parameters_arg))
+function_parameters = parser.describe('function_parameters', parenthesized(parameters))
 function_body = parser.describe('function_body', SYMBOL_ARROW >> parser.lazy(lambda: expr) | block_base)
 function = parser.describe('function', parser.concat(ast.FunctionExpr, function_parameters, function_body) | block)
 
