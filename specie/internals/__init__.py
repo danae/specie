@@ -10,6 +10,7 @@ from .object import (Obj, ObjNull, ObjBool, ObjNumber, ObjInt, ObjFloat,
 # Import objects
 from .object_callable import ObjCallable, ObjPartialCallable, ObjPyCallable
 from .object_function import ObjFunction
+from .object_traversable import ObjTraversable
 from .object_list import ObjList, ObjSortedList
 from .object_record import FieldOptions, Field, ObjRecord
 from .object_date import ObjDate

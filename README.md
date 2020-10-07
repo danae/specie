@@ -14,7 +14,7 @@
 * [X] *Grammar*: add function definitions
 * [X] Add resolver for correct closure handling
 * [X] Add methods as get expression
-* [ ] Add for-in expressions
+* [X] Add for-in expressions
 * [ ] Add if-expressions
 * [ ] Rework queries
 * [ ] Create a new Table object for a collection of records

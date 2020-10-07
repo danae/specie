@@ -1,6 +1,7 @@
 from bisect import insort
 
 from .object import Obj, ObjBool, ObjInt, ObjString
+from .object_traversable import ObjTraversable
 from .errors import InvalidTypeException, UndefinedIndexException
 
 
@@ -8,13 +9,12 @@ from .errors import InvalidTypeException, UndefinedIndexException
 ### Definition of the list object class ###
 ###########################################
 
-class ObjList(Obj, typename = "List"):
+class ObjList(ObjTraversable, typename = "List"):
   # Constructor
   def __init__(self, *items):
     super().__init__()
 
     self.items = []
-    self.add_all(items)
     self.insert_all(items)
 
 
@@ -38,6 +38,18 @@ class ObjList(Obj, typename = "List"):
       del self.items[index]
     except IndexError:
       raise UndefinedIndexException(index)
+
+
+  # Return if the cursor is at a valid position in the traversable object
+  def valid(self):
+    return self.cursor < len(self.items)
+
+  # Return the element at the cursor of the list object
+  def current(self):
+    if self.valid():
+      return self.items[self.cursor]
+    else:
+      raise UndefinedIndexException(self.cursor)
 
 
   # Return if this list object is equal to another object
@@ -121,11 +133,11 @@ class ObjList(Obj, typename = "List"):
     return self.map(func)
 
   # Filter the items of the list
-  def filter(self, func):
+  def where(self, func):
     return ObjList.from_py(item for item in self if func(item))
 
-  def method_filter(self, func: 'ObjCallable') -> 'ObjList':
-    return self.filter(func)
+  def method_where(self, func: 'ObjCallable') -> 'ObjList':
+    return self.where(func)
 
 
   # Return the Python value for this object
@@ -139,10 +151,6 @@ class ObjList(Obj, typename = "List"):
   # Return the Python representation for this object
   def __repr__(self):
     return f"{self.__class__.__name__}(*{self.items!r})"
-
-  # Convert to iterator
-  def __iter__(self):
-    return iter(self.items)
 
 
   # Convert a Python iterable to a list object

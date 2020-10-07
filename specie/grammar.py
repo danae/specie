@@ -74,10 +74,10 @@ rules = [
 
   # Keyword tokens
   parser.Rule('keyword_do', r'do', None),
+  parser.Rule('keyword_for', r'for', None),
   parser.Rule('keyword_if', r'if', None),
   parser.Rule('keyword_end', r'end', None),
   parser.Rule('keyword_from', r'from', None),
-  parser.Rule('keyword_regex', r'regex', None),
   parser.Rule('keyword_var', r'var', None),
 
   # Literal tokens
@@ -200,10 +200,14 @@ query_action = parser.describe('query_action', parser.concat(ast.Call, IDENTIFIE
 query_where = parser.describe('query_where', KEYWORD_IF >> parser.lazy(lambda: expr))
 query = parser.describe('query', parser.concat(ast.QueryExpr, parser.map(ast.VariableExpr, KEYWORD_FROM >> IDENTIFIER), query_action, query_where ^ None) | logic_or)
 
+# Control expressions
+control_for = parser.describe('control_for', parser.concat(ast.ForExpr, parser.map(ast.VariableExpr, KEYWORD_FOR >> IDENTIFIER), OPERATOR_IN >> parser.lazy(lambda: expr), parser.lazy(lambda: expr)))
+control = parser.describe('control', control_for | query)
+
 # Block expressions
 block_contents = parser.describe('block_contents', parser.map(ast.BlockExpr, parser.lazy(lambda: expr) * parser.token('newline')))
 block_base = parser.describe('block_base', KEYWORD_DO >> parser.token('newline') >> block_contents << parser.token('newline') << KEYWORD_END)
-block = parser.describe('block', block_base | query)
+block = parser.describe('block', block_base | control)
 
 # Parameters
 parameters_arg = parser.describe('parameters_arg', IDENTIFIER)

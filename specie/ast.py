@@ -250,6 +250,23 @@ class QueryExpr(Expr):
     return visitor.visit_query_expr(self)
 
 
+# Class that defines a for expression
+class ForExpr(Expr):
+  def __init__(self, variable, expression, body):
+    self.variable = variable
+    self.expression = expression
+    self.body = body
+
+  def __str__(self):
+    return f"for {self.variable} in {self.expression} {self.body}"
+
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.variable!r}, {self.expression}, {self.body!r})"
+
+  def accept(self, visitor):
+    return visitor.visit_for_expr(self)
+
+
 # Class that defines a function expression
 class FunctionExpr(Expr):
   def __init__(self, parameters, body):

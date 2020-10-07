@@ -102,6 +102,15 @@ class Resolver(ast.ExprVisitor[None]):
     if expr.predicate:
       self.resolve(expr.predicate)
 
+  # Visit a for expression
+  def visit_for_expr(self, expr: ast.ForExpr) -> None:
+    self.resolve(expr.expression)
+    self.begin_scope()
+    self.declare_variable(expr.variable.name.value)
+    self.initialize_variable(expr.variable.name.value)
+    self.resolve(expr.body)
+    self.end_scope()
+
   # Visit a function expression
   def visit_function_expr(self, expr: ast.FunctionExpr) -> None:
     self.begin_scope()

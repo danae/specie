@@ -447,6 +447,35 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     # Create a query and execute that
     return query.Query(table, expr.action, predicate).execute(self)
 
+  # Visit a for expression
+  def visit_for_expr(self, expr: ast.ForExpr) -> internals.Obj:
+    # Evaluate the expression
+    traversable = self.evaluate(expr.expression)
+
+    # Check if the expression is traversable
+    if not isinstance(traversable, internals.ObjTraversable):
+      raise internals.InvalidTypeException(f"{traversable} is not traversable")
+
+    # Traverse the expression
+    results = []
+
+    traversable.rewind()
+    while traversable.valid():
+      # Create a new environment with the capture variable
+      capture = self.environment.nested()
+      capture.declare_variable(expr.variable.name, traversable.current())
+
+      # Evaluate the body
+      result = self.evaluate_with(capture, expr.body)
+      results.append(result)
+
+      # Advance the traversable
+      traversable.advance()
+
+    # Return the results
+    return internals.ObjList.from_py(results)
+
+
   # Visit a function expression
   def visit_function_expr(self, expr: ast.FunctionExpr) -> internals.Obj:
     return internals.ObjFunction(self, expr, self.environment)
