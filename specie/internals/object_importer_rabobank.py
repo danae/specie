@@ -34,7 +34,7 @@ class ObjRabobankImporter(ObjImporter):
       # Iterate over the records
       for record in reader:
         # Insert the record as a transaction
-        transactions.add(self.parse(record))
+        transactions.insert(self.parse(record))
 
     # Return the transactions
     return transactions

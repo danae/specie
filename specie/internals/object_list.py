@@ -15,6 +15,7 @@ class ObjList(Obj, typename = "List"):
 
     self.items = []
     self.add_all(items)
+    self.insert_all(items)
 
 
   # Get an item in the list
@@ -78,20 +79,20 @@ class ObjList(Obj, typename = "List"):
     return self.__getitem__(index)
 
   # Add an item to this list object
-  def add(self, item):
+  def insert(self, item):
     self.items.append(item)
 
-  def method_add(self, item: 'Obj') -> 'ObjList':
-    self.add(item)
+  def method_insert(self, item: 'Obj') -> 'ObjList':
+    self.insert(item)
     return self
 
   # Add several items to this list object
-  def add_all(self, list):
+  def insert_all(self, list):
     for item in list:
-      self.add(item)
+      self.insert(item)
 
-  def method_addAll(self, list: 'ObjList') -> 'ObjList':
-    self.add_all(list)
+  def method_insertAll(self, list: 'ObjList') -> 'ObjList':
+    self.insert_all(list)
     return self
 
   # Delete an item from this list object
@@ -157,8 +158,8 @@ class ObjList(Obj, typename = "List"):
 class ObjSortedList(ObjList, typename = "SortedList"):
   # Constructor
   def __init__(self, *items):
-    ObjList.__init__(self, *items)
+    super().__init__(*items)
 
   # Add an item to this list object
-  def add(self, item):
+  def insert(self, item):
     insort(self.items, item)

@@ -271,7 +271,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
   def visit_list_expr(self, expr: ast.ListExpr) -> internals.Obj:
     list_object = internals.ObjList()
     for item in expr:
-      list_object.add(self.evaluate(item))
+      list_object.insert(self.evaluate(item))
     return list_object
 
   # Visit a record expression

@@ -31,7 +31,7 @@ class ObjImporter(ObjCallable):
     transactions = self.do(resolved_file_name, options)
 
     # Add the imported transactions
-    self.interpreter.globals['_'].add_all(transactions)
+    self.interpreter.globals['_'].insert_all(transactions)
 
     # Return a result object
     return ObjRecord(count = ObjInt(len(transactions)))
