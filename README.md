@@ -15,7 +15,7 @@
 * [X] Add resolver for correct closure handling
 * [X] Add methods as get expression
 * [X] Add for-in expressions
-* [ ] Add if-expressions
+* [X] Add if-expressions
 * [ ] Rework queries
 * [ ] Create a new Table object for a collection of records
 * [ ] Update the TransactionList class to use the new Table model

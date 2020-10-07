@@ -75,9 +75,11 @@ rules = [
   # Keyword tokens
   parser.Rule('keyword_do', r'do', None),
   parser.Rule('keyword_for', r'for', None),
-  parser.Rule('keyword_if', r'if', None),
-  parser.Rule('keyword_end', r'end', None),
   parser.Rule('keyword_from', r'from', None),
+  parser.Rule('keyword_if', r'if', None),
+  parser.Rule('keyword_else', r'else', None),
+  parser.Rule('keyword_end', r'end', None),
+  parser.Rule('keyword_then', r'then', None),
   parser.Rule('keyword_var', r'var', None),
 
   # Literal tokens
@@ -201,8 +203,9 @@ query_where = parser.describe('query_where', KEYWORD_IF >> parser.lazy(lambda: e
 query = parser.describe('query', parser.concat(ast.QueryExpr, parser.map(ast.VariableExpr, KEYWORD_FROM >> IDENTIFIER), query_action, query_where ^ None) | logic_or)
 
 # Control expressions
+control_if = parser.describe('control_if', parser.concat(ast.IfExpr, KEYWORD_IF >> parser.lazy(lambda: expr), KEYWORD_THEN >> parser.lazy(lambda: expr), KEYWORD_ELSE >> parser.lazy(lambda: expr) ^ None))
 control_for = parser.describe('control_for', parser.concat(ast.ForExpr, parser.map(ast.VariableExpr, KEYWORD_FOR >> IDENTIFIER), OPERATOR_IN >> parser.lazy(lambda: expr), parser.lazy(lambda: expr)))
-control = parser.describe('control', control_for | query)
+control = parser.describe('control', control_if | control_for | query)
 
 # Block expressions
 block_contents = parser.describe('block_contents', parser.map(ast.BlockExpr, parser.lazy(lambda: expr) * parser.token('newline')))

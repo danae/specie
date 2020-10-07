@@ -447,6 +447,19 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     # Create a query and execute that
     return query.Query(table, expr.action, predicate).execute(self)
 
+  # Visit an if expression
+  def visit_if_expr(self, expr: ast.IfExpr) -> internals.Obj:
+    # Evaluate the condition
+    condition = bool(self.evaluate(expr.condition))
+    if condition:
+      # Evaluate the then clause
+      return self.evaluate(expr.then_clause)
+    elif expr.else_clause is not None:
+      # Evaluate the else clause if present, else return null
+      return self.evaluate(expr.else_clause)
+    else:
+      return internals.ObjNull()
+
   # Visit a for expression
   def visit_for_expr(self, expr: ast.ForExpr) -> internals.Obj:
     # Evaluate the expression

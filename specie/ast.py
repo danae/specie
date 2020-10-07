@@ -250,6 +250,26 @@ class QueryExpr(Expr):
     return visitor.visit_query_expr(self)
 
 
+# Class that defines an if expression
+class IfExpr(Expr):
+  def __init__(self, condition, then_clause, else_clause):
+    self.condition = condition
+    self.then_clause = then_clause
+    self.else_clause = else_clause
+
+  def __str__(self):
+    if self.else_clause is not None:
+      return f"if {self.condition} then {self.then_clause} else {self.else_clause}"
+    else:
+      return f"if {self.condition} then {self.then_clause}"
+
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.condition!r}, {self.then_clause}, {self.else_clause!r})"
+
+  def accept(self, visitor):
+    return visitor.visit_if_expr(self)
+
+
 # Class that defines a for expression
 class ForExpr(Expr):
   def __init__(self, variable, expression, body):
