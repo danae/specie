@@ -272,16 +272,16 @@ class IfExpr(Expr):
 
 # Class that defines a for expression
 class ForExpr(Expr):
-  def __init__(self, variable, expression, body):
+  def __init__(self, variable, iterable, body):
     self.variable = variable
-    self.expression = expression
+    self.iterable = iterable
     self.body = body
 
   def __str__(self):
-    return f"for {self.variable} in {self.expression} {self.body}"
+    return f"for {self.variable} in {self.iterable} {self.body}"
 
   def __repr__(self):
-    return f"{self.__class__.__name__}({self.variable!r}, {self.expression}, {self.body!r})"
+    return f"{self.__class__.__name__}({self.variable!r}, {self.iterable}, {self.body!r})"
 
   def accept(self, visitor):
     return visitor.visit_for_expr(self)
@@ -404,6 +404,12 @@ class ExprVisitor(Generic[T]):
     raise NotImplementedError()
 
   def visit_logical_expr(self, expr: LogicalExpr) -> T:
+    raise NotImplementedError()
+
+  def visit_if_expr(self, expr: IfExpr) -> T:
+    raise NotImplementedError()
+
+  def visit_for_expr(self, expr: ForExpr) -> T:
     raise NotImplementedError()
 
   def visit_query_expr(self, expr: QueryExpr) -> T:

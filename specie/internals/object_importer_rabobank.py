@@ -22,7 +22,7 @@ class ObjRabobankImporter(ObjImporter):
     super().__init__(interpreter)
 
   # Import a file with Rabobank transactions
-  def do(self, file_name, options):
+  def parse(self, file_name, options):
     # Create a new transaction list
     transactions = ObjList()
 
@@ -34,13 +34,13 @@ class ObjRabobankImporter(ObjImporter):
       # Iterate over the records
       for record in reader:
         # Insert the record as a transaction
-        transactions.insert(self.parse(record))
+        transactions.insert(self.parse_record(record))
 
     # Return the transactions
     return transactions
 
   # Parse a Rabobank record
-  def parse(self, record):
+  def parse_record(self, record):
     return ObjTransaction(
       # Standard fields
       id = ObjString("rabobank:{}".format(record['Volgnr'])),

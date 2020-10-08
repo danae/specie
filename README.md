@@ -17,6 +17,8 @@
 * [X] Add for-in expressions
 * [X] Add if-expressions
 * [ ] Rework queries
+
+### Should
 * [ ] Create a new Table object for a collection of records
 * [ ] Update the TransactionList class to use the new Table model
 

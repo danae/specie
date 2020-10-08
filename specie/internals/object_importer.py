@@ -28,14 +28,14 @@ class ObjImporter(ObjCallable):
       raise RuntimeException(f"Import failed: the file '{file_name}' could not be found")
 
     # Import the transactions
-    transactions = self.do(resolved_file_name, options)
+    transactions = self.parse(resolved_file_name, options)
 
     # Add the imported transactions
-    self.interpreter.globals['_'].insert_all(transactions)
+    self.interpreter.globals['_'].insort_all(transactions)
 
     # Return a result object
     return ObjRecord(count = ObjInt(len(transactions)))
 
   # Import a file with transactions
-  def do(self, file_name, options):
+  def parse(self, file_name, options):
     raise NotImplementedError()

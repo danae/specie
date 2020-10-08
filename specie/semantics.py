@@ -111,7 +111,7 @@ class Resolver(ast.ExprVisitor[None]):
 
   # Visit a for expression
   def visit_for_expr(self, expr: ast.ForExpr) -> None:
-    self.resolve(expr.expression)
+    self.resolve(expr.iterable)
     self.begin_scope()
     self.declare_variable(expr.variable.name.value)
     self.initialize_variable(expr.variable.name.value)

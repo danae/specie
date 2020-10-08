@@ -11,6 +11,11 @@ class RuntimeException(Exception):
       return f"{self.message}"
 
 
+# Exception that is raised when an invalid state is encountered
+class InvalidStateException(RuntimeException):
+  pass
+
+
 # Exception that is raised when an invalid type is encountered
 class InvalidTypeException(RuntimeException):
   pass

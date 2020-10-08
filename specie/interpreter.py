@@ -462,29 +462,26 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
   # Visit a for expression
   def visit_for_expr(self, expr: ast.ForExpr) -> internals.Obj:
-    # Evaluate the expression
-    traversable = self.evaluate(expr.expression)
+    # Evaluate the iterable
+    iterable = self.evaluate(expr.iterable)
 
-    # Check if the expression is traversable
-    if not isinstance(traversable, internals.ObjTraversable):
-      raise internals.InvalidTypeException(f"{traversable} is not traversable")
+    # Check if the expression is iterable
+    if not isinstance(iterable, (internals.ObjIterable, internals.ObjIterator)):
+      raise internals.InvalidTypeException(f"{iterable} is not iterable")
 
     # Create a list to store the results
     results = internals.ObjList()
 
-    # Traverse the expression
-    traversable.rewind()
-    while traversable.valid():
+    # Iterate over the iterable
+    iterator = iter(iterable) if isinstance(iterable, internals.ObjIterable) else iterable
+    while iterator.advance():
       # Create a new environment with the capture variable
       capture = self.environment.nested()
-      capture.declare_variable(expr.variable.name, traversable.current())
+      capture.declare_variable(expr.variable.name, iterator.current())
 
       # Evaluate the body
       result = self.evaluate_with(capture, expr.body)
       results.insert(result)
-
-      # Advance the traversable
-      traversable.advance()
 
     # Return the results
     return results

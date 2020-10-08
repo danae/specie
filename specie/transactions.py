@@ -13,7 +13,7 @@ from . import ast, internals
 
 
 # Transaction list class
-class TransactionList(internals.ObjSortedList, typename = "TransactionList"):
+class TransactionList(internals.ObjList, typename = "TransactionList"):
   # Constructor
   def __init__(self, *items):
     super().__init__(*items)
