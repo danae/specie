@@ -2,7 +2,7 @@ import os.path
 
 from colorama import Fore, Back, Style
 
-from . import ast, grammar, internals, output, parser, query, semantics, transactions
+from . import ast, grammar, internals, output, parser, query, semantics
 
 
 #####################################
@@ -127,7 +127,7 @@ class Environment:
     globals['import'] = internals.namespace_import(interpreter)
 
     # Tables
-    globals['_'] = transactions.TransactionList()
+    globals['_'] = internals.ObjList()
 
     return cls(None, globals)
 

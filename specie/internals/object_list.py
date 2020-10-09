@@ -1,7 +1,7 @@
 from bisect import insort
 
 from .object import Obj, ObjBool, ObjInt, ObjString
-from .object_iterable import ObjIterable, ObjIterator, ObjDeleteIterator
+from .object_iterable import ObjIterable, ObjIterator
 from .errors import InvalidStateException, InvalidTypeException, UndefinedIndexException
 
 
@@ -130,26 +130,14 @@ class ObjList(ObjIterable, typename = "List"):
     self.delete(item)
     return self
 
+  """
   # Return if the list object contains the specified item
   def __contains__(self, item):
     return item in self.items
 
   def method_contains(self, item: 'Obj') -> 'ObjBool':
     return ObjBool(self.__contains__(item))
-
-  # Map the items of the list
-  def map(self, func):
-    return ObjList.from_py(func(item) for item in self)
-
-  def method_map(self, func: 'ObjCallable') -> 'ObjList':
-    return self.map(func)
-
-  # Filter the items of the list
-  def where(self, func):
-    return ObjList.from_py(item for item in self if func(item))
-
-  def method_where(self, func: 'ObjCallable') -> 'ObjList':
-    return self.where(func)
+  """
 
 
   # Return the Python value for the object
@@ -175,7 +163,7 @@ class ObjList(ObjIterable, typename = "List"):
 ### Definition of the list iterator object class ###
 ####################################################
 
-class ObjListIterator(ObjDeleteIterator, typename = "ListIterator"):
+class ObjListIterator(ObjIterator, typename = "ListIterator"):
   # Constructor
   def __init__(self, list):
     super().__init__()

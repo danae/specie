@@ -16,6 +16,7 @@
 * [X] Add methods as get expression
 * [X] Add for-in expressions
 * [X] Add if-expressions
+* [ ] Add optional arguments to functions
 * [ ] Rework queries
 
 ### Should
@@ -27,3 +28,36 @@
 * [ ] *Neat*: Enable forward declarations in the metaclass
 * [ ] *Neat*: Give type errors a meaningful type instead of the Python types
 * [ ] Buffer print output (so it does not print if e.g. the function is an invalid assignment target)
+
+
+## Queries
+
+### Terminal
+* [X] --> **select** → traversable
+* [X] --> **select** (object) → traversable
+* [X] --> **distinct** (object) → traversable
+* [X] **count** → int
+* [ ] **fold** (callable(object, object) → object) → object
+* [ ] **fold** (callable(object, object) → object, object) → object
+* [ ] --> **sum** → number
+* [ ] --> **sum** (object) → number
+* [ ] **min** → number
+* [ ] **min** (object) → number
+* [ ] **max** → number
+* [ ] **max** (object) → number
+* [ ] **average** → number
+* [ ] **average** (object) → number
+* [ ] **median** → number
+* [ ] **median** (object) → number
+* [X] **contains** (object) → bool
+* [X] **any** (bool) → bool
+* [X] **all** (bool) → bool
+* [X] --> **each** → null
+* [X] --> **drop** → null
+
+### Intermediate
+* [X] --> **where** (bool) → traversable
+* [ ] **orderBy** (object) → traversable
+* [ ] **orderByDesc** (object) → traversable
+* [ ] **thenBy** (object) → traversable
+* [ ] **thenByDesc** (object) → traversable

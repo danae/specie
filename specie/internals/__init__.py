@@ -10,7 +10,7 @@ from .object import (Obj, ObjNull, ObjBool, ObjNumber, ObjInt, ObjFloat,
 # Import objects
 from .object_callable import ObjCallable, ObjPartialCallable, ObjPyCallable
 from .object_function import ObjFunction
-from .object_iterable import ObjIterable, ObjIterator, ObjDeleteIterator
+from .object_iterable import ObjIterable, ObjDelegatedIterable, ObjIterator
 from .object_list import ObjList, ObjListIterator
 from .object_record import FieldOptions, Field, ObjRecord
 from .object_date import ObjDate
