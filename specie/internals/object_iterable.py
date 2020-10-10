@@ -49,17 +49,21 @@ class ObjIterable(Obj, typename = "Iterable"):
     return ObjInt(self.__len__())
 
   # Fold the elements in this iterable
-  def fold(self, function, initial = None):
+  def fold(self, function, initial = ObjNull()):
     iterator = iter(self)
-    if initial is None:
-      value = next(iterator)
-    else:
+
+    if not isinstance(initial, ObjNull):
       value = initial
-    for e in iterator:
-      value = function(value, e)
+    elif iterator.advance():
+      value = iterator.current()
+    else:
+      return initial
+
+    while iterator.advance():
+      value = function(value, iterator.current())
     return value
 
-  def method_fold(self, function: 'ObjCallable', initial: 'Obj' = None) -> 'Obj':
+  def method_fold(self, function: 'ObjCallable', initial: 'Obj' = ObjNull()) -> 'Obj':
     return self.fold(function, initial)
 
   # Return if this iterable contains an element

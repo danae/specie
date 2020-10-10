@@ -94,8 +94,11 @@ class Fold(Function):
   # Call the function
   def call(self, interpreter, variable, iterable):
     function = interpreter.evaluate(self.func)
-    initial = interpreter.evaluate(self.initial) if self.initial is not None else None
-    return iterable.method_fold(function, initial)
+    if self.initial is not None:
+      initial = interpreter.evaluate(self.initial)
+      return iterable.method_fold(function, initial)
+    else:
+      return iterable.method_fold(function)
 
   # Resolve the function
   def resolve(self):
