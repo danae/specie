@@ -16,7 +16,7 @@ from .object_importer import ObjImporter
 ### Definition of the Rabobank importer class ###
 #################################################
 
-class ObjRabobankImporter(ObjImporter):
+class ObjRabobankImporter(ObjImporter, typename = "RabobankImporter"):
   # Constructor
   def __init__(self, interpreter):
     super().__init__(interpreter)

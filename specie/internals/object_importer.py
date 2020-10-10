@@ -8,7 +8,7 @@ from .errors import RuntimeException
 ### Definition of the importer class ###
 ########################################
 
-class ObjImporter(ObjCallable):
+class ObjImporter(ObjCallable, typename = "Importer"):
   # Constructor
   def __init__(self, interpreter):
     super().__init__()
