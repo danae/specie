@@ -8,15 +8,16 @@ from .object_callable import ObjCallable
 
 class ObjFunction(ObjCallable, typename = "Function"):
   # Constructor
-  def __init__(self, interpreter, expr, closure):
+  def __init__(self, interpreter, params, body, closure):
     super().__init__()
     self.interpreter = interpreter
-    self.expr = expr
+    self.params = params
+    self.body = body
     self.closure = closure
 
   # Return the parameters of the callable
   def parameters(self):
-    return [Obj] * len(self.expr.parameters)
+    return self.params
 
   # Call the function
   def __call__(self, *args, **kwargs):
@@ -24,8 +25,12 @@ class ObjFunction(ObjCallable, typename = "Function"):
     environment = self.closure.nested()
 
     # Declare the arguments
-    for i, parameter in enumerate(self.expr.parameters):
-      environment.declare_variable(parameter, args[i])
+    for i in range(len(args)):
+      environment.declare(self.params[i].name, args[i])
+
+    # Declare the default parameters
+    for i in range(i + 1, len(self.params)):
+      environment.declare(self.params[i].name, self.params[i].default)
 
     # Execute the body and return the result
-    return self.interpreter.evaluate_with(environment, self.expr.body)
+    return self.interpreter.evaluate_with(environment, self.body)

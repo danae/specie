@@ -1,3 +1,4 @@
+import collections
 import re
 
 from . import ast, internals, parser
@@ -96,9 +97,12 @@ rules = [
 ]
 
 
-###########################################
-### Definition of parser helper methods ###
-###########################################
+#############################################
+### Definition of parser helper functions ###
+#############################################
+
+# Class that defines a parameter
+Parameter = collections.namedtuple('Parameter', ['name', 'default'])
 
 # Map a call expression
 def map_call(expr, token, value):
@@ -110,8 +114,31 @@ def map_call(expr, token, value):
   elif token.name == 'symbol_dot':
     return ast.GetExpr(expr, token, value)
 
-  # Otherwise fail
-  raise parser.ParserError(f"Invalid token in call expression: {token}")
+  # Otherwise fail (should not reach this in normal execution)
+  raise parser.ParserError(f"Invalid token in call expression: {token}", token.location)
+
+# Map a parameter list
+def map_parameters(params):
+  # Hold if there are any optional parameters
+  optional_params = False
+
+  # Iterate over the parameters
+  for param in params:
+    # Set that there are optional parameters if we found one
+    if not optional_params and param.default is not None:
+      optional_params = True
+
+    # Fail if we found a required parameter after an optional one
+    elif optional_params and param.default is None:
+      raise parser.ParserError(f"Invalid required parameter after an optional parameter: {param}", param.name.location)
+
+  # Return the parameters
+  return params
+
+# Map a query function
+def map_query_func(name, args):
+  print(f"{name=} {args=}")
+  return (name, args)
 
 # Map an assignment expression
 def map_assignment(expr, op, value):
@@ -124,7 +151,7 @@ def map_assignment(expr, op, value):
     return ast.SetExpr(expr.expression, expr.token, expr.name, op, value)
 
   # Otherwise fail
-  raise parser.ParserError(f"Invalid assignment target: {expr.token}")
+  raise parser.ParserError(f"Invalid assignment target: {expr}", op.location)
 
 
 #################################
@@ -166,10 +193,14 @@ list = parser.describe('list', parser.map(ast.ListExpr, square_bracketed(list_it
 record_item = parser.describe('record_item', IDENTIFIER + (SYMBOL_COLON >> parser.lazy(lambda: expr)))
 record = parser.describe('record', parser.map(ast.RecordExpr, curly_bracketed(record_item * SYMBOL_COMMA)))
 
+# Variable expressions
+variable = parser.describe('variable', parser.map(ast.VariableExpr, IDENTIFIER))
+
+# Grouping expressions
+grouping = parser.describe('grouping', parser.map(ast.GroupingExpr, parenthesized(parser.lazy(lambda: expr))))
+
 # Primary expressions
-primary_variable = parser.describe('primary_variable', parser.map(ast.VariableExpr, IDENTIFIER))
-primary_grouping = parser.describe('primary_grouping', parser.map(ast.GroupingExpr, parenthesized(parser.lazy(lambda: expr))))
-primary = parser.describe('primary', literal | list | record | primary_variable | primary_grouping)
+primary = parser.describe('primary', literal | list | record | variable | grouping)
 
 # Arguments
 arguments_item = parser.describe('arguments_item', parser.lazy(lambda: expr))
@@ -213,8 +244,8 @@ block_base = parser.describe('block_base', KEYWORD_DO >> parser.token('newline')
 block = parser.describe('block', block_base | control)
 
 # Parameters
-parameters_arg = parser.describe('parameters_arg', IDENTIFIER)
-parameters = parser.describe('parameters', parameters_arg * SYMBOL_COMMA)
+parameters_arg = parser.describe('parameters_arg', parser.concat(Parameter, IDENTIFIER, OPERATOR_ASSIGN >> parser.lazy(lambda: expr) ^ None))
+parameters = parser.describe('parameters', parser.map(map_parameters, parameters_arg * SYMBOL_COMMA))
 
 # Function expressions
 function_parameters = parser.describe('function_parameters', parenthesized(parameters))

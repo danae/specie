@@ -27,6 +27,7 @@
 * [ ] *Performance*: Create separate parse tree that is converted into an AST after parsing
 * [ ] *Neat*: Enable forward declarations in the metaclass
 * [ ] *Neat*: Give type errors a meaningful type instead of the Python types
+* [ ] Add variadic function arguments
 * [ ] Buffer print output (so it does not print if e.g. the function is an invalid assignment target)
 
 

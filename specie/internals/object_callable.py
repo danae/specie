@@ -27,10 +27,13 @@ class ObjCallable(Obj, typename = "Callable"):
   def partial(self, *args):
     return ObjPartialCallable(self, *args)
 
+  def method_partial(self, args: 'Obj') -> 'ObjCallable':
+    return self.partial(*args)
+
 
   # Return the string representation of this object
   def __str__(self):
-    params = [' | '.join(p.typename for p in param) if isinstance(param, tuple) else param.typename for param in self.parameters()]
+    params = [f"{param}" for param in self.parameters()]
     return f"<{self.__class__.typename}(" + ', '.join(params) + ")>"
 
   # Return the Python representation for this object

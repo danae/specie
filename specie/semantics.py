@@ -121,9 +121,9 @@ class Resolver(ast.ExprVisitor[None]):
   # Visit a function expression
   def visit_function_expr(self, expr: ast.FunctionExpr) -> None:
     self.begin_scope()
-    for parameter in expr.parameters:
-      self.declare_variable(parameter.value)
-      self.initialize_variable(parameter.value)
+    for param in expr.params:
+      self.declare_variable(param.name.value)
+      self.initialize_variable(param.name.value)
     self.resolve(expr.body)
     self.end_scope()
 

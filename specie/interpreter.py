@@ -58,6 +58,10 @@ class Environment:
     else:
       return False
 
+  # Set a varable in the CURRENT environmentn
+  def declare(self, name, value):
+    self.variables[name] = value
+
   # Create a nested environment with this environment as previous environment
   def nested(self):
     return Environment(self)
@@ -119,9 +123,9 @@ class Environment:
     globals = internals.ObjRecord()
 
     # Global functions
-    globals['print'] = internals.ObjPyCallable(output.print_object, internals.Obj)
-    globals['printTitle'] = internals.ObjPyCallable(output.title, internals.ObjString)
-    globals['include'] = internals.ObjPyCallable(interpreter.include, internals.ObjString)
+    globals['print'] = internals.ObjPyCallable(output.print_object, internals.Parameter("object", internals.Obj))
+    globals['printTitle'] = internals.ObjPyCallable(output.title, internals.Parameter("title", internals.ObjString))
+    globals['include'] = internals.ObjPyCallable(interpreter.include, internals.Parameter("fileName", internals.ObjString))
 
     # Namespaces
     globals['import'] = internals.namespace_import(interpreter)
@@ -311,15 +315,23 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     # Fetch the parameters
     params = callable.parameters()
 
-    # Check the length of the arguments
-    if len(args) != len(params):
-      raise internals.InvalidCallException(f"Expected {len(params)} arguments, got {len(args)}", expr.token.location)
+    # Check if there are default parameters
+    if any(not param.required() for param in params):
+      # Check the length range of the arguments
+      min_length = len([param for param in params if param.required()])
+      max_length = len(params)
+      if len(args) < min_length or len(args) > max_length:
+        raise internals.InvalidCallException(f"Expected between {length.start} and {length.stop} arguments, got {len(args)}", expr.token.location)
+    else:
+      # Check the length of the arguments
+      if len(args) != len(params):
+        raise internals.InvalidCallException(f"Expected {len(params)} arguments, got {len(args)}", expr.token.location)
 
     # Iterate over the argument types
-    for i, param in enumerate(params):
+    for i, arg in enumerate(args):
       # Check if the argument is the valid type
-      if not issubclass(check_type := type(args[i]), param):
-        raise internals.InvalidCallException(f"Expected argument {i+1} of type {param}, got type {check_type}", expr.token.location)
+      if not issubclass(check_type := type(arg), param_type := params[i].type):
+        raise internals.InvalidCallException(f"Expected argument {i+1} of type {param_type.typename}, got type {check_type.typename}", expr.token.location)
 
     # Call the callable
     return callable(*args._py_list())
@@ -488,7 +500,11 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
   # Visit a function expression
   def visit_function_expr(self, expr: ast.FunctionExpr) -> internals.Obj:
-    return internals.ObjFunction(self, expr, self.environment)
+    # Evaluate the parameters
+    params = [internals.Parameter(param.name.value, internals.Obj, self.evaluate(param.default) if param.default is not None else None) for param in expr.params]
+
+    # Return the function object
+    return internals.ObjFunction(self, params, expr.body, self.environment)
 
   # Visit an assignment expression
   def visit_assignment_expr(self, expr: ast.AssignmentExpr) -> internals.Obj:

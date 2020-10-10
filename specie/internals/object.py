@@ -8,6 +8,33 @@ import types
 from .errors import RuntimeException, UndefinedMethodException, UndefinedIndexException
 
 
+#########################################
+### Definition of the parameter class ###
+#########################################
+
+class Parameter:
+  # Constructor
+  def __init__(self, name, type, default = None):
+    self.name = name
+    self.type = type
+    self.default = default
+
+  # Return if this parameter is required
+  def required(self):
+    return self.default is None
+
+  # Return the string representation for this parameter
+  def __str__(self):
+    if self.default is not None:
+      return f"{self.name} = {self.default}"
+    else:
+      return f"{self.name}"
+
+  # Return the Python representation for this parameter
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.name!r}, {self.type!r}, {self.default!r})"
+
+
 ######################################
 ### Definition of the method class ###
 ######################################
@@ -60,14 +87,15 @@ class ObjMeta(type):
       method_name = attr[7:]
 
       signature = inspect.signature(method_func)
-      params = [cls.resolve(param) for param in signature.parameters.values() if param.kind in [inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD]]
+      params_sig = [param for param in signature.parameters.values() if param.kind in [inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD]]
+      params = [Parameter(param.name, cls.resolve_type(param), param.default if param.default is not param.empty else None) for param in params_sig]
       cls.methods[method_name] = Method(method_func, params)
 
   # Return a parameter resolved to a class
-  def resolve(cls, param):
+  def resolve_type(cls, param):
     if param.name == "self":
       return cls
-    elif param.annotation == inspect.Parameter.empty:
+    elif param.annotation == param.empty:
       return cls.obj_classes['Obj']
     elif ',' not in param.annotation:
       return cls.obj_classes[param.annotation]

@@ -4,8 +4,8 @@ from .errors import (RuntimeException, InvalidStateException,
   UndefinedMethodException, UndefinedFieldException, UndefinedIndexException)
 
 # Import primitive objects
-from .object import (Obj, ObjNull, ObjBool, ObjNumber, ObjInt, ObjFloat,
-  ObjString, ObjRegex)
+from .object import (Parameter, Obj, ObjNull, ObjBool, ObjNumber, ObjInt,
+  ObjFloat, ObjString, ObjRegex)
 
 # Import objects
 from .object_callable import ObjCallable, ObjPartialCallable, ObjPyCallable

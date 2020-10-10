@@ -289,15 +289,15 @@ class ForExpr(Expr):
 
 # Class that defines a function expression
 class FunctionExpr(Expr):
-  def __init__(self, parameters, body):
-    self.parameters = parameters
+  def __init__(self, params, body):
+    self.params = params
     self.body = body
 
   def __str__(self):
-    return '(' + ', '.join(parameter.value for parameter in self.parameters) + ') -> ' + f"{self.body}"
+    return '(' + ', '.join(param.value for param in self.params) + ') -> ' + f"{self.body}"
 
   def __repr__(self):
-    return f"{self.__class__.__name__}({self.parameters!r}, {self.body!r})"
+    return f"{self.__class__.__name__}({self.params!r}, {self.body!r})"
 
   def accept(self, visitor):
     return visitor.visit_function_expr(self)
