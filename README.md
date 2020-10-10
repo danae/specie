@@ -16,8 +16,9 @@
 * [X] Add methods as get expression
 * [X] Add for-in expressions
 * [X] Add if-expressions
-* [ ] Add optional arguments to functions
+* [X] Add optional arguments to functions
 * [ ] Rework queries
+* [ ] Fix PayPal imports
 
 ### Should
 * [ ] Create a new Table object for a collection of records
