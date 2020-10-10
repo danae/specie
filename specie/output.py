@@ -110,16 +110,16 @@ def title(string: 'ObjString'):
   print("=" * (len(string)))
 
 # Print an object
-def print_object(object: 'Obj', **kwargs):
+def print_object(object: 'Obj'):
   if isinstance(object, internals.ObjRecord):
-    print_record(object, **kwargs)
+    print_record(object)
   elif isinstance(object, internals.ObjList):
-    print_list(object, **kwargs)
+    print_list(object)
   else:
     print(object)
 
 # Print a record oject
-def print_record(record: 'ObjRecord', **kwargs):
+def print_record(record: 'ObjRecord'):
   tbl = Table()
   tbl.append_row(['field', 'value'])
   tbl.append_separator_row()
@@ -131,14 +131,14 @@ def print_record(record: 'ObjRecord', **kwargs):
     print(tbl)
 
 # Print a list object
-def print_list(list: 'ObjList', **kwargs):
+def print_list(list: 'ObjList'):
   # Check if the list is empty
   if not list:
     print("No items in the list")
   else:
     # Check if this list is a list of records
     if all(isinstance(item, internals.ObjRecord) for item in list):
-      print_table(list, **kwargs)
+      print_table(list)
 
     # Otherwise just print every item on its own line
     else:
@@ -146,7 +146,7 @@ def print_list(list: 'ObjList', **kwargs):
         print(f"- {item}")
 
 # print a table object
-def print_table(table: 'ObjList', **kwargs):
+def print_table(table: 'ObjList'):
   # Get all fields
   fields = functools.reduce(utils.distinct_append, (record.list_field_names(only_public = True) for record in table), [])
 
