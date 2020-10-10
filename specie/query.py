@@ -107,6 +107,78 @@ class Fold(Function):
       yield self.initial
 
 
+# Sum query function
+class Sum(Function):
+  # Constructor
+  def __init__(self, func):
+    self.func = func
+
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function_params = [internals.Parameter(variable, internals.Obj)]
+    function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
+
+    return iterable.method_select(function).method_sum()
+
+  # Resolve the function
+  def resolve(self):
+    yield self.func
+
+
+# Min query function
+class Min(Function):
+  # Constructor
+  def __init__(self, func):
+    self.func = func
+
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function_params = [internals.Parameter(variable, internals.Obj)]
+    function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
+
+    return iterable.method_select(function).method_min()
+
+  # Resolve the function
+  def resolve(self):
+    yield self.func
+
+
+# Max query function
+class Max(Function):
+  # Constructor
+  def __init__(self, func):
+    self.func = func
+
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function_params = [internals.Parameter(variable, internals.Obj)]
+    function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
+
+    return iterable.method_select(function).method_max()
+
+  # Resolve the function
+  def resolve(self):
+    yield self.func
+
+
+# Average query function
+class Average(Function):
+  # Constructor
+  def __init__(self, func):
+    self.func = func
+
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function_params = [internals.Parameter(variable, internals.Obj)]
+    function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
+
+    return iterable.method_select(function).method_average()
+
+  # Resolve the function
+  def resolve(self):
+    yield self.func
+
+
 # Contains query function
 class Contains(Function):
   # Constructor
@@ -224,6 +296,26 @@ def parse_function(name, args):
   elif name.value == "fold":
     if len(args) == 1 or len(args) == 2:
       return Fold(*args)
+
+  # Sum query function
+  elif name.value == "sum":
+    if len(args) == 1:
+      return Sum(*args)
+
+  # Min query function
+  elif name.value == "min":
+    if len(args) == 1:
+      return Min(*args)
+
+  # Max query function
+  elif name.value == "max":
+    if len(args) == 1:
+      return Max(*args)
+
+  # Average query function
+  elif name.value == "average":
+    if len(args) == 1:
+      return Average(*args)
 
   # Contains query function
   elif name.value == "contains":

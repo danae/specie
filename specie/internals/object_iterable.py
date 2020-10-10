@@ -66,6 +66,34 @@ class ObjIterable(Obj, typename = "Iterable"):
   def method_fold(self, function: 'ObjCallable', initial: 'Obj' = ObjNull()) -> 'Obj':
     return self.fold(function, initial)
 
+  # Return the sum of the elements in this iterable
+  def sum(self):
+    return self.fold(lambda a, b: a.call_method('add', b))
+
+  def method_sum(self) -> 'Obj':
+    return self.sum()
+
+  # Return the minimum of the elements in this iterable
+  def min(self):
+    return self.fold(lambda a, b: a if bool(a.call_method('lt', b)) else b)
+
+  def method_min(self) -> 'Obj':
+    return self.min()
+
+  # Return the maximum of the elements in this iterable
+  def max(self):
+    return self.fold(lambda a, b: a if bool(a.call_method('gt', b)) else b)
+
+  def method_max(self) -> 'Obj':
+    return self.max()
+
+  # Return the average of the elements in this iterable
+  def average(self):
+    return self.method_sum() / self.method_count()
+
+  def method_average(self) -> 'Obj':
+    return self.average()
+
   # Return if this iterable contains an element
   def __contains__(self, element):
     for e in iter(self):

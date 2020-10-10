@@ -469,7 +469,10 @@ class ObjInt(ObjNumber, typename = "Int"):
   # Return the division of two numeric objects
   def __truediv__(self, other):
     if isinstance(other, ObjNumber):
-      return ObjFloat(self.value / other.value)
+      try:
+        return ObjFloat(self.value / other.value)
+      except ZeroDivisionError:
+        raise RuntimeException("Division by zero")
     return NotImplemented
 
   def method_div(self, other: 'ObjNumber') -> 'ObjNumber':
@@ -550,7 +553,10 @@ class ObjFloat(ObjNumber, typename = "Float"):
   # Return the division of two numeric objects
   def __truediv__(self, other):
     if isinstance(other, ObjNumber):
-      return ObjFloat(self.value / other.value)
+      try:
+        return ObjFloat(self.value / other.value)
+      except ZeroDivisionError:
+        raise RuntimeException("Division by zero")
     return NotImplemented
 
   def method_div(self, other: 'ObjNumber') -> 'ObjNumber':

@@ -17,7 +17,8 @@
 * [X] Add for-in expressions
 * [X] Add if-expressions
 * [X] Add optional arguments to functions
-* [ ] Rework queries
+* [X] Rework queries
+* [ ] Fix average queries raising a ZeroDivisionError
 * [ ] Fix PayPal imports
 
 ### Should
@@ -34,24 +35,25 @@
 
 ## Queries
 
-### Terminal
+### Mapping
 * [X] --> **select** (object) → traversable
 * [X] --> **distinct** (object) → traversable
+
+### Terminal
 * [X] **count** → int
 * [X] **fold** (callable(object, object) → object) → object
 * [X] **fold** (callable(object, object) → object, object) → object
-* [ ] --> **sum** (object) → number
-* [ ] **min** (object) → number
-* [ ] **max** (object) → number
-* [ ] **average** (object) → number
-* [ ] **median** (object) → number
+* [X] --> **sum** (object) → number
+* [X] **min** (object) → number
+* [X] **max** (object) → number
+* [X] **average** (object) → number
 * [X] **contains** (object) → bool
 * [X] **any** (bool) → bool
 * [X] **all** (bool) → bool
 * [X] --> **each** → null
 * [X] --> **drop** → null
 
-### Intermediate
+### Filtering and ordering
 * [X] --> **where** (bool) → traversable
 * [ ] **orderBy** (object) → traversable
 * [ ] **orderByDesc** (object) → traversable
