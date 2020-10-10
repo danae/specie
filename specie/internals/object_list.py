@@ -130,14 +130,12 @@ class ObjList(ObjIterable, typename = "List"):
     self.delete(item)
     return self
 
-  """
   # Return if the list object contains the specified item
   def __contains__(self, item):
     return item in self.items
 
   def method_contains(self, item: 'Obj') -> 'ObjBool':
     return ObjBool(self.__contains__(item))
-  """
 
 
   # Return the Python value for the object
