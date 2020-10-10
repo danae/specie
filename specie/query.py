@@ -84,6 +84,26 @@ class Count(Function):
     return iterable.method_count()
 
 
+# Fold query function
+class Fold(Function):
+  # Constructor
+  def __init__(self, func, initial = None):
+    self.func = func
+    self.initial = initial
+
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function = interpreter.evaluate(self.func)
+    initial = interpreter.evaluate(self.initial) if self.initial is not None else None
+    return iterable.method_fold(function, initial)
+
+  # Resolve the function
+  def resolve(self):
+    yield self.func
+    if self.initial is not None:
+      yield self.initial
+
+
 # Contains query function
 class Contains(Function):
   # Constructor
@@ -196,6 +216,11 @@ def parse_function(name, args):
   elif name.value == "count":
     if len(args) == 0:
       return Count()
+
+  # Count query function
+  elif name.value == "fold":
+    if len(args) == 1 or len(args) == 2:
+      return Fold(*args)
 
   # Contains query function
   elif name.value == "contains":

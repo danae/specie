@@ -48,6 +48,20 @@ class ObjIterable(Obj, typename = "Iterable"):
   def method_count(self) -> 'ObjInt':
     return ObjInt(self.__len__())
 
+  # Fold the elements in this iterable
+  def fold(self, function, initial = None):
+    iterator = iter(self)
+    if initial is None:
+      value = next(iterator)
+    else:
+      value = initial
+    for e in iterator:
+      value = function(value, e)
+    return value
+
+  def method_fold(self, function: 'ObjCallable', initial: 'Obj' = None) -> 'Obj':
+    return self.fold(function, initial)
+
   # Return if this iterable contains an element
   def __contains__(self, element):
     for e in iter(self):

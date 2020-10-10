@@ -12,20 +12,23 @@ from .errors import RuntimeException, UndefinedMethodException, UndefinedIndexEx
 ### Definition of the parameter class ###
 #########################################
 
+class ParameterRequired:
+  pass
+
 class Parameter:
   # Constructor
-  def __init__(self, name, type, default = None):
+  def __init__(self, name, type, default = ParameterRequired):
     self.name = name
     self.type = type
     self.default = default
 
   # Return if this parameter is required
   def required(self):
-    return self.default is None
+    return self.default is ParameterRequired
 
   # Return the string representation for this parameter
   def __str__(self):
-    if self.default is not None:
+    if self.default is not ParameterRequired:
       return f"{self.name} = {self.default}"
     else:
       return f"{self.name}"
@@ -88,7 +91,7 @@ class ObjMeta(type):
 
       signature = inspect.signature(method_func)
       params_sig = [param for param in signature.parameters.values() if param.kind in [inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD]]
-      params = [Parameter(param.name, cls.resolve_type(param), param.default if param.default is not param.empty else None) for param in params_sig]
+      params = [Parameter(param.name, cls.resolve_type(param), param.default if param.default is not param.empty else ParameterRequired) for param in params_sig]
       cls.methods[method_name] = Method(method_func, params)
 
   # Return a parameter resolved to a class
