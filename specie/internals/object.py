@@ -5,7 +5,7 @@ import re
 import sys
 import types
 
-from .errors import RuntimeException, UndefinedMethodException, UndefinedIndexException
+from .errors import RuntimeException, InvalidTypeException, UndefinedMethodException, UndefinedIndexException
 
 
 #########################################

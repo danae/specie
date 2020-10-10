@@ -38,8 +38,8 @@
 * [X] --> **select** (object) → traversable
 * [X] --> **distinct** (object) → traversable
 * [X] **count** → int
-* [ ] **fold** (callable(object, object) → object) → object
-* [ ] **fold** (callable(object, object) → object, object) → object
+* [X] **fold** (callable(object, object) → object) → object
+* [X] **fold** (callable(object, object) → object, object) → object
 * [ ] --> **sum** (object) → number
 * [ ] **min** (object) → number
 * [ ] **max** (object) → number

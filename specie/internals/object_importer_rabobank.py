@@ -45,7 +45,7 @@ class ObjRabobankImporter(ObjImporter, typename = "RabobankImporter"):
       # Standard fields
       id = ObjString("rabobank:{}".format(record['Volgnr'])),
       date = ObjDate(datetime.datetime.strptime(record['Datum'], '%Y-%m-%d').date()),
-      amount = ObjMoney(currency = ObjString(record['Munt']), amount = ObjFloat(record['Bedrag'].replace(',', '.'))),
+      amount = ObjMoney(ObjString(record['Munt']), ObjFloat(record['Bedrag'].replace(',', '.'))),
       name = ObjString(record['Naam tegenpartij'].upper()),
       address = ObjString(record['Tegenrekening IBAN/BBAN']),
       description = ObjString(re.sub('\s+', ' ', ' '.join([record['Omschrijving-1'], record['Omschrijving-2'], record['Omschrijving-3']]).strip())),
