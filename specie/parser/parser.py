@@ -70,6 +70,10 @@ class ParserError(Exception):
   def __repr__(self):
     return f"{self.__class__.__name__}({self.message!r}, {self.location!r})"
 
+  # Convert to string
+  def __str__(self):
+     return self.message
+
   # Return an unexpected token error
   @classmethod
   def unexpected(cls, tokens, index, expected = None):

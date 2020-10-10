@@ -231,6 +231,9 @@ class LexerError(RuntimeError):
   def __init__(self, message):
     self.message = message
 
+  def __str__(self):
+    return self.message
+
 
 # Class that defines a syntax error
 class SyntaxError(LexerError):
