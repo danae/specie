@@ -20,6 +20,7 @@
 * [X] Rework queries
 * [ ] Fix average queries raising a ZeroDivisionError
 * [ ] Fix PayPal imports
+* [ ] Add N26 import
 
 ### Should
 * [ ] Create a new Table object for a collection of records

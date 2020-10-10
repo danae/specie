@@ -34,13 +34,13 @@ class ObjRabobankImporter(ObjImporter, typename = "RabobankImporter"):
       # Iterate over the records
       for record in reader:
         # Insert the record as a transaction
-        transactions.insert(self.parse_record(record))
+        transactions.insert(self.parse_record(record, file_name))
 
     # Return the transactions
     return transactions
 
   # Parse a Rabobank record
-  def parse_record(self, record):
+  def parse_record(self, record, source):
     return ObjTransaction(
       # Standard fields
       id = ObjString("rabobank:{}".format(record['Volgnr'])),
@@ -51,6 +51,7 @@ class ObjRabobankImporter(ObjImporter, typename = "RabobankImporter"):
       description = ObjString(re.sub('\s+', ' ', ' '.join([record['Omschrijving-1'], record['Omschrijving-2'], record['Omschrijving-3']]).strip())),
 
       # Extension fields
+      source = Field(ObjString(source), public = False),
       own_address = Field(ObjString(record['IBAN/BBAN']), public = False),
       own_bic = Field(ObjString(record['BIC']), public = False),
       bic = Field(ObjString(record['BIC tegenpartij']), public = False),
