@@ -282,7 +282,10 @@ def reduce(function, parser, initializer = None):
       index = next_result.index
 
       # Reduce the next result
-      result = ParserResult(function(result.value, *next_result.value if isinstance(next_result.value, tuple) else next_result.value), next_result.index, next_result.errors)
+      if isinstance(next_result.value, tuple):
+        result = ParserResult(function(result.value, *next_result.value), next_result.index, next_result.errors)
+      else:
+        result = ParserResult(function(result.value, next_result.value), next_result.index, next_result.errors)
 
     # Return the result
     return result

@@ -34,21 +34,15 @@
 ## Queries
 
 ### Terminal
-* [X] --> **select** → traversable
 * [X] --> **select** (object) → traversable
 * [X] --> **distinct** (object) → traversable
 * [X] **count** → int
 * [ ] **fold** (callable(object, object) → object) → object
 * [ ] **fold** (callable(object, object) → object, object) → object
-* [ ] --> **sum** → number
 * [ ] --> **sum** (object) → number
-* [ ] **min** → number
 * [ ] **min** (object) → number
-* [ ] **max** → number
 * [ ] **max** (object) → number
-* [ ] **average** → number
 * [ ] **average** (object) → number
-* [ ] **median** → number
 * [ ] **median** (object) → number
 * [X] **contains** (object) → bool
 * [X] **any** (bool) → bool

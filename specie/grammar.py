@@ -1,7 +1,7 @@
 import collections
 import re
 
-from . import ast, internals, parser
+from . import ast, internals, parser, query
 
 
 ######################################
@@ -135,11 +135,6 @@ def map_parameters(params):
   # Return the parameters
   return params
 
-# Map a query function
-def map_query_func(name, args):
-  print(f"{name=} {args=}")
-  return (name, args)
-
 # Map an assignment expression
 def map_assignment(expr, op, value):
   # Check if the expression is a variable expression
@@ -228,20 +223,18 @@ logic_not = parser.describe('logic_not', parser.concat(ast.UnaryOpExpr, OPERATOR
 logic_and = parser.describe('logic_and', parser.reduce(ast.LogicalExpr, OPERATOR_AND + logic_not, logic_not))
 logic_or = parser.describe('logic_or', parser.reduce(ast.LogicalExpr, OPERATOR_OR + logic_and, logic_and))
 
-# Query expressions
-query_action = parser.describe('query_action', parser.concat(ast.Call, IDENTIFIER, arguments))
-query_where = parser.describe('query_where', KEYWORD_IF >> parser.lazy(lambda: expr))
-query = parser.describe('query', parser.concat(ast.QueryExpr, parser.map(ast.VariableExpr, KEYWORD_FROM >> IDENTIFIER), query_action, query_where ^ None) | logic_or)
-
-# Control expressions
-control_if = parser.describe('control_if', parser.concat(ast.IfExpr, KEYWORD_IF >> parser.lazy(lambda: expr), KEYWORD_THEN >> parser.lazy(lambda: expr), KEYWORD_ELSE >> parser.lazy(lambda: expr) ^ None))
-control_for = parser.describe('control_for', parser.concat(ast.ForExpr, parser.map(ast.VariableExpr, KEYWORD_FOR >> IDENTIFIER), OPERATOR_IN >> parser.lazy(lambda: expr), parser.lazy(lambda: expr)))
-control = parser.describe('control', control_if | control_for | query)
+# Control flow expressions
+ctrl_if = parser.describe('comp_if', parser.concat(ast.IfExpr, KEYWORD_IF >> parser.lazy(lambda: expr), KEYWORD_THEN >> parser.lazy(lambda: expr), KEYWORD_ELSE >> parser.lazy(lambda: expr) ^ None))
+ctrl_for = parser.describe('comp_for', parser.concat(ast.ForExpr, KEYWORD_FOR >> variable, OPERATOR_IN >> parser.lazy(lambda: expr), parser.lazy(lambda: expr)))
+ctrl_query_func = parser.describe('ctrl_query_func', parser.concat(query.parse_function, IDENTIFIER, arguments))
+ctrl_query_func_list = parser.describe('ctrl_query_func_list', parser.reduce(query.Compose, ctrl_query_func))
+ctrl_query = parser.describe('ctrl_query', parser.concat(ast.QueryExpr, KEYWORD_FROM >> variable, OPERATOR_IN >> parser.lazy(lambda: expr), ctrl_query_func_list) | logic_or)
+ctrl = parser.describe('control', ctrl_if | ctrl_for | ctrl_query | logic_or)
 
 # Block expressions
 block_contents = parser.describe('block_contents', parser.map(ast.BlockExpr, parser.lazy(lambda: expr) * parser.token('newline')))
 block_base = parser.describe('block_base', KEYWORD_DO >> parser.token('newline') >> block_contents << parser.token('newline') << KEYWORD_END)
-block = parser.describe('block', block_base | control)
+block = parser.describe('block', block_base | ctrl)
 
 # Parameters
 parameters_arg = parser.describe('parameters_arg', parser.concat(Parameter, IDENTIFIER, OPERATOR_ASSIGN >> parser.lazy(lambda: expr) ^ None))

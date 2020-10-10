@@ -1,28 +1,6 @@
 from typing import TypeVar, Generic
 
 
-### Definition of helper classes
-
-# Class that holds a call
-class Call:
-  # Constructor
-  def __init__(self, name, args):
-    self.name = name
-    self.args = args
-
-  # Convert to string
-  def __str__(self):
-    if self.args:
-      args = ', '.join(str(arg) for arg in self.args)
-      return f"{self.name.value} {args}"
-    else:
-      return f"{self.name.value}"
-
-  # Convert to representation
-  def __repr__(self):
-    return f"{self.__class__.__name__}({self.name!r}, {self.args!r})"
-
-
 #####################################
 ### Definition of the expressions ###
 #####################################
@@ -230,26 +208,6 @@ class LogicalExpr(Expr):
     return visitor.visit_logical_expr(self)
 
 
-# Class that defines a query expression
-class QueryExpr(Expr):
-  def __init__(self, table, action, predicate):
-    self.table = table
-    self.action = action
-    self.predicate = predicate
-
-  def __str__(self):
-    if self.predicate:
-      return f"from {self.table} {self.action} if {self.predicate}"
-    else:
-      return f"from {self.table} {self.action}"
-
-  def __repr__(self):
-    return f"{self.__class__.__name__}({self.table!r}, {self.action!r}, {self.predicate!r})"
-
-  def accept(self, visitor):
-    return visitor.visit_query_expr(self)
-
-
 # Class that defines an if expression
 class IfExpr(Expr):
   def __init__(self, condition, then_clause, else_clause):
@@ -285,6 +243,23 @@ class ForExpr(Expr):
 
   def accept(self, visitor):
     return visitor.visit_for_expr(self)
+
+
+# Class that defines a query expression
+class QueryExpr(Expr):
+  def __init__(self, variable, iterable, function):
+    self.variable = variable
+    self.iterable = iterable
+    self.function = function
+
+  def __str__(self):
+    return f"from {self.variable} in {self.iterable} {self.function}"
+
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.variable!r}, {self.iterable!r}, {self.function!r})"
+
+  def accept(self, visitor):
+    return visitor.visit_query_expr(self)
 
 
 # Class that defines a function expression

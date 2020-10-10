@@ -196,16 +196,6 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
       if err.location:
         print(err.location.point(string, 2))
 
-  # Begin a new scope
-  def begin_scope(self, variables = None):
-    self.environment = Environment(self.environment, variables)
-
-  # End the current scope
-  def end_scope(self):
-    if self.environment.previous is None:
-      raise RuntimeError("Could not end the current scope")
-    self.environment = self.environment.previous
-
 
   # Resolve a file name
   def resolve_file_name(self, file_name):
@@ -442,23 +432,6 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     # No matching operation found
     raise internals.RuntimeException("Undefined binary operator '{}'".format(op), expr.op.location)
 
-  # Visit a query expression
-  def visit_query_expr(self, expr: ast.QueryExpr) -> internals.Obj:
-    # Evaluate the expression
-    table = self.evaluate(expr.table)
-    predicate = self.evaluate(expr.predicate) if expr.predicate else None
-
-    # Check if the collection is of the right type
-    if not isinstance(table, internals.ObjList):
-      raise internals.InvalidTypeException(f"Queries can only operate on tables")
-
-    # Check if the predicate, if provided, is a callable
-    if predicate and not isinstance(predicate, internals.ObjCallable):
-      raise internals.InvalidTypeException(f"A query predicate must be callable")
-
-    # Create a query and execute that
-    return query.Query(table, expr.action, predicate).execute(self)
-
   # Visit an if expression
   def visit_if_expr(self, expr: ast.IfExpr) -> internals.Obj:
     # Evaluate the condition
@@ -497,6 +470,22 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Return the results
     return results
+
+  # Visit a query expression
+  def visit_query_expr(self, expr: ast.QueryExpr) -> internals.Obj:
+    # Evaluate the iterable
+    iterable = self.evaluate(expr.iterable)
+
+    # Check if the expression is traversable
+    if not isinstance(iterable, internals.ObjIterable):
+      raise internals.InvalidTypeException(f"{iterable} is not iterable")
+
+    # Evaluate the function
+    result = expr.function.call(self, expr.variable.name.value, iterable)
+    if isinstance(result, internals.ObjIterable):
+      return result.as_list()
+    else:
+      return result
 
   # Visit a function expression
   def visit_function_expr(self, expr: ast.FunctionExpr) -> internals.Obj:

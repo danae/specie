@@ -1,105 +1,231 @@
-from . import internals, utils
+from . import internals, interpreter, parser
 
 
-# Class that defines a query on a list
-class Query:
+############################################
+### Definition of query function classes ###
+############################################
+
+# Base class for query functions
+class Function:
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    raise NotImplementedError()
+
+  # Resolve the function
+  def resolve(self):
+    return []
+
+  # Return the Python representation of this function
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.name!r}, {self.args!r})"
+
+
+# Composition of query functions
+class Compose(Function):
   # Constructor
-  def __init__(self, table, action, predicate):
-    self.table = table
-    self.action = action
+  def __init__(self, first, second):
+    self.first = first
+    self.second = second
+
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    return self.second.call(interpreter, variable, self.first.call(interpreter, variable, iterable))
+
+  # Resolve the function
+  def resolve(self):
+    yield from self.first.resolve()
+    yield from self.second.resolve()
+
+  # Return the Python representation of this function
+  def __repr__(self):
+    return f"{self.__class__.__name__}({self.first!r}, {self.second!r})"
+
+
+# Select query function
+class Select(Function):
+  # Constructor
+  def __init__(self, func):
+    self.func = func
+
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function_params = [internals.Parameter(variable, internals.Obj)]
+    function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
+
+    return iterable.method_select(function)
+
+  # Resolve the function
+  def resolve(self):
+    yield self.func
+
+
+# Distinct query function
+class Distinct(Function):
+  # Constructor
+  def __init__(self, func):
+    self.func = func
+
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function_params = [internals.Parameter(variable, internals.Obj)]
+    function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
+
+    return iterable.method_select(function).method_distinct()
+
+  # Resolve the function
+  def resolve(self):
+    yield self.func
+
+
+# Count query function
+class Count(Function):
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    return iterable.method_count()
+
+
+# Contains query function
+class Contains(Function):
+  # Constructor
+  def __init__(self, element):
+    self.element = element
+
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    element = interpreter.evaluate(self.element)
+    return iterable.method_contains(element)
+
+  # Resolve the function
+  def resolve(self):
+    yield self.element
+
+
+# Any query function
+class Any(Function):
+  # Constructor
+  def __init__(self, predicate):
     self.predicate = predicate
 
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function_params = [internals.Parameter(variable, internals.Obj)]
+    function = internals.ObjFunction(interpreter, function_params, self.predicate, interpreter.environment)
 
-  ### Definition of helper functions ###
+    return iterable.method_any(function)
 
-  # Return a mapped record using the specified expressions
-  def _map(self, interpreter, expressions):
-    def _map_lambda(item):
-      record = internals.ObjRecord()
-
-      interpreter.begin_scope(item)
-      for expression in expressions:
-        record[str(expression)] = interpreter.evaluate(expression)
-      interpreter.end_scope()
-
-      return record
-    return _map_lambda
+  # Resolve the function
+  def resolve(self):
+    yield self.predicate
 
 
-  ### Definition of query action functions ###
+# All query function
+class All(Function):
+  # Constructor
+  def __init__(self, predicate):
+    self.predicate = predicate
 
-  # Return a table that adheres to the predicate
-  def test(self):
-    if self.predicate is not None:
-      return self.table.filter(lambda item: self.predicate(item))
-    else:
-      return self.table
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function_params = [internals.Parameter(variable, internals.Obj)]
+    function = internals.ObjFunction(interpreter, function_params, self.predicate, interpreter.environment)
 
-  # Execute the query
-  def execute(self, interpreter):
-    action = self.action.name.value
+    return iterable.method_all(function)
 
-    # Query actions
-    if action == 'get':
-      return self.execute_get(interpreter, self.action.args)
-    elif action == 'apply':
-      return self.execute_apply(interpreter, self.action.args)
-    elif action == 'delete':
-      return self.execute_delete(interpreter, self.action.args)
-    elif action == 'group':
-      return self.execute_group(interpreter, self.action.args)
+  # Resolve the function
+  def resolve(self):
+    yield self.predicate
 
-    # No matching action found
-    raise internals.RuntimeException(f"Undefined query action '{action}'", self.action.name.location)
 
-  # Execute a get query
-  def execute_get(self, interpreter, args):
-    # Apply the predicate
-    table_test = self.test()
+# Each query function
+class Each(Function):
+  # Constructor
+  def __init__(self, function):
+    self.function = function
 
-    # If there are arguments specified, then map the table
-    if args:
-      # Return the table with the records mapped to the arguments
-      return table_test.map(self._map(interpreter, args))
-    else:
-      # Return the original table
-      return table_test
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function_params = [internals.Parameter(variable, internals.Obj)]
+    function = internals.ObjFunction(interpreter, function_params, self.function, interpreter.environment)
+    return iterable.method_each(function)
 
-  # Execute an apply query
-  def execute_apply(self, interpreter, args):
-    # Apply the predicate
-    table_test = self.test()
+  # Resolve the function
+  def resolve(self):
+    yield self.function
 
-    # Evaluate the arguments
-    args = interpreter.evaluate(args)
-    if not isinstance(args[0], internals.ObjCallable):
-      raise internals.RuntimeException("The argument of an apply query must be callable")
 
-    # Iterate over the tested table
-    for item in table_test:
-      # Apply the callable with the item
-      args[0](item)
+# Drop query function
+class Drop(Function):
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    return iterable.method_drop()
 
-    # Return the number of matched items
-    return internals.ObjInt(len(table_test))
 
-  # Execute a delete query
-  def execute_delete(self, interpreter, args):
-    # Apply the predicate
-    table_test = self.test()
+# Where query function
+class Where(Function):
+  # Constructor
+  def __init__(self, predicate):
+    self.predicate = predicate
 
-    # Iterate over the tested table
-    for item in table_test:
-      # Delete the item from the original table
-      self.table.delete(item)
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function_params = [internals.Parameter(variable, internals.Obj)]
+    function = internals.ObjFunction(interpreter, function_params, self.predicate, interpreter.environment)
+    return iterable.where(function)
 
-    # Return the number of matched items
-    return internals.ObjInt(len(table_test))
+  # Resolve the function
+  def resolve(self):
+    yield self.predicate
 
-  # Execute a group query
-  def execute_group(self, interpreter, args):
-    # Apply the predicate
-    table_test = self.test()
 
-    # Return a list of distinct matches
-    return internals.ObjList(utils.distinct(interpreter.evaluate_scope(args[0], item) for item in table_test))
+###############################################
+### Definition of the query function parser ###
+###############################################
+
+def parse_function(name, args):
+  # Select query function
+  if name.value == "select":
+    if len(args) == 1:
+      return Select(*args)
+
+  # Distinct query function
+  elif name.value == "distinct":
+    if len(args) == 1:
+      return Distinct(*args)
+
+  # Count query function
+  elif name.value == "count":
+    if len(args) == 0:
+      return Count()
+
+  # Contains query function
+  elif name.value == "contains":
+    if len(args) == 1:
+      return Contains(*args)
+
+  # Any query function
+  elif name.value == "any":
+    if len(args) == 1:
+      return Any(*args)
+
+  # All query function
+  elif name.value == "all":
+    if len(args) == 1:
+      return All(*args)
+
+  # Each query function
+  elif name.value == "each":
+    if len(args) == 1:
+      return Each(*args)
+
+  # Drop query function
+  elif name.value == "drop":
+    if len(args) == 0:
+      return Drop()
+
+  # Where query function
+  elif name.value == "where":
+    if len(args) == 1:
+      return Where(*args)
+
+  # Undefined query functon, so raise a parser error
+  raise parser.ParserError(f"Invalid query function {name.value}", name.location)

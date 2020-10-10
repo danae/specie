@@ -99,11 +99,11 @@ class ObjIterable(Obj, typename = "Iterable"):
 
   #Return a list with all elements in the iterable
   def as_list(self):
-    return [e for e in iter(self)]
+    from .object_list import ObjList
+    return ObjList(*iter(self))
 
   def method_asList(self) -> 'ObjList':
-    from .object_list import ObjList
-    return ObjList(*self.as_list())
+    return self.as_list()
 
 
 #########################################################

@@ -95,13 +95,6 @@ class Resolver(ast.ExprVisitor[None]):
     self.resolve(expr.left)
     self.resolve(expr.right)
 
-  # Visit a query expression
-  def visit_query_expr(self, expr: ast.QueryExpr) -> None:
-    self.resolve(expr.table)
-    self.resolve(expr.action.args)
-    if expr.predicate:
-      self.resolve(expr.predicate)
-
   # Visit an if expression
   def visit_if_expr(self, expr: ast.IfExpr) -> None:
     self.resolve(expr.condition)
@@ -116,6 +109,16 @@ class Resolver(ast.ExprVisitor[None]):
     self.declare_variable(expr.variable.name.value)
     self.initialize_variable(expr.variable.name.value)
     self.resolve(expr.body)
+    self.end_scope()
+
+  # Visit a query expression
+  def visit_query_expr(self, expr: ast.QueryExpr) -> None:
+    self.resolve(expr.iterable)
+    self.begin_scope()
+    self.declare_variable(expr.variable.name.value)
+    self.initialize_variable(expr.variable.name.value)
+    for resolvable in expr.function.resolve():
+      self.resolve(resolvable)
     self.end_scope()
 
   # Visit a function expression
