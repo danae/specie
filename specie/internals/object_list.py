@@ -188,6 +188,10 @@ class ObjListIterator(ObjIterator, typename = "ListIterator"):
       self.list_index += 1
     return self.list_index < len(self.list)
 
+  # Rewind the iterator object
+  def rewind(self):
+    self.list_index = None
+
   # Delete the element at the cursor of the iterator object
   def delete(self):
     if self.list_index is None or self.list_deleted:

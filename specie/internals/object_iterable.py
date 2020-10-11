@@ -166,6 +166,7 @@ class ObjDelegatedIterable(ObjIterable, typename = "DelegatedIterable"):
 
   # Return an iterator for the iterable object
   def __iter__(self):
+    self.iterator.rewind()
     return self.iterator
 
   def method_iterator(self) -> 'ObjIterator':
@@ -201,6 +202,14 @@ class ObjIterator(Obj, typename = "Iterator"):
 
   def method_advance(self) -> 'ObjBool':
     return ObjBool(self.advance())
+
+  # Rewind the iterator object
+  def rewind(self):
+    raise NotImplementedError()
+
+  def method_rewind(self) -> 'ObjNull':
+    self.rewind()
+    return ObjNull()
 
   # Delete the element at the cursor of the iterator object
   def delete(self):
@@ -251,6 +260,10 @@ class ObjSelectIterator(ObjIterator, typename = "SelectIterator"):
   def advance(self):
     return self.iterator.advance()
 
+  # Rewind the iterator object
+  def rewind(self):
+    self.iterator.rewind()
+
   # Delete the element at the cursor of the iterator object
   def delete(self):
     self.iterator.delete()
@@ -284,6 +297,10 @@ class ObjDistinctIterator(ObjIterator, typename = "DistinctIterator"):
     # Readed the end of the iterator
     return False
 
+  # Rewind the iterator object
+  def rewind(self):
+    self.iterator.rewind()
+
   # Delete the element at the cursor of the iterator object
   def delete(self):
     self.iterator.delete()
@@ -315,6 +332,10 @@ class ObjWhereIterator(ObjIterator, typename = "WhereIterator"):
 
     # Readed the end of the iterator
     return False
+
+  # Rewind the iterator object
+  def rewind(self):
+    self.iterator.rewind()
 
   # Delete the element at the cursor of the iterator object
   def delete(self):
