@@ -18,7 +18,8 @@
 * [X] Add if-expressions
 * [X] Add optional arguments to functions
 * [X] Rework queries
-* [ ] Fix average queries raising a ZeroDivisionError
+* [X] Fix average queries raising a ZeroDivisionError
+* [ ] Add types to instantiate things from the specie code
 * [ ] Fix PayPal imports
 * [ ] Add N26 import
 
