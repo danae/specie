@@ -29,8 +29,8 @@ class LiteralExpr(Expr):
 
 # Class that defines a list expression
 class ListExpr(Expr):
-  def __init__(self, items = []):
-    self.items = items
+  def __init__(self, items = None):
+    self.items = items if items is not None else []
 
   def __str__(self):
     return '[' + ', '.join(f"{item}" for item in self.items) + ']'
@@ -53,8 +53,8 @@ class ListExpr(Expr):
 
 # Class that defines a record expression
 class RecordExpr(Expr):
-  def __init__(self, fields = []):
-    self.fields = fields
+  def __init__(self, fields = None):
+    self.fields = fields if fields is not None else []
 
   def __str__(self):
     return '{' + ', '.join(f"{name.value}: {value}" for name, value in self.fields) + '}'
@@ -113,7 +113,7 @@ class CallExpr(Expr):
     self.args = args
 
   def __str__(self):
-    return f"{self.expression}({self.args})"
+    return f"{self.expression}(" + ', '.join(f"{arg}" for arg in self.args) + ")"
 
   def __repr__(self):
     return f"{self.__class__.__name__}({self.expression!r}, {self.token!r}, {self.args!r})"

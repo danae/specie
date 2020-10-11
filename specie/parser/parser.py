@@ -1,12 +1,13 @@
 # Class that defines a parser
 class Parser:
   # Constructor
-  def __init__(self, function, sync_tokens = []):
+  def __init__(self, function, sync_tokens = None):
     self.function = function
-    self.sync_tokens = sync_tokens
+    self.sync_tokens = sync_tokens if sync_tokens is not None else []
 
   # Parse the iterable of tokens starting at the specified index
-  def parse(self, tokens, index, errors = []):
+  def parse(self, tokens, index, errors = None):
+    errors = errors if errors is not None else []
     result = self.function(tokens, index)
     if isinstance(result, ParserResult):
       # Return the result
@@ -45,10 +46,10 @@ class Parser:
 # Class that defines a parser result
 class ParserResult:
   # Constructor
-  def __init__(self, value, index, errors = []):
+  def __init__(self, value, index, errors = None):
     self.value = value
     self.index = index
-    self.errors = errors
+    self.errors = errors if errors is not None else []
 
   # Return the truthyness of the result
   def __bool__(self):

@@ -111,7 +111,9 @@ class Lexer:
     self.reduce_newlines = kwargs.get('reduce_newlines', True)
 
   # Base function for converting a string to tokens
-  def tokenize_base(self, string, ignored = []):
+  def tokenize_base(self, string, ignored = None):
+    ignored = ignored if ignored is not None else []
+
     # Store the end of lines
     line_ends = []
 
