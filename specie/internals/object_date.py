@@ -13,7 +13,7 @@ class ObjDate(Obj, typename = 'Date'):
   format = "%Y-%m-%d"
 
   # Constructor
-  def __init__(self, value = date.today()):
+  def __init__(self, value: 'ObjDate, ObjString' = date.today()) -> 'ObjDate':
     super().__init__()
 
     if isinstance(value, ObjDate):

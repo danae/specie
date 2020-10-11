@@ -103,20 +103,30 @@ class Table:
 ### Definition of functions to print objects ###
 
 # Print a title
-def title(string: 'ObjString'):
+def title(string: 'ObjString') -> 'ObjNull':
   string = string.value.upper()
   print()
   print(string)
   print("=" * (len(string)))
+  return internals.ObjNull()
 
 # Print an object
-def print_object(object: 'Obj'):
-  if isinstance(object, internals.ObjRecord):
-    print_record(object)
-  elif isinstance(object, internals.ObjList):
-    print_list(object)
-  else:
-    print(object)
+def print_object(*objects: 'Obj') -> 'ObjNull':
+  # If there is a single object, then print it with details
+  if len(objects) == 1:
+    object = objects[0]
+    if isinstance(object, internals.ObjRecord):
+      print_record(object)
+    elif isinstance(object, internals.ObjList):
+      print_list(object)
+    else:
+      print(object)
+
+  # If there are multiple objects, concatenate them
+  elif len(objects) > 1:
+    print("".join(str(object) for object in objects))
+
+  return internals.ObjNull()
 
 # Print a record oject
 def print_record(record: 'ObjRecord'):

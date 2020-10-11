@@ -3,9 +3,13 @@ from .errors import (RuntimeException, InvalidStateException,
   InvalidTypeException, InvalidValueException, InvalidCallException,
   UndefinedMethodException, UndefinedFieldException, UndefinedIndexException)
 
+# Import parameters
+from .parameters import (Parameter, ParameterRequired, ParameterVariadic,
+  Parameters)
+
 # Import primitive objects
-from .object import (Parameter, Obj, ObjNull, ObjBool, ObjNumber, ObjInt,
-  ObjFloat, ObjString, ObjRegex)
+from .object import (Obj, ObjNull, ObjBool, ObjNumber, ObjInt, ObjFloat,
+  ObjString, ObjRegex)
 
 # Import objects
 from .object_callable import ObjCallable, ObjPartialCallable, ObjPyCallable

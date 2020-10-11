@@ -49,6 +49,7 @@ rules = [
   parser.Rule('curly_bracket_right', r'\}', None),
 
   # Symbol tokens
+  parser.Rule('symbol_ellipsis', r'\.{3}', None),
   parser.Rule('symbol_dot', r'\.', None),
   parser.Rule('symbol_comma', r'\,', None),
   parser.Rule('symbol_colon', r'\:', None),
@@ -102,7 +103,7 @@ rules = [
 #############################################
 
 # Class that defines a parameter
-Parameter = collections.namedtuple('Parameter', ['name', 'default'])
+Parameter = collections.namedtuple('Parameter', ['name', 'default', 'variadic'])
 
 # Map a call expression
 def map_call(expr, token, value):
@@ -117,20 +118,38 @@ def map_call(expr, token, value):
   # Otherwise fail (should not reach this in normal execution)
   raise parser.ParserError(f"Invalid token in call expression: {token}", token.location)
 
+# Map a parameter
+def map_parameter(variadic, name, default = None):
+  # Check if this is a variadic parameter
+  if variadic:
+    return Parameter(name, None, True)
+  else:
+    return Parameter(name, default, False)
+
 # Map a parameter list
 def map_parameters(params):
-  # Hold if there are any optional parameters
-  optional_params = False
+  # State of the paramaters
+  state = 0
 
   # Iterate over the parameters
   for param in params:
-    # Set that there are optional parameters if we found one
-    if not optional_params and param.default is not None:
-      optional_params = True
+    # State 0: required parameters
+    if state == 0:
+      # Set that there are optional or variadic parameters if we found one
+      if param.default is not None:
+        state = 1
+      elif param.variadic:
+        state = 2
 
-    # Fail if we found a required parameter after an optional one
-    elif optional_params and param.default is None:
-      raise parser.ParserError(f"Invalid required parameter after an optional parameter: {param}", param.name.location)
+    # State 1: optional parameters
+    # Fail if we found a non-optional parameter after an optional one
+    elif state == 1 and param.default is None:
+        raise parser.ParserError(f"Invalid non-optional parameter after an optional parameter: {param.name}", param.name.location)
+
+    # State 2: variadic parameters
+    # Fail if we found a non-variadic parameter after an variadic one
+    elif state == 2 and not param.variadic:
+      raise parser.ParserError(f"Invalid non-variadic parameter after a variadic parameter: {param.name}", param.name.location)
 
   # Return the parameters
   return params
@@ -237,7 +256,9 @@ block_base = parser.describe('block_base', KEYWORD_DO >> parser.token('newline')
 block = parser.describe('block', block_base | ctrl)
 
 # Parameters
-parameters_arg = parser.describe('parameters_arg', parser.concat(Parameter, IDENTIFIER, OPERATOR_ASSIGN >> parser.lazy(lambda: expr) ^ None))
+parameters_arg_default = parser.describe('parameters_arg_default', parser.concat(map_parameter, parser.empty(), IDENTIFIER, OPERATOR_ASSIGN >> parser.lazy(lambda: expr) ^ None))
+parameters_arg_variadic = parser.describe('parameters_arg_variadic', parser.concat(map_parameter, SYMBOL_ELLIPSIS, IDENTIFIER))
+parameters_arg = parser.describe('parameters_arg', parameters_arg_default | parameters_arg_variadic)
 parameters = parser.describe('parameters', parser.map(map_parameters, parameters_arg * SYMBOL_COMMA))
 
 # Function expressions

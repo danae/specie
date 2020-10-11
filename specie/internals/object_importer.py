@@ -1,7 +1,8 @@
-from .object import Parameter, Obj, ObjBool, ObjInt, ObjString
+from .object import  Obj, ObjBool, ObjInt, ObjString
 from .object_callable import ObjCallable
 from .object_record import ObjRecord
 from .errors import RuntimeException
+from .parameters import Parameter, ParameterRequired, ParameterVariadic, Parameters
 
 
 ########################################
@@ -16,7 +17,7 @@ class ObjImporter(ObjCallable, typename = "Importer"):
 
   # Return the parameters of the callable
   def parameters(self):
-    return [Parameter("fileName", ObjString), Parameter("options", ObjRecord, ObjRecord())]
+    return Parameters(Parameter("fileName", ObjString), Parameter("options", ObjRecord, ObjRecord()))
 
   # Call the importer
   def __call__(self, file_name, options):

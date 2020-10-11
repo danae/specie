@@ -122,10 +122,18 @@ class Environment:
   def globals(cls, interpreter):
     globals = internals.ObjRecord()
 
+    # Types
+    globals['bool'] = internals.ObjPyCallable(internals.ObjBool)
+    globals['int'] = internals.ObjPyCallable(internals.ObjInt)
+    globals['float'] = internals.ObjPyCallable(internals.ObjFloat)
+    globals['string'] = internals.ObjPyCallable(internals.ObjString)
+    globals['date'] = internals.ObjPyCallable(internals.ObjDate)
+    globals['money'] = internals.ObjPyCallable(internals.ObjMoney)
+
     # Global functions
-    globals['print'] = internals.ObjPyCallable(output.print_object, internals.Parameter("object", internals.Obj))
-    globals['printTitle'] = internals.ObjPyCallable(output.title, internals.Parameter("title", internals.ObjString))
-    globals['include'] = internals.ObjPyCallable(interpreter.include, internals.Parameter("fileName", internals.ObjString))
+    globals['print'] = internals.ObjPyCallable(output.print_object)
+    globals['printTitle'] = internals.ObjPyCallable(output.title)
+    globals['include'] = internals.ObjPyCallable(interpreter.include)
 
     # Namespaces
     globals['import'] = internals.namespace_import(interpreter)
@@ -173,7 +181,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
       # Interpret the abstract syntax tree
       result = self.evaluate(ast)
-      if not self.includes[-1] and result is not None:
+      if not self.includes[-1] and result != internals.ObjNull():
         output.print_object(result)
 
       # Return the result
@@ -214,7 +222,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
 
   # Include a file
-  def include(self, file_name):
+  def include(self, file_name: 'ObjString'):
     file_name = file_name._py_value() if isinstance(file_name, internals.ObjString) else file_name
 
     # Check if the file exists
@@ -299,29 +307,9 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     if not isinstance(callable, internals.ObjCallable):
       raise internals.RuntimeException(f"The expression '{expr.expression}' is not callable", expr.token.location)
 
-    # Evaluate the arguments
+    # Evaluate the arguments and validate them
     args = self.evaluate(expr.args)
-
-    # Fetch the parameters
-    params = callable.parameters()
-
-    # Check if there are default parameters
-    if any(not param.required() for param in params):
-      # Check the length range of the arguments
-      min_length = len([param for param in params if param.required()])
-      max_length = len(params)
-      if len(args) < min_length or len(args) > max_length:
-        raise internals.InvalidCallException(f"Expected between {length.start} and {length.stop} arguments, got {len(args)}", expr.token.location)
-    else:
-      # Check the length of the arguments
-      if len(args) != len(params):
-        raise internals.InvalidCallException(f"Expected {len(params)} arguments, got {len(args)}", expr.token.location)
-
-    # Iterate over the argument types
-    for i, arg in enumerate(args):
-      # Check if the argument is the valid type
-      if not issubclass(check_type := type(arg), param_type := params[i].type):
-        raise internals.InvalidCallException(f"Expected argument {i+1} of type {param_type.typename}, got type {check_type.typename}", expr.token.location)
+    args = callable.parameters().validate(args)
 
     # Call the callable
     return callable(*args._py_list())
@@ -490,10 +478,22 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
   # Visit a function expression
   def visit_function_expr(self, expr: ast.FunctionExpr) -> internals.Obj:
     # Evaluate the parameters
-    params = [internals.Parameter(param.name.value, internals.Obj, self.evaluate(param.default) if param.default is not None else None) for param in expr.params]
+    def evaluate_parameters(params):
+      for param in params:
+        # Check for variadic parameters
+        if param.variadic:
+          yield internals.Parameter(param.name.value, internals.Obj, internals.ParameterVariadic)
+
+        # Check for optional parameters
+        elif param.default is not None:
+          yield internals.Parameter(param.name.value, internals.Obj, self.evaluate(param.default))
+
+        # Must be a required parameter
+        else:
+          yield internals.Parameter(param.name.value, internals.Obj)
 
     # Return the function object
-    return internals.ObjFunction(self, params, expr.body, self.environment)
+    return internals.ObjFunction(self, internals.Parameters(*evaluate_parameters(expr.params)), expr.body, self.environment)
 
   # Visit an assignment expression
   def visit_assignment_expr(self, expr: ast.AssignmentExpr) -> internals.Obj:

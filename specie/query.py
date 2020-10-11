@@ -49,7 +49,7 @@ class Select(Function):
 
   # Call the function
   def call(self, interpreter, variable, iterable):
-    function_params = [internals.Parameter(variable, internals.Obj)]
+    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
     function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
 
     return iterable.method_select(function)
@@ -67,7 +67,7 @@ class Distinct(Function):
 
   # Call the function
   def call(self, interpreter, variable, iterable):
-    function_params = [internals.Parameter(variable, internals.Obj)]
+    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
     function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
 
     return iterable.method_select(function).method_distinct()
@@ -115,7 +115,7 @@ class Sum(Function):
 
   # Call the function
   def call(self, interpreter, variable, iterable):
-    function_params = [internals.Parameter(variable, internals.Obj)]
+    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
     function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
 
     return iterable.method_select(function).method_sum()
@@ -133,7 +133,7 @@ class Min(Function):
 
   # Call the function
   def call(self, interpreter, variable, iterable):
-    function_params = [internals.Parameter(variable, internals.Obj)]
+    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
     function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
 
     return iterable.method_select(function).method_min()
@@ -151,7 +151,7 @@ class Max(Function):
 
   # Call the function
   def call(self, interpreter, variable, iterable):
-    function_params = [internals.Parameter(variable, internals.Obj)]
+    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
     function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
 
     return iterable.method_select(function).method_max()
@@ -169,7 +169,7 @@ class Average(Function):
 
   # Call the function
   def call(self, interpreter, variable, iterable):
-    function_params = [internals.Parameter(variable, internals.Obj)]
+    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
     function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
 
     return iterable.method_select(function).method_average()
@@ -203,7 +203,7 @@ class Any(Function):
 
   # Call the function
   def call(self, interpreter, variable, iterable):
-    function_params = [internals.Parameter(variable, internals.Obj)]
+    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
     function = internals.ObjFunction(interpreter, function_params, self.predicate, interpreter.environment)
 
     return iterable.method_any(function)
@@ -221,7 +221,7 @@ class All(Function):
 
   # Call the function
   def call(self, interpreter, variable, iterable):
-    function_params = [internals.Parameter(variable, internals.Obj)]
+    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
     function = internals.ObjFunction(interpreter, function_params, self.predicate, interpreter.environment)
 
     return iterable.method_all(function)
@@ -239,7 +239,7 @@ class Each(Function):
 
   # Call the function
   def call(self, interpreter, variable, iterable):
-    function_params = [internals.Parameter(variable, internals.Obj)]
+    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
     function = internals.ObjFunction(interpreter, function_params, self.function, interpreter.environment)
     return iterable.method_each(function)
 
@@ -263,7 +263,7 @@ class Where(Function):
 
   # Call the function
   def call(self, interpreter, variable, iterable):
-    function_params = [internals.Parameter(variable, internals.Obj)]
+    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
     function = internals.ObjFunction(interpreter, function_params, self.predicate, interpreter.environment)
     return iterable.where(function)
 

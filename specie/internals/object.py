@@ -5,37 +5,8 @@ import re
 import sys
 import types
 
+from .parameters import Parameter, ParameterRequired, ParameterVariadic, Parameters
 from .errors import RuntimeException, InvalidTypeException, UndefinedMethodException, UndefinedIndexException
-
-
-#########################################
-### Definition of the parameter class ###
-#########################################
-
-class ParameterRequired:
-  pass
-
-class Parameter:
-  # Constructor
-  def __init__(self, name, type, default = ParameterRequired):
-    self.name = name
-    self.type = type
-    self.default = default
-
-  # Return if this parameter is required
-  def required(self):
-    return self.default is ParameterRequired
-
-  # Return the string representation for this parameter
-  def __str__(self):
-    if self.default is not ParameterRequired:
-      return f"{self.name} = {self.default}"
-    else:
-      return f"{self.name}"
-
-  # Return the Python representation for this parameter
-  def __repr__(self):
-    return f"{self.__class__.__name__}({self.name!r}, {self.type!r}, {self.default!r})"
 
 
 ######################################
@@ -44,17 +15,14 @@ class Parameter:
 
 class Method:
   # Constructor
-  def __init__(self, func, params):
+  def __init__(self, cls, func):
+    self.cls = cls
     self.func = func
-    self.params = params
 
   # Resolve the method to a callable
   def create_callable(self, this_arg):
     from .object_callable import ObjPyCallable
-
-    callable = ObjPyCallable(self.func, *self.params)
-    callable = callable.partial(this_arg)
-    return callable
+    return ObjPyCallable(self.func, self.cls).partial(this_arg)
 
 
 ###########################################
@@ -88,22 +56,7 @@ class ObjMeta(type):
 
       method_func = getattr(cls, attr)
       method_name = attr[7:]
-
-      signature = inspect.signature(method_func)
-      params_sig = [param for param in signature.parameters.values() if param.kind in [inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD]]
-      params = [Parameter(param.name, cls.resolve_type(param), param.default if param.default is not param.empty else ParameterRequired) for param in params_sig]
-      cls.methods[method_name] = Method(method_func, params)
-
-  # Return a parameter resolved to a class
-  def resolve_type(cls, param):
-    if param.name == "self":
-      return cls
-    elif param.annotation == param.empty:
-      return cls.obj_classes['Obj']
-    elif ',' not in param.annotation:
-      return cls.obj_classes[param.annotation]
-    else:
-      return tuple(cls.obj_classes[annot.strip()] for annot in param.annotation.split(','))
+      cls.methods[method_name] = Method(cls, method_func)
 
 
 ######################################
@@ -134,9 +87,9 @@ class Obj(metaclass = ObjMeta, typename = "Object"):
     return name in self.methods
 
   # Call the method with the specified name
-  def call_method(self, name, *args, **kwargs):
+  def call_method(self, name, *args):
     try:
-      return self.methods[name].func(self, *args, **kwargs)
+      return self.methods[name].func(self, *args)
     except KeyError:
       raise UndefinedMethodException(name)
 
@@ -226,7 +179,7 @@ class ObjNull(Obj, typename = "Null"):
 
 class ObjBool(Obj, typename = "Bool"):
   # Constructor
-  def __init__(self, value):
+  def __init__(self, value: 'ObjBool, ObjString') -> 'ObjBool':
     super().__init__()
 
     if isinstance(value, ObjBool):
@@ -404,7 +357,7 @@ class ObjNumber(Obj, typename = "Number"):
 
 class ObjInt(ObjNumber, typename = "Int"):
   # Constructor
-  def __init__(self, value = 0):
+  def __init__(self, value: 'ObjInt, ObjFloat, ObjString' = 0) -> 'ObjInt':
     super().__init__()
 
     if isinstance(value, ObjInt):
@@ -492,7 +445,7 @@ class ObjInt(ObjNumber, typename = "Int"):
 # Class that defines a float object
 class ObjFloat(ObjNumber, typename = "Float"):
   # Constructor
-  def __init__(self, value = 0.0):
+  def __init__(self, value: 'ObjFloat, ObjInt, ObjString' = 0.0) -> 'ObjFloat':
     super().__init__()
 
     if isinstance(value, ObjFloat):
@@ -576,11 +529,13 @@ class ObjFloat(ObjNumber, typename = "Float"):
 # Class that defines a string object
 class ObjString(Obj, typename = "String"):
   # Constructor
-  def __init__(self, value = ""):
+  def __init__(self, value: 'Obj' = "") -> 'ObjString':
     super().__init__()
 
     if isinstance(value, ObjString):
       self.value = value.value
+    elif isinstance(value, Obj):
+      self.value = str(value)
     elif isinstance(value, str):
       self.value = value
     else:
@@ -749,7 +704,7 @@ class ObjRegex(Obj, typename = "Regex"):
       raise TypeError(f"Unexpected native type {pattern.__class__.__name__}")
 
   # Return if this regex object is equal to another object
-  def __eq__(self):
+  def __eq__(self, other):
     return isinstance(other, ObjRegex) and self.pattern == other.pattern
 
   def method_eq(self, other: 'Obj') -> 'ObjBool':

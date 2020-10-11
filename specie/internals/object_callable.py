@@ -1,6 +1,8 @@
 import typing
 
 from .object import Obj, ObjBool, ObjInt, ObjString
+from .parameters import Parameter, ParameterRequired, ParameterRequired, Parameters
+from .errors import InvalidCallException
 
 
 ###############################################
@@ -20,21 +22,20 @@ class ObjCallable(Obj, typename = "Callable"):
   def __call__(self, *args):
     raise NotImplementedError()
 
-  def method_call(self, args: 'Obj') -> 'Obj':
+  def method_call(self, *args: 'Obj') -> 'Obj':
     return self.__call__(*args._py_list())
 
   # Return a callable with the first arguments substituted by the specified arguments
   def partial(self, *args):
     return ObjPartialCallable(self, *args)
 
-  def method_partial(self, args: 'Obj') -> 'ObjCallable':
+  def method_partial(self, *args: 'Obj') -> 'ObjCallable':
     return self.partial(*args)
 
 
   # Return the string representation of this object
   def __str__(self):
-    params = [f"{param}" for param in self.parameters()]
-    return f"<{self.__class__.typename}(" + ', '.join(params) + ")>"
+    return f"<{self.__class__.typename}({self.parameters()})>"
 
   # Return the Python representation for this object
   def __repr__(self):
@@ -50,7 +51,7 @@ class ObjPartialCallable(ObjCallable, typename = "PartialCallable"):
   def __init__(self, callable, *args):
     super().__init__()
     self.callable = callable
-    self.args = args
+    self.args = list(args)
 
   # Return the parameters of the callable
   def parameters(self):
@@ -62,9 +63,8 @@ class ObjPartialCallable(ObjCallable, typename = "PartialCallable"):
 
   # Return the string representation of this object
   def __str__(self):
-    params = [' | '.join(p.typename for p in param) if isinstance(param, tuple) else param.typename for param in self.parameters()]
     args = [str(arg) for arg in self.args]
-    return f"<{self.__class__.typename}(" + ', '.join(params) + ") bound to (" + ', '.join(args) + ")>"
+    return f"<{self.__class__.typename}({self.parameters()}) bound to (" + ', '.join(args) + ")>"
 
   def method_string(self) -> 'ObjString':
     return ObjString(self.__str__())
@@ -81,10 +81,10 @@ class ObjPartialCallable(ObjCallable, typename = "PartialCallable"):
 
 class ObjPyCallable(ObjCallable, typename = "PyCallable"):
   # Constructor
-  def __init__(self, function, *params):
+  def __init__(self, function, self_type = None):
     super().__init__()
     self.function = function
-    self.params = params
+    self.params = Parameters.from_callable(self.function, self_type)
 
   # Return the parameters of the callable
   def parameters(self):
@@ -92,9 +92,16 @@ class ObjPyCallable(ObjCallable, typename = "PyCallable"):
 
   # Return the result of calling the callable
   def __call__(self, *args):
-    return self.function(*args)
+    def get_args():
+      for param, arg in zip(self.params, args):
+        if param.is_variadic():
+          yield from arg
+        else:
+          yield arg
+
+    return self.function(*get_args())
 
 
   # Return the Python representation for this object
   def __repr__(self):
-    return f"{self.__class__.__name__}({self.function!r}, *{self.params!r})"
+    return f"{self.__class__.__name__}({self.function!r})"

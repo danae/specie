@@ -1,4 +1,4 @@
-from .object import Obj, ObjBool, ObjNumber, ObjInt, ObjString
+from .object import Obj, ObjBool, ObjNumber, ObjInt, ObjFloat, ObjString
 from .object_record import ObjRecord
 
 
@@ -8,8 +8,8 @@ from .object_record import ObjRecord
 
 class ObjMoney(ObjRecord, typename = "Money"):
   # Constructor
-  def __init__(self, currency, value):
-    super().__init__(currency = currency, value = value)
+  def __init__(self, currency: 'ObjString', value: 'ObjNumber') -> 'ObjMoney':
+    super().__init__(currency = currency, value = ObjFloat(value))
 
 
   # Return if this money object is equal to another object
