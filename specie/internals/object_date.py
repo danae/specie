@@ -23,10 +23,10 @@ class ObjDate(Obj, typename = 'Date'):
         self.value = datetime.strptime(value.value, self.format).date()
       except ValueError:
         raise RuntimeException(f"Invalid date literal {value}")
-    elif isinstance(value, date):
-      self.value = value
     elif isinstance(value, datetime):
       self.value = value.date()
+    elif isinstance(value, date):
+      self.value = value
     elif isinstance(value, str):
       try:
         self.value = datetime.strptime(value, self.format).date()

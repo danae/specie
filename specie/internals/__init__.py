@@ -22,10 +22,12 @@ from .object_money import ObjMoney
 from .object_transaction import ObjTransaction
 from .object_importer import ObjImporter
 from .object_importer_rabobank import ObjRabobankImporter
+from .object_importer_n26 import ObjN26Importer
 
 
 # Create the import namespace
 def namespace_import(interpreter):
   ns = ObjRecord()
   ns['rabobank'] = ObjRabobankImporter(interpreter)
+  ns['n26'] = ObjN26Importer(interpreter)
   return ns

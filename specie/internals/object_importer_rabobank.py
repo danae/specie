@@ -43,8 +43,8 @@ class ObjRabobankImporter(ObjImporter, typename = "RabobankImporter"):
   def parse_record(self, record, source):
     return ObjTransaction(
       # Standard fields
-      id = ObjString("rabobank:{}".format(record['Volgnr'])),
-      date = ObjDate(datetime.datetime.strptime(record['Datum'], '%Y-%m-%d').date()),
+      id = ObjString(f"rabobank:{record['Volgnr']}"),
+      date = ObjDate(datetime.datetime.strptime(record['Datum'], '%Y-%m-%d')),
       amount = ObjMoney(ObjString(record['Munt']), ObjFloat(record['Bedrag'].replace(',', '.'))),
       name = ObjString(record['Naam tegenpartij'].upper()),
       address = ObjString(record['Tegenrekening IBAN/BBAN']),
