@@ -38,25 +38,25 @@
 ## Queries
 
 ### Mapping
-* [X] --> **select** (object) → traversable
-* [X] --> **distinct** (object) → traversable
+* [X] **select** (object) → traversable
+* [X] **distinct** (object) → traversable
 
 ### Terminal
 * [X] **count** → int
 * [X] **fold** (callable(object, object) → object) → object
 * [X] **fold** (callable(object, object) → object, object) → object
-* [X] --> **sum** (object) → number
+* [X] **sum** (object) → number
 * [X] **min** (object) → number
 * [X] **max** (object) → number
 * [X] **average** (object) → number
 * [X] **contains** (object) → bool
 * [X] **any** (bool) → bool
 * [X] **all** (bool) → bool
-* [X] --> **each** → null
-* [X] --> **drop** → null
+* [X] **each** → null
+* [X] **drop** → null
 
 ### Filtering and ordering
-* [X] --> **where** (bool) → traversable
+* [X] **where** (bool) → traversable
 * [ ] **orderBy** (object) → traversable
 * [ ] **orderByDesc** (object) → traversable
 * [ ] **thenBy** (object) → traversable
