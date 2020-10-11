@@ -329,7 +329,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
       return expression.get_method(expr.name.value)
 
     # Nothing found to get
-    raise internals.RuntimeException(f"The expression '{expr.expression}' is either not a record or the specified method is undefined", expr.token.location)
+    raise internals.RuntimeException(f"The expression '{expr.expression}' is either not a record or the specified field or method is undefined", expr.token.location)
 
   # Visit a set expression
   def visit_set_expr(self, expr: ast.GetExpr) -> internals.Obj:
