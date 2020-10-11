@@ -19,7 +19,7 @@
 * [X] Add optional arguments to functions
 * [X] Rework queries
 * [X] Fix average queries raising a ZeroDivisionError
-* [ ] Add types to instantiate things from the specie code
+* [X] Add types to instantiate things from the specie code → done using callables for specific types
 * [ ] Fix PayPal imports
 * [ ] Add N26 import
 
@@ -31,7 +31,7 @@
 * [ ] *Performance*: Create separate parse tree that is converted into an AST after parsing
 * [ ] *Neat*: Enable forward declarations in the metaclass
 * [ ] *Neat*: Give type errors a meaningful type instead of the Python types
-* [ ] Add variadic function arguments
+* [X] Add variadic function arguments
 * [ ] Buffer print output (so it does not print if e.g. the function is an invalid assignment target)
 
 
