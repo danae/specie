@@ -2,9 +2,9 @@ from .object import Obj, ObjBool, ObjNumber, ObjInt, ObjString
 from .object_record import ObjRecord
 
 
-#####################################
-### Definition of the money class ###
-#####################################
+############################################
+### Definition of the money object class ###
+############################################
 
 class ObjMoney(ObjRecord, typename = "Money"):
   # Constructor
