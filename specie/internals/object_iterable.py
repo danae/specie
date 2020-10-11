@@ -1,4 +1,5 @@
 from .object import Obj, ObjNull, ObjBool, ObjInt, ObjString
+from .object_callable import ObjPyCallable
 from .errors import RuntimeException
 
 
@@ -27,19 +28,28 @@ class ObjIterable(Obj, typename = "Iterable"):
   def method_select(self, function: 'ObjCallable') -> 'ObjIterable':
     return self.select(function)
 
-  # Return an iterable with the distinct qelements from this iterable
+  # Return an iterable with the distinct elements from this iterable
   def distinct(self):
     return ObjDistinctIterator(iter(self)).delegate()
 
   def method_distinct(self) -> 'ObjIterable':
     return self.distinct()
 
-  # Return an iterable that only contains items that match the predicate
+  # Return an iterable that only contains elements that match the predicate
   def where(self, predicate):
     return ObjWhereIterator(iter(self), predicate).delegate()
 
   def method_where(self, predicate: 'ObjCallable') -> 'ObjIterable':
     return self.where(predicate)
+
+  # Return an iterable that has its elements sorted using the key function
+  def sort(self, key = ObjNull(), desc = ObjBool(False)):
+    elements = [e for e in iter(self)]
+    elements.sort(key = key if key != ObjNull() else (lambda e: e), reverse = bool(desc))
+    return ObjPyIterator(elements).delegate()
+
+  def method_sort(self, key: 'ObjCallable' = ObjNull(), desc: 'ObjBool' = ObjBool(False)) -> 'ObjList':
+    return self.sort(key, desc)
 
   # Return the number of elements in this iterable
   def __len__(self):
@@ -178,7 +188,6 @@ class ObjDelegatedIterable(ObjIterable, typename = "DelegatedIterable"):
     return f"{self.__class__.__name__}({self.value!r})"
 
 
-
 ###############################################
 ### Definition of the iterator object class ###
 ###############################################
@@ -229,6 +238,7 @@ class ObjIterator(Obj, typename = "Iterator"):
 
   # Return the Python iterator for the iterator object
   def __iter__(self):
+    self.rewind()
     return self
 
   # Return the Python next element for the iterator object
@@ -237,6 +247,50 @@ class ObjIterator(Obj, typename = "Iterator"):
       return self.current()
     else:
       raise StopIteration
+
+
+######################################################
+### Definition of the Python iterator object class ###
+######################################################
+
+class ObjPyIterator(ObjIterator, typename = "PyIterator"):
+  # Constructor
+  def __init__(self, list):
+    super().__init__()
+
+    self.list = list
+    self.list_index = None
+    self.list_deleted = False
+
+
+  # Return the element at the cursor of the iterator object
+  def current(self):
+    if self.list_index is None or self.list_deleted:
+      raise InvalidStateException("The iterator has not yet been advanced")
+    else:
+      return self.list[self.list_index]
+
+  # Advance the cursor of the iterator object
+  def advance(self):
+    if self.list_index is None:
+      self.list_index = 0
+    elif self.list_deleted:
+      self.list_deleted = False
+    else:
+      self.list_index += 1
+    return self.list_index < len(self.list)
+
+  # Rewind the iterator object
+  def rewind(self):
+    self.list_index = None
+
+  # Delete the element at the cursor of the iterator object
+  def delete(self):
+    if self.list_index is None or self.list_deleted:
+      raise InvalidStateException("The iterator has not yet been advanced")
+    else:
+      del self.list[self.list_index]
+      self.list_deleted = True
 
 
 ######################################################

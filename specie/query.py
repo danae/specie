@@ -77,6 +77,59 @@ class Distinct(Function):
     yield self.func
 
 
+# Where query function
+class Where(Function):
+  # Constructor
+  def __init__(self, predicate):
+    self.predicate = predicate
+
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
+    function = internals.ObjFunction(interpreter, function_params, self.predicate, interpreter.environment)
+    return iterable.where(function)
+
+  # Resolve the function
+  def resolve(self):
+    yield self.predicate
+
+
+# Sort query function
+class Sort(Function):
+  # Constructor
+  def __init__(self, func):
+    self.func = func
+
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
+    function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
+
+    return iterable.method_sort(function)
+
+  # Resolve the function
+  def resolve(self):
+    yield self.func
+
+
+# SortDesc query function
+class SortDesc(Function):
+  # Constructor
+  def __init__(self, func):
+    self.func = func
+
+  # Call the function
+  def call(self, interpreter, variable, iterable):
+    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
+    function = internals.ObjFunction(interpreter, function_params, self.func, interpreter.environment)
+
+    return iterable.method_sort(function, internals.ObjBool(True))
+
+  # Resolve the function
+  def resolve(self):
+    yield self.func
+
+
 # Count query function
 class Count(Function):
   # Call the function
@@ -255,23 +308,6 @@ class Drop(Function):
     return iterable.method_drop()
 
 
-# Where query function
-class Where(Function):
-  # Constructor
-  def __init__(self, predicate):
-    self.predicate = predicate
-
-  # Call the function
-  def call(self, interpreter, variable, iterable):
-    function_params = internals.Parameters(internals.Parameter(variable, internals.Obj))
-    function = internals.ObjFunction(interpreter, function_params, self.predicate, interpreter.environment)
-    return iterable.where(function)
-
-  # Resolve the function
-  def resolve(self):
-    yield self.predicate
-
-
 ###############################################
 ### Definition of the query function parser ###
 ###############################################
@@ -286,6 +322,21 @@ def parse_function(name, args):
   elif name.value == "distinct":
     if len(args) == 1:
       return Distinct(*args)
+
+  # Where query function
+  elif name.value == "where":
+    if len(args) == 1:
+      return Where(*args)
+
+  # Sort query function
+  elif name.value == "sort":
+    if len(args) == 1:
+      return Sort(*args)
+
+  # SortDesc query function
+  elif name.value == "sortDesc":
+    if len(args) == 1:
+      return SortDesc(*args)
 
   # Count query function
   elif name.value == "count":
@@ -341,11 +392,6 @@ def parse_function(name, args):
   elif name.value == "drop":
     if len(args) == 0:
       return Drop()
-
-  # Where query function
-  elif name.value == "where":
-    if len(args) == 1:
-      return Where(*args)
 
   # Undefined query functon, so raise a parser error
   raise parser.ParserError(f"Invalid query function {name.value}", name.location)

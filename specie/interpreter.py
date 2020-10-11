@@ -447,6 +447,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Iterate over the iterable
     iterator = iter(iterable) if isinstance(iterable, internals.ObjIterable) else iterable
+    iterator.rewind()
     while iterator.advance():
       # Create a new environment with the capture variable
       capture = self.environment.nested()
