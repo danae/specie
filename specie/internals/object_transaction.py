@@ -4,9 +4,9 @@ from .object_date import ObjDate
 from .object_money import ObjMoney
 
 
-###########################################
-### Definition of the transaction class ###
-###########################################
+##################################################
+### Definition of the transaction object class ###
+##################################################
 
 class ObjTransaction(ObjRecord, typename = "Transaction"):
   # Constructor
