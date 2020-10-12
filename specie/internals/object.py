@@ -190,7 +190,7 @@ class ObjBool(Obj, typename = "Bool"):
       elif value.value == "true":
         self.value = True
       else:
-        raise Valuerror(f"Unexpected native type {value.__class__.__name__} with value {value!r}")
+        raise ValueError(f"Unexpected native type {value.__class__.__name__} with value {value!r}")
     elif isinstance(value, bool):
       self.value = value
     elif isinstance(value, str):
@@ -199,7 +199,7 @@ class ObjBool(Obj, typename = "Bool"):
       elif value == "true":
         self.value = True
       else:
-        raise Valuerror(f"Unexpected native type {value.__class__.__name__} with value {value!r}")
+        raise ValueError(f"Unexpected native type {value.__class__.__name__} with value {value!r}")
     else:
       raise TypeError(f"Unexpected native type {value.__class__.__name__}")
 
