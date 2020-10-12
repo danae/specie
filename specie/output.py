@@ -74,7 +74,8 @@ class Table:
     widths = []
     for column_index in range(0, self.column_count()):
       column = self.get_column(column_index)
-      width = max(len(cell) for cell in column)
+      # TODO: Neat ellipsis
+      width = min(max(len(cell) for cell in column), 80)
       widths.append(width)
 
     # Create the format string
@@ -93,7 +94,8 @@ class Table:
         strings.append(separators)
       # Otherwise append the row
       else:
-        strings.append(fmt.format(*row))
+        # TODO: Neat ellipsis
+        strings.append(fmt.format(*(s[:80] for s in row)))
     strings.append("")
 
     # Return the strings
