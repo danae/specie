@@ -43,7 +43,7 @@ class ObjN26Importer(ObjImporter, typename = "N26Importer"):
   def parse_record(self, id, record, source):
     return ObjTransaction(
       # Standard fields
-      id = ObjString(f"n26:{source}:{id}"),
+      id = ObjString(f"n26:{source}:{id:06d}"),
       date = ObjDate(datetime.datetime.strptime(record['Date'], '%Y-%m-%d')),
       amount = ObjMoney("EUR", ObjFloat(record['Amount (EUR)'])),
       name = ObjString(record['Payee'].upper()),
