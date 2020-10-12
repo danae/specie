@@ -20,8 +20,8 @@
 * [X] Rework queries
 * [X] Fix average queries raising a ZeroDivisionError
 * [X] Add types to instantiate things from the specie code → done using callables for specific types
-* [ ] Fix PayPal imports
-* [ ] Add N26 import
+* [X] Fix PayPal imports
+* [X] Add N26 import
 
 ### Should
 * [ ] Create a new Table object for a collection of records
