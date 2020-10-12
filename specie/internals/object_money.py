@@ -1,5 +1,6 @@
 from .object import Obj, ObjBool, ObjNumber, ObjInt, ObjFloat, ObjString
 from .object_record import ObjRecord
+from .errors import InvalidTypeException
 
 
 ############################################

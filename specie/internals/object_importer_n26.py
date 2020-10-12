@@ -45,7 +45,7 @@ class ObjN26Importer(ObjImporter, typename = "N26Importer"):
       # Standard fields
       id = ObjString(f"n26:{source}:{id:06d}"),
       date = ObjDate(datetime.datetime.strptime(record['Date'], '%Y-%m-%d')),
-      amount = ObjMoney("EUR", ObjFloat(record['Amount (EUR)'])),
+      amount = ObjMoney(ObjString("EUR"), ObjFloat(record['Amount (EUR)'])),
       name = ObjString(record['Payee'].upper()),
       address = ObjString(record['Account number']),
       description = ObjString(record['Payment reference']),
