@@ -76,17 +76,13 @@ class ObjDate(Obj, typename = 'Date'):
   def method_day(self) -> 'ObjInt':
     return ObjInt(self.day())
 
-  def at_start_of_year(self):
-    return date(self.value.year, 1, 1)
-
+  # Return a date object at the start of the year of this date object
   def method_atStartOfYear(self) -> 'ObjDate':
-    return ObjDate(self.at_start_of_year())
+    return ObjDate(date(self.value.year, 1, 1))
 
-  def at_start_of_month(self):
-    return date(self.value.year, self.value.month, 1)
-
+  # Return a date object at the start of the month of this date object
   def method_atStartOfMonth(self) -> 'ObjDate':
-    return ObjDate(self.at_start_of_month())
+    return ObjDate(date(self.value.year, self.value.month, 1))
 
   # Return a formatted string representation of this date object
   def __format__(self, format_spec):
