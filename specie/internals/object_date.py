@@ -105,7 +105,7 @@ class ObjDate(Obj, typename = 'Date'):
     return NotImplemented
 
   def method_lt(self, other: 'ObjDate') -> 'ObjBool':
-    if (result := self.__lt__(other)) != NotImplemented:
+    if (result := self.__lt__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -115,7 +115,7 @@ class ObjDate(Obj, typename = 'Date'):
     return NotImplemented
 
   def method_lte(self, other: 'ObjDate') -> 'ObjBool':
-    if (result := self.__le__(other)) != NotImplemented:
+    if (result := self.__le__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -125,7 +125,7 @@ class ObjDate(Obj, typename = 'Date'):
     return NotImplemented
 
   def method_gt(self, other: 'ObjDate') -> 'ObjBool':
-    if (result := self.__gt__(other)) != NotImplemented:
+    if (result := self.__gt__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -135,7 +135,7 @@ class ObjDate(Obj, typename = 'Date'):
     return NotImplemented
 
   def method_gte(self, other: 'ObjDate') -> 'ObjBool':
-    if (result := self.__ge__(other)) != NotImplemented:
+    if (result := self.__ge__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -155,7 +155,7 @@ class ObjDate(Obj, typename = 'Date'):
     return NotImplemented
 
   def method_add(self, other: 'ObjInt') -> 'ObjDate':
-    if (result := self.__add__(other)) != NotImplemented:
+    if (result := self.__add__(other)) is not NotImplemented:
       return result
     raise InvalidTypeException(other)
 
@@ -168,7 +168,7 @@ class ObjDate(Obj, typename = 'Date'):
     return NotImplemented
 
   def method_sub(self, other: 'ObjInt, ObjDate') -> 'ObjDate, ObjInt':
-    if (result := self.__sub__(other)) != NotImplemented:
+    if (result := self.__sub__(other)) is not NotImplemented:
       return result
     raise InvalidTypeException(other)
 

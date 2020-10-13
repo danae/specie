@@ -294,7 +294,7 @@ class ObjNumber(Obj, typename = "Number"):
     return NotImplemented
 
   def method_lt(self, other: 'ObjNumber') -> 'ObjBool':
-    if (result := self.__lt__(other)) != NotImplemented:
+    if (result := self.__lt__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -304,7 +304,7 @@ class ObjNumber(Obj, typename = "Number"):
     return NotImplemented
 
   def method_lte(self, other: 'ObjNumber') -> 'ObjBool':
-    if (result := self.__le__(other)) != NotImplemented:
+    if (result := self.__le__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -314,7 +314,7 @@ class ObjNumber(Obj, typename = "Number"):
     return NotImplemented
 
   def method_gt(self, other: 'ObjNumber') -> 'ObjBool':
-    if (result := self.__gt__(other)) != NotImplemented:
+    if (result := self.__gt__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -324,7 +324,7 @@ class ObjNumber(Obj, typename = "Number"):
     return NotImplemented
 
   def method_gte(self, other: 'ObjNumber') -> 'ObjBool':
-    if (result := self.__ge__(other)) != NotImplemented:
+    if (result := self.__ge__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -389,7 +389,7 @@ class ObjInt(ObjNumber, typename = "Int"):
     return NotImplemented
 
   def method_add(self, other: 'ObjNumber') -> 'ObjNumber':
-    if (result := self.__add__(other)) != NotImplemented:
+    if (result := self.__add__(other)) is not NotImplemented:
       return result
     raise InvalidTypeException(other)
 
@@ -402,7 +402,7 @@ class ObjInt(ObjNumber, typename = "Int"):
     return NotImplemented
 
   def method_sub(self, other: 'ObjNumber') -> 'ObjNumber':
-    if (result := self.__sub__(other)) != NotImplemented:
+    if (result := self.__sub__(other)) is not NotImplemented:
       return result
     raise InvalidTypeException(other)
 
@@ -415,7 +415,7 @@ class ObjInt(ObjNumber, typename = "Int"):
     return NotImplemented
 
   def method_mul(self, other: 'ObjNumber') -> 'ObjNumber':
-    if (result := self.__mul__(other)) != NotImplemented:
+    if (result := self.__mul__(other)) is not NotImplemented:
       return result
     raise InvalidTypeException(other)
 
@@ -429,7 +429,7 @@ class ObjInt(ObjNumber, typename = "Int"):
     return NotImplemented
 
   def method_div(self, other: 'ObjNumber') -> 'ObjNumber':
-    if (result := self.__truediv__(other)) != NotImplemented:
+    if (result := self.__truediv__(other)) is not NotImplemented:
       return result
     raise InvalidTypeException(other)
 
@@ -477,7 +477,7 @@ class ObjFloat(ObjNumber, typename = "Float"):
     return NotImplemented
 
   def method_add(self, other: 'ObjNumber') -> 'ObjNumber':
-    if (result := self.__add__(other)) != NotImplemented:
+    if (result := self.__add__(other)) is not NotImplemented:
       return result
     raise InvalidTypeException(other)
 
@@ -488,7 +488,7 @@ class ObjFloat(ObjNumber, typename = "Float"):
     return NotImplemented
 
   def method_sub(self, other: 'ObjNumber') -> 'ObjNumber':
-    if (result := self.__sub__(other)) != NotImplemented:
+    if (result := self.__sub__(other)) is not NotImplemented:
       return result
     raise InvalidTypeException(other)
 
@@ -499,7 +499,7 @@ class ObjFloat(ObjNumber, typename = "Float"):
     return NotImplemented
 
   def method_mul(self, other: 'ObjNumber') -> 'ObjNumber':
-    if (result := self.__mul__(other)) != NotImplemented:
+    if (result := self.__mul__(other)) is not NotImplemented:
       return result
     raise InvalidTypeException(other)
 
@@ -513,7 +513,7 @@ class ObjFloat(ObjNumber, typename = "Float"):
     return NotImplemented
 
   def method_div(self, other: 'ObjNumber') -> 'ObjNumber':
-    if (result := self.__truediv__(other)) != NotImplemented:
+    if (result := self.__truediv__(other)) is not NotImplemented:
       return result
     raise InvalidTypeException(other)
 
@@ -577,7 +577,7 @@ class ObjString(Obj, typename = "String"):
     return NotImplemented
 
   def method_lt(self, other: 'ObjString') -> 'ObjBool':
-    if (result := self.__lt__(other)) != NotImplemented:
+    if (result := self.__lt__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -587,7 +587,7 @@ class ObjString(Obj, typename = "String"):
     return NotImplemented
 
   def method_lte(self, other: 'ObjString') -> 'ObjBool':
-    if (result := self.__le__(other)) != NotImplemented:
+    if (result := self.__le__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -597,7 +597,7 @@ class ObjString(Obj, typename = "String"):
     return NotImplemented
 
   def method_gt(self, other: 'ObjString') -> 'ObjBool':
-    if (result := self.__gt__(other)) != NotImplemented:
+    if (result := self.__gt__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -607,7 +607,7 @@ class ObjString(Obj, typename = "String"):
     return NotImplemented
 
   def method_gte(self, other: 'ObjString') -> 'ObjBool':
-    if (result := self.__ge__(other)) != NotImplemented:
+    if (result := self.__ge__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -627,7 +627,7 @@ class ObjString(Obj, typename = "String"):
     return NotImplemented
 
   def method_add(self, other: 'ObjString') -> 'ObjString':
-    if (result := self.__add__(other)) != NotImplemented:
+    if (result := self.__add__(other)) is not NotImplemented:
       return result
     raise InvalidTypeException(other)
 

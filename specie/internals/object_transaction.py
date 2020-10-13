@@ -45,7 +45,7 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
     return NotImplemented
 
   def method_lt(self, other: 'ObjTransaction') -> 'ObjBool':
-    if (result := self.__lt__(other)) != NotImplemented:
+    if (result := self.__lt__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -55,7 +55,7 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
     return NotImplemented
 
   def method_lte(self, other: 'ObjTransaction') -> 'ObjBool':
-    if (result := self.__le__(other)) != NotImplemented:
+    if (result := self.__le__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -65,7 +65,7 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
     return NotImplemented
 
   def method_gt(self, other: 'ObjTransaction') -> 'ObjBool':
-    if (result := self.__gt__(other)) != NotImplemented:
+    if (result := self.__gt__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
@@ -75,7 +75,7 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
     return NotImplemented
 
   def method_gte(self, other: 'ObjTransaction') -> 'ObjBool':
-    if (result := self.__ge__(other)) != NotImplemented:
+    if (result := self.__ge__(other)) is not NotImplemented:
       return ObjBool(result)
     raise InvalidTypeException(other)
 
