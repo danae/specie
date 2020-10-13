@@ -24,6 +24,9 @@
 * [X] Add N26 import
 
 ### Should
+* [ ] Create an abstract structure type that holds fields
+* [ ] Create a hash map type
+* [ ] Optimize table output (support for ellipsis, wrapping, etc)
 * [ ] Create a new Table object for a collection of records
 * [ ] Update the TransactionList class to use the new Table model
 
