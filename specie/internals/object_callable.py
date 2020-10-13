@@ -32,10 +32,13 @@ class ObjCallable(Obj, typename = "Callable"):
   def method_partial(self, *args: 'Obj') -> 'ObjCallable':
     return self.partial(*args)
 
-
   # Return the string representation of this object
   def __str__(self):
     return f"<{self.__class__.typename}({self.parameters()})>"
+
+  def method_string(self) -> 'ObjString':
+    return ObjString(self.__str__())
+
 
   # Return the Python representation for this object
   def __repr__(self):
