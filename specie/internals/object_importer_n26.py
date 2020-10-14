@@ -5,7 +5,7 @@ import re
 
 from .object import Obj, ObjBool, ObjInt, ObjFloat, ObjString
 from .object_list import ObjList
-from .object_record import FieldOptions, Field, ObjRecord
+from .object_record import ObjRecord
 from .object_date import ObjDate
 from .object_money import ObjMoney
 from .object_transaction import ObjTransaction
@@ -41,14 +41,15 @@ class ObjN26Importer(ObjImporter, typename = "N26Importer"):
 
   # Parse an N26 record
   def parse_record(self, id, record, source):
-    return ObjTransaction(
-      # Standard fields
-      id = ObjString(f"n26:{source}:{id:06d}"),
-      date = ObjDate(datetime.datetime.strptime(record['Date'], '%Y-%m-%d')),
-      amount = ObjMoney(ObjString("EUR"), ObjFloat(record['Amount (EUR)'])),
-      name = ObjString(record['Payee'].upper()),
-      address = ObjString(record['Account number']),
-      description = ObjString(record['Payment reference']),
+    transaction = ObjTransaction()
 
-      # Extension fields
-      source = Field(ObjString(source), public = False))
+    # Standard fields
+    transaction.id = ObjString(f"n26:{source}:{id:06d}")
+    transaction.source = ObjString(source)
+    transaction.date = ObjDate(datetime.datetime.strptime(record['Date'], '%Y-%m-%d'))
+    transaction.amount = ObjMoney(ObjString("EUR"), ObjFloat(record['Amount (EUR)']))
+    transaction.name = ObjString(record['Payee'].upper())
+    transaction.address = ObjString(record['Account number'])
+    transaction.description = ObjString(record['Payment reference'])
+
+    return transaction

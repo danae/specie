@@ -29,7 +29,7 @@ from .object_importer_paypal import ObjPayPalImporter
 # Create the import namespace
 def namespace_import(interpreter):
   ns = ObjRecord()
-  ns['rabobank'] = ObjRabobankImporter(interpreter)
-  ns['n26'] = ObjN26Importer(interpreter)
-  ns['paypal'] = ObjPayPalImporter(interpreter, ObjString("EUR"))
+  ns.declare_field('rabobank', ObjRabobankImporter(interpreter))
+  ns.declare_field('n26', ObjN26Importer(interpreter))
+  ns.declare_field('paypal', ObjPayPalImporter(interpreter, ObjString("EUR")))
   return ns

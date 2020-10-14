@@ -117,7 +117,7 @@ def print_object(*objects: 'Obj') -> 'ObjNull':
   # If there is a single object, then print it with details
   if len(objects) == 1:
     object = objects[0]
-    if isinstance(object, internals.ObjRecord):
+    if isinstance(object, internals.ObjRecord) and object.__class__.prettyprint:
       print_record(object)
     elif isinstance(object, internals.ObjList):
       print_list(object)
@@ -160,7 +160,7 @@ def print_list(list: 'ObjList'):
 # print a table object
 def print_table(table: 'ObjList'):
   # Get all fields
-  fields = functools.reduce(utils.distinct_append, (record.list_field_names(only_public = True) for record in table), [])
+  fields = functools.reduce(utils.distinct_append, ([name for name, field in record.fields.items() if field.public] for record in table), [])
 
   # Print the list in table form
   tbl = Table()
@@ -168,7 +168,7 @@ def print_table(table: 'ObjList'):
   tbl.append_separator_row()
 
   for record in table:
-    tbl.append_row([record.field_value(name, "") for name in fields])
+    tbl.append_row([record.get_field_or(name, "") for name in fields])
 
   if tbl:
     print(tbl)

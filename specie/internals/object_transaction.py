@@ -1,5 +1,5 @@
 from .object import Obj, ObjBool, ObjInt, ObjFloat, ObjString
-from .object_record import FieldOptions, Field, ObjRecord
+from .object_record import FieldOptions, ObjRecord
 from .object_date import ObjDate
 from .object_money import ObjMoney
 
@@ -10,30 +10,28 @@ from .object_money import ObjMoney
 
 class ObjTransaction(ObjRecord, typename = "Transaction"):
   # Constructor
-  def __init__(self, **fields):
-    super().__init__(
-      id = Field(fields.get('id', ObjString()), public = False),
-      date = fields.get('date', ObjDate()),
-      amount = Field(fields.get('amount', ObjMoney(ObjString('EUR'), ObjFloat())), options = FieldOptions.FORMAT_ALIGN_RIGHT),
-      label = fields.get('label', ObjString()),
-      name = fields.get('name', ObjString()),
-      address = fields.get('address', ObjString()),
-      description = Field(fields.get('description', ObjString()), options = FieldOptions.FORMAT_ELLIPSIS))
-
-    for name, field in fields.items():
-      self[name] = field
+  def __init__(self):
+    super().__init__()
+    self.declare_field('id', ObjString(), public = False)
+    self.declare_field('source', ObjString(), public = False)
+    self.declare_field('date', ObjDate())
+    self.declare_field('amount', ObjMoney(ObjString('EUR')), options = FieldOptions.FORMAT_ALIGN_RIGHT)
+    self.declare_field('label', ObjString())
+    self.declare_field('name', ObjString())
+    self.declare_field('address', ObjString())
+    self.declare_field('description', ObjString(), options = FieldOptions.FORMAT_ELLIPSIS)
 
 
   # Return if this transaction object is equal to another object
   def __eq__(self, other):
-    return isinstance(other, ObjTransaction) and self['id'] == other['id']
+    return isinstance(other, ObjTransaction) and self.id == other.id
 
   def method_eq(self, other: 'Obj') -> 'ObjBool':
     return ObjBool(self.__eq__(other))
 
   # Return the hash of this object
   def __hash__(self):
-    return hash((self['id']))
+    return hash((self.id))
 
   def method_asHash(self) -> 'ObjInt':
     return ObjInt(self.__hash__())
@@ -41,7 +39,7 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
   # Compare this transaction object with another object
   def __lt__(self, other):
     if isinstance(other, ObjTransaction):
-      return (self['date'], self['id']) < (other['date'], other['id'])
+      return (self.date, self.id) < (other.date, other.id)
     return NotImplemented
 
   def method_lt(self, other: 'ObjTransaction') -> 'ObjBool':
@@ -51,7 +49,7 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
 
   def __le__(self, other):
     if isinstance(other, ObjTransaction):
-      return (self['date'], self['id']) <= (other['date'], other['id'])
+      return (self.date, self.id) <= (other.date, other.id)
     return NotImplemented
 
   def method_lte(self, other: 'ObjTransaction') -> 'ObjBool':
@@ -61,7 +59,7 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
 
   def __gt__(self, other):
     if isinstance(other, ObjTransaction):
-      return (self['date'], self['id']) > (other['date'], other['id'])
+      return (self.date, self.id) > (other.date, other.id)
     return NotImplemented
 
   def method_gt(self, other: 'ObjTransaction') -> 'ObjBool':
@@ -71,7 +69,7 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
 
   def __ge__(self, other):
     if isinstance(other, ObjTransaction):
-      return (self['date'], self['id']) >= (other['date'], other['id'])
+      return (self.date, self.id) >= (other.date, other.id)
     return NotImplemented
 
   def method_gte(self, other: 'ObjTransaction') -> 'ObjBool':

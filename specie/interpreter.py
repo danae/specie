@@ -19,8 +19,8 @@ class Environment:
   # Get a variable in the environment
   def __getitem__(self, name):
     # Get a variable from the current environment
-    if name in self.variables:
-      return self.variables[name]
+    if self.variables.has_field(name):
+      return self.variables.get_field(name)
 
     # Get a variable from the previous environment
     elif self.previous is not None:
@@ -33,8 +33,8 @@ class Environment:
   # Set a variable in the environment
   def __setitem__(self, name, value):
     # Set a variable in the current environment
-    if name in self.variables:
-      self.variables[name] = value
+    if self.variables.has_field(name):
+      self.variables.set_field(name, value)
 
     # Get a variable from the previous environment
     elif self.previous is not None:
@@ -47,7 +47,7 @@ class Environment:
   # Return is a variable exists in the environment
   def __contains__(self, name):
     # Check the current environment
-    if name in self.variables:
+    if self.variables.has_field():
       return True
 
     # Check the previous environment
@@ -60,7 +60,7 @@ class Environment:
 
   # Set a varable in the CURRENT environmentn
   def declare(self, name, value):
-    self.variables[name] = value
+    self.variables.declare_field(name, value)
 
   # Create a nested environment with this environment as previous environment
   def nested(self):
@@ -77,9 +77,9 @@ class Environment:
   def get_variable(self, name, distance = 0):
     try:
       if distance == 0:
-        return self.variables[name.value]
+        return self.variables.get_field(name.value, name.location)
       else:
-        return self.ancestor(distance).variables[name.value]
+        return self.ancestor(distance).variables.get_field(name.value, name.location)
     except KeyError:
       raise internals.UndefinedFieldException(f"{name.value}", name.location)
 
@@ -87,22 +87,22 @@ class Environment:
   def set_variable(self, name, value, distance = 0):
     try:
       if distance == 0:
-        self.variables[name.value] = value
+        self.variables.set_field(name.value, value, name.location)
       else:
-        self.ancestor(distance).variables[name.value] = value
+        self.ancestor(distance).variables.set_field(name.value, value, name.location)
     except KeyError:
       raise internals.UndefinedFieldException(name.value, name.location)
 
   # Return if the environment contains the specified variable
   def has_variable(self, name, distance = 0):
     if distance == 0:
-      return name.value in self.variables
+      return self.variables.has_field(name.value)
     else:
-      return name.value in self.ancestor(distance).variables
+      return self.ancestor(distance).variables.has_field(name.value)
 
   # Declare a varable in the CURRENT environment by means of a lexer token
-  def declare_variable(self, name, value):
-    self.variables[name.value] = value
+  def declare_variable(self, name, value, **kwargs):
+    self.variables.declare_field(name.value, value, **kwargs)
 
   # Return an iterator over this environment and its ancestors
   def __iter__(self):
@@ -123,23 +123,23 @@ class Environment:
     globals = internals.ObjRecord()
 
     # Types
-    globals['bool'] = internals.ObjPyCallable(internals.ObjBool)
-    globals['int'] = internals.ObjPyCallable(internals.ObjInt)
-    globals['float'] = internals.ObjPyCallable(internals.ObjFloat)
-    globals['string'] = internals.ObjPyCallable(internals.ObjString)
-    globals['date'] = internals.ObjPyCallable(internals.ObjDate)
-    globals['money'] = internals.ObjPyCallable(internals.ObjMoney)
+    globals.declare_field('bool', internals.ObjPyCallable(internals.ObjBool), mutable = False)
+    globals.declare_field('int', internals.ObjPyCallable(internals.ObjInt), mutable = False)
+    globals.declare_field('float', internals.ObjPyCallable(internals.ObjFloat), mutable = False)
+    globals.declare_field('string', internals.ObjPyCallable(internals.ObjString), mutable = False)
+    globals.declare_field('date', internals.ObjPyCallable(internals.ObjDate), mutable = False)
+    globals.declare_field('money', internals.ObjPyCallable(internals.ObjMoney), mutable = False)
 
     # Global functions
-    globals['print'] = internals.ObjPyCallable(output.print_object)
-    globals['printTitle'] = internals.ObjPyCallable(output.title)
-    globals['include'] = internals.ObjPyCallable(interpreter.include)
+    globals.declare_field('print', internals.ObjPyCallable(output.print_object), mutable = False)
+    globals.declare_field('printTitle', internals.ObjPyCallable(output.title), mutable = False)
+    globals.declare_field('include', internals.ObjPyCallable(interpreter.include), mutable = False)
 
     # Namespaces
-    globals['import'] = internals.namespace_import(interpreter)
+    globals.declare_field('import', internals.namespace_import(interpreter), mutable = False)
 
     # Tables
-    globals['_'] = internals.ObjList()
+    globals.declare_field('_', internals.ObjList())
 
     return cls(None, globals)
 
@@ -280,7 +280,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
   def visit_record_expr(self, expr: ast.RecordExpr) -> internals.Obj:
     record_object = internals.ObjRecord()
     for name, value in expr:
-      record_object[name.value] = self.evaluate(value)
+      record_object.declare_field(name.value, self.evaluate(value), name.location)
     return record_object
 
   # Visit a variable expression
