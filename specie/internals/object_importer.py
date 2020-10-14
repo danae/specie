@@ -21,8 +21,7 @@ class ObjImporter(ObjCallable, typename = "Importer"):
 
   # Call the importer
   def __call__(self, file_name, options):
-    file_name = file_name._py_value() if isinstance(file_name, ObjString) else file_name
-    options = options._py_dict() if isinstance(options, ObjRecord) else options
+    file_name = file_name.value if isinstance(file_name, ObjString) else file_name
 
     # Check if the file exists
     if (resolved_file_name := self.interpreter.resolve_file_name(file_name)) is None:

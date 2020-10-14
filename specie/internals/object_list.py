@@ -138,14 +138,6 @@ class ObjList(ObjIterable, typename = "List"):
     return ObjBool(self.__contains__(item))
 
 
-  # Return the Python value for the object
-  def _py_value(self):
-    return [value._py_value() for value in self.items]
-
-  # Return the Python list for the object
-  def _py_list(self):
-    return self.items
-
   # Return the Python representation for the object
   def __repr__(self):
     return f"{self.__class__.__name__}(*{self.items!r})"

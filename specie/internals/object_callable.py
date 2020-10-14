@@ -23,7 +23,7 @@ class ObjCallable(Obj, typename = "Callable"):
     raise NotImplementedError()
 
   def method_call(self, *args: 'Obj') -> 'Obj':
-    return self.__call__(*args._py_list())
+    return self.__call__(*args)
 
   # Return a callable with the first arguments substituted by the specified arguments
   def partial(self, *args):

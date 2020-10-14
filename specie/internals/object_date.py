@@ -169,10 +169,6 @@ class ObjDate(Obj, typename = 'Date'):
     raise InvalidTypeException(other)
 
 
-  # Return the Python value of this object
-  def _py_value(self):
-    return self.value
-
   # Return the Python representation for this object
   def __repr__(self):
     return f"{self.__class__.__name__}({self.value!r})"
