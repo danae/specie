@@ -1,6 +1,7 @@
 from datetime import datetime, date, timedelta
 
 from .object import Obj, ObjBool, ObjInt, ObjString
+from .object_record import ObjRecord
 from .errors import InvalidTypeException
 
 
@@ -8,7 +9,7 @@ from .errors import InvalidTypeException
 ### Definition of the date object class ###
 ###########################################
 
-class ObjDate(Obj, typename = 'Date'):
+class ObjDate(ObjRecord, typename = 'Date', prettyprint = False):
   # The date format to use when parsing a string date
   format = "%Y-%m-%d"
 
@@ -35,6 +36,10 @@ class ObjDate(Obj, typename = 'Date'):
     else:
       raise TypeError(f"Unexpected native type {value.__class__.__name__}")
 
+    self.declare_delegate('year', lambda self: ObjInt(self.value.year))
+    self.declare_delegate('month', lambda self: ObjInt(self.value.month))
+    self.declare_delegate('day', lambda self: ObjInt(self.value.day))
+
 
   # Return if this date object is equal to another date object
   def __eq__(self, other):
@@ -56,16 +61,6 @@ class ObjDate(Obj, typename = 'Date'):
 
   def method_asHash(self) -> 'ObjInt':
     return ObjInt(self.__hash__())
-
-  # Return the date components of this date object
-  def method_year(self) -> 'ObjInt':
-    return ObjInt(self.value.year)
-
-  def method_month(self) -> 'ObjInt':
-    return ObjInt(self.value.month)
-
-  def method_day(self) -> 'ObjInt':
-    return ObjInt(self.value.day)
 
   # Return a date object at the start of the year of this date object
   def method_atStartOfYear(self) -> 'ObjDate':
