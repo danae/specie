@@ -58,23 +58,14 @@ class ObjDate(Obj, typename = 'Date'):
     return ObjInt(self.__hash__())
 
   # Return the date components of this date object
-  def year(self):
-    return self.value.year
-
   def method_year(self) -> 'ObjInt':
-    return ObjInt(self.year())
-
-  def month(self):
-    return self.value.month
+    return ObjInt(self.value.year)
 
   def method_month(self) -> 'ObjInt':
-    return ObjInt(self.month())
-
-  def day(self):
-    return self.value.day
+    return ObjInt(self.value.month)
 
   def method_day(self) -> 'ObjInt':
-    return ObjInt(self.day())
+    return ObjInt(self.value.day)
 
   # Return a date object at the start of the year of this date object
   def method_atStartOfYear(self) -> 'ObjDate':
