@@ -223,7 +223,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
   # Include a file
   def include(self, file_name: 'ObjString'):
-    file_name = file_name._py_value() if isinstance(file_name, internals.ObjString) else file_name
+    file_name = file_name.value if isinstance(file_name, internals.ObjString) else file_name
 
     # Check if the file exists
     if (resolved_file_name := self.resolve_file_name(file_name)) is None:
@@ -312,7 +312,7 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
     args = callable.parameters().validate(args)
 
     # Call the callable
-    return callable(*args._py_list())
+    return callable(*args)
 
   # Visit a get expression
   def visit_get_expr(self, expr: ast.GetExpr) -> internals.Obj:

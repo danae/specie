@@ -35,7 +35,7 @@ class ObjMeta(type):
 
   # Class constructor
   def __new__(cls, name, bases, attrs, **kwargs):
-    return super(ObjMeta, cls).__new__(cls, name, bases, attrs)
+    return super().__new__(cls, name, bases, attrs)
 
   # Class initializer
   def __init__(cls, name, bases, attrs, **kwargs):
@@ -132,10 +132,6 @@ class Obj(metaclass = ObjMeta, typename = "Object"):
     return ObjList.from_py(list(self.methods))
 
 
-  # Return the Python value of this object (empty for standard objects)
-  def _py_value(self):
-    return None
-
   # Return the Python representation for this object
   def __repr__(self):
     return f"{self.__class__.__name__}()"
@@ -225,10 +221,6 @@ class ObjBool(Obj, typename = "Bool"):
   def method_asString(self):
     return ObjString(self.__str__())
 
-
-  # Return the Python value of this object
-  def _py_value(self):
-    return self.value
 
   # Return the Python representation of this object
   def __repr__(self):
@@ -337,10 +329,6 @@ class ObjNumber(Obj, typename = "Number"):
       return ObjInt(1)
     raise InvalidTypeException(other)
 
-
-  # Return the Python value of this object
-  def _py_value(self):
-    return self.value
 
   # Return the Python representation of this object
   def __repr__(self):
@@ -670,10 +658,6 @@ class ObjString(Obj, typename = "String"):
     raise InvalidTypeException(pattern)
 
 
-  # Return the Python value of this object
-  def _py_value(self):
-    return self.value
-
   # Return the Python representation of this object
   def __repr__(self):
     return f"{self.__class__.__name__}({self.value!r})"
@@ -702,6 +686,7 @@ class ObjRegex(Obj, typename = "Regex"):
       self.pattern = re.compile(pattern, flags)
     else:
       raise TypeError(f"Unexpected native type {pattern.__class__.__name__}")
+
 
   # Return if this regex object is equal to another object
   def __eq__(self, other):
@@ -732,10 +717,6 @@ class ObjRegex(Obj, typename = "Regex"):
   def method_flags(self) -> 'ObjString':
     return ObjString(self.flags())
 
-
-  # Return the Python value of this object
-  def _py_value(self):
-    return self.pattern
 
   # Return the Python representation of this object
   def __repr__(self):
