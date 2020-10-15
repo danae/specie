@@ -61,20 +61,6 @@ class ObjList(ObjIterable, typename = "List"):
   def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())
 
-  # Return an iterator for this list object
-  def __iter__(self):
-    return ObjListIterator(self)
-
-  def method_iterator(self) -> 'ObjIterator':
-    return self.__iter__()
-
-  # Return the length of the list object
-  def __len__(self):
-    return len(self.items)
-
-  def method_count(self) -> 'ObjInt':
-    return ObjInt(self.__len__())
-
   # Get the item at the specified index in the list object
   def __getitem__(self, index):
     if isinstance(index, (ObjInt, int)):
@@ -130,12 +116,26 @@ class ObjList(ObjIterable, typename = "List"):
     self.delete(item)
     return self
 
+  # Return an iterator for this list object
+  def __iter__(self):
+    return ObjListIterator(self)
+
+  def method_iterator(self) -> 'ObjIterator':
+    return self.__iter__()
+
   # Return if the list object contains the specified item
   def __contains__(self, item):
     return item in self.items
 
   def method_contains(self, item: 'Obj') -> 'ObjBool':
     return ObjBool(self.__contains__(item))
+
+  # Return the length of the list object
+  def __len__(self):
+    return len(self.items)
+
+  def method_count(self) -> 'ObjInt':
+    return ObjInt(self.__len__())
 
 
   # Return the Python representation for the object
