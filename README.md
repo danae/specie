@@ -25,7 +25,7 @@
 
 ### Should
 * [X] Create an abstract structure type that holds fields → done by refactoring the Record type
-* [ ] Create a hash map type
+* [X] Create a hash map type
 * [ ] Optimize table output (support for ellipsis, wrapping, etc)
 * [ ] Create a new Table object for a collection of records
 * [ ] Update the TransactionList class to use the new Table model
