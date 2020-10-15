@@ -6,7 +6,7 @@ import sys
 import types
 
 from .parameters import Parameter, ParameterRequired, ParameterVariadic, Parameters
-from .errors import RuntimeException, InvalidTypeException, UndefinedMethodException, UndefinedIndexException
+from .errors import RuntimeException, InvalidOperationException, InvalidTypeException, UndefinedMethodException, UndefinedIndexException
 
 
 ######################################
@@ -57,6 +57,10 @@ class ObjMeta(type):
       method_func = getattr(cls, attr)
       method_name = attr[7:]
       cls.methods[method_name] = Method(cls, method_func)
+
+  # Return the string representation of this class
+  def __str__(cls):
+    return cls.typename
 
 
 ######################################
@@ -288,7 +292,7 @@ class ObjNumber(Obj, typename = "Number"):
   def method_lt(self, other: 'ObjNumber') -> 'ObjBool':
     if (result := self.__lt__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __le__(self, other):
     if isinstance(other, ObjNumber):
@@ -298,7 +302,7 @@ class ObjNumber(Obj, typename = "Number"):
   def method_lte(self, other: 'ObjNumber') -> 'ObjBool':
     if (result := self.__le__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __gt__(self, other):
     if isinstance(other, ObjNumber):
@@ -308,7 +312,7 @@ class ObjNumber(Obj, typename = "Number"):
   def method_gt(self, other: 'ObjNumber') -> 'ObjBool':
     if (result := self.__gt__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __ge__(self, other):
     if isinstance(other, ObjNumber):
@@ -318,7 +322,7 @@ class ObjNumber(Obj, typename = "Number"):
   def method_gte(self, other: 'ObjNumber') -> 'ObjBool':
     if (result := self.__ge__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def method_cmp(self, other: 'ObjNumber') -> 'ObjInt':
     if self.__eq__(other) == True:
@@ -327,7 +331,7 @@ class ObjNumber(Obj, typename = "Number"):
       return ObjInt(-1)
     elif self.__gt__(other) == True:
       return ObjInt(1)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
 
   # Return the Python representation of this object
@@ -379,7 +383,7 @@ class ObjInt(ObjNumber, typename = "Int"):
   def method_add(self, other: 'ObjNumber') -> 'ObjNumber':
     if (result := self.__add__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the suntraction of two numeric objects
   def __sub__(self, other):
@@ -392,7 +396,7 @@ class ObjInt(ObjNumber, typename = "Int"):
   def method_sub(self, other: 'ObjNumber') -> 'ObjNumber':
     if (result := self.__sub__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the multiplication of two numeric objects
   def __mul__(self, other):
@@ -405,7 +409,7 @@ class ObjInt(ObjNumber, typename = "Int"):
   def method_mul(self, other: 'ObjNumber') -> 'ObjNumber':
     if (result := self.__mul__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the division of two numeric objects
   def __truediv__(self, other):
@@ -419,7 +423,7 @@ class ObjInt(ObjNumber, typename = "Int"):
   def method_div(self, other: 'ObjNumber') -> 'ObjNumber':
     if (result := self.__truediv__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the Python int representation of this object (to avoid deadlocks)
   def __int__(self):
@@ -467,7 +471,7 @@ class ObjFloat(ObjNumber, typename = "Float"):
   def method_add(self, other: 'ObjNumber') -> 'ObjNumber':
     if (result := self.__add__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the suntraction of two numeric objects
   def __sub__(self, other):
@@ -478,7 +482,7 @@ class ObjFloat(ObjNumber, typename = "Float"):
   def method_sub(self, other: 'ObjNumber') -> 'ObjNumber':
     if (result := self.__sub__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the multiplication of two numeric objects
   def __mul__(self, other):
@@ -489,7 +493,7 @@ class ObjFloat(ObjNumber, typename = "Float"):
   def method_mul(self, other: 'ObjNumber') -> 'ObjNumber':
     if (result := self.__mul__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the division of two numeric objects
   def __truediv__(self, other):
@@ -503,7 +507,7 @@ class ObjFloat(ObjNumber, typename = "Float"):
   def method_div(self, other: 'ObjNumber') -> 'ObjNumber':
     if (result := self.__truediv__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the Python float representation of this object (to avoid deadlocks)
   def __float__(self):
@@ -567,7 +571,7 @@ class ObjString(Obj, typename = "String"):
   def method_lt(self, other: 'ObjString') -> 'ObjBool':
     if (result := self.__lt__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __le__(self, other):
     if isinstance(other, ObjString):
@@ -577,7 +581,7 @@ class ObjString(Obj, typename = "String"):
   def method_lte(self, other: 'ObjString') -> 'ObjBool':
     if (result := self.__le__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __gt__(self, other):
     if isinstance(other, ObjString):
@@ -587,7 +591,7 @@ class ObjString(Obj, typename = "String"):
   def method_gt(self, other: 'ObjString') -> 'ObjBool':
     if (result := self.__gt__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __ge__(self, other):
     if isinstance(other, ObjString):
@@ -597,7 +601,7 @@ class ObjString(Obj, typename = "String"):
   def method_gte(self, other: 'ObjString') -> 'ObjBool':
     if (result := self.__ge__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def method_cmp(self, other: 'ObjString') -> 'ObjInt':
     if self.__eq__(other) == True:
@@ -606,7 +610,7 @@ class ObjString(Obj, typename = "String"):
       return ObjInt(-1)
     elif self.__gt__(other) == True:
       return ObjInt(1)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the concatenation of two string objects
   def __add__(self, other):
@@ -617,7 +621,7 @@ class ObjString(Obj, typename = "String"):
   def method_add(self, other: 'ObjString') -> 'ObjString':
     if (result := self.__add__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the length of this string object
   def __len__(self):
@@ -634,7 +638,7 @@ class ObjString(Obj, typename = "String"):
         return ObjString(self.value[index])
       except IndexError:
         raise UndefinedIndexException(index)
-    raise InvalidTypeException(index)
+    raise InvalidTypeException(f"Method 'at' does not support arguments of type {index.__class__}")
 
   def method_at(self, index: 'ObjInt') -> 'ObjString':
     return self.__getitem__(index)
@@ -644,18 +648,18 @@ class ObjString(Obj, typename = "String"):
     if isinstance(item, (ObjString, str)):
       item = item.value if isinstance(item, ObjString) else item
       return ObjBool(self.value.find(item) > -1)
-    raise InvalidTypeException(item)
+    raise InvalidTypeException(f"Method 'contains' does not support arguments of type {item.__class__}")
 
   def method_contains(self, item: 'ObjString') -> 'ObjBool':
     return self.__contains__(item)
 
   # Return if this string object matches a pattern
-  def method_match(self, pattern: 'Obj') -> 'ObjBool':
+  def method_match(self, pattern: 'ObjString, ObjRegex') -> 'ObjBool':
     if isinstance(pattern, ObjRegex):
       return ObjBool(pattern.pattern.search(self.value) is not None)
     if isinstance(pattern, ObjString):
       return ObjBool(re.search(pattern.value, self.value, re.IGNORECASE) is not None)
-    raise InvalidTypeException(pattern)
+    raise InvalidTypeException(f"Method 'match' does not support arguments of type {pattern.__class__}")
 
 
   # Return the Python representation of this object

@@ -1,6 +1,6 @@
 from .object import Obj, ObjBool, ObjNumber, ObjInt, ObjFloat, ObjString
 from .object_record import ObjRecord
-from .errors import InvalidTypeException
+from .errors import InvalidOperationException
 
 
 ############################################
@@ -52,7 +52,7 @@ class ObjMoney(ObjRecord, typename = "Money", prettyprint = False):
   def method_lt(self, other: 'ObjMoney') -> 'ObjBool':
     if (result := self.__lt__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __le__(self, other):
     if isinstance(other, ObjMoney) and self.currency == other.currency:
@@ -62,7 +62,7 @@ class ObjMoney(ObjRecord, typename = "Money", prettyprint = False):
   def method_lte(self, other: 'ObjMoney') -> 'ObjBool':
     if (result := self.__le__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lte' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __gt__(self, other):
     if isinstance(other, ObjMoney) and self.currency == other.currency:
@@ -72,7 +72,7 @@ class ObjMoney(ObjRecord, typename = "Money", prettyprint = False):
   def method_gt(self, other: 'ObjMoney') -> 'ObjBool':
     if (result := self.__gt__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'gt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __ge__(self, other):
     if isinstance(other, ObjMoney) and self.currency == other.currency:
@@ -82,7 +82,7 @@ class ObjMoney(ObjRecord, typename = "Money", prettyprint = False):
   def method_gte(self, other: 'ObjMoney') -> 'ObjBool':
     if (result := self.__ge__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'gte' does not support operands of type {self.__class__} and {other.__class__}")
 
   def method_cmp(self, other: 'ObjMoney') -> 'ObjInt':
     if self.__eq__(other) == True:
@@ -91,7 +91,7 @@ class ObjMoney(ObjRecord, typename = "Money", prettyprint = False):
       return ObjInt(-1)
     elif self.__gt__(other) == True:
       return ObjInt(1)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'cmp' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the addition of two money objects
   def __add__(self, other):
@@ -102,7 +102,7 @@ class ObjMoney(ObjRecord, typename = "Money", prettyprint = False):
   def method_add(self, other: 'ObjNumber') -> 'ObjNumber':
     if (result := self.__add__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'add' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the suntraction of two numeric objects
   def __sub__(self, other):
@@ -113,7 +113,7 @@ class ObjMoney(ObjRecord, typename = "Money", prettyprint = False):
   def method_sub(self, other: 'ObjNumber') -> 'ObjNumber':
     if (result := self.__sub__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'sub' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the multiplication of two numeric objects
   def __mul__(self, other):
@@ -124,7 +124,7 @@ class ObjMoney(ObjRecord, typename = "Money", prettyprint = False):
   def method_mul(self, other: 'ObjNumber') -> 'ObjNumber':
     if (result := self.__mul__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'mul' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return the division of two numeric objects
   def __truediv__(self, other):
@@ -135,4 +135,4 @@ class ObjMoney(ObjRecord, typename = "Money", prettyprint = False):
   def method_div(self, other: 'ObjNumber') -> 'ObjNumber':
     if (result := self.__truediv__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'div' does not support operands of type {self.__class__} and {other.__class__}")

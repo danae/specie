@@ -2,6 +2,7 @@ from .object import Obj, ObjBool, ObjInt, ObjFloat, ObjString
 from .object_record import FieldOptions, ObjRecord
 from .object_date import ObjDate
 from .object_money import ObjMoney
+from .errors import InvalidOperationException
 
 
 ##################################################
@@ -45,7 +46,7 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
   def method_lt(self, other: 'ObjTransaction') -> 'ObjBool':
     if (result := self.__lt__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __le__(self, other):
     if isinstance(other, ObjTransaction):
@@ -55,7 +56,7 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
   def method_lte(self, other: 'ObjTransaction') -> 'ObjBool':
     if (result := self.__le__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lte' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __gt__(self, other):
     if isinstance(other, ObjTransaction):
@@ -65,7 +66,7 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
   def method_gt(self, other: 'ObjTransaction') -> 'ObjBool':
     if (result := self.__gt__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'gt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __ge__(self, other):
     if isinstance(other, ObjTransaction):
@@ -75,7 +76,7 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
   def method_gte(self, other: 'ObjTransaction') -> 'ObjBool':
     if (result := self.__ge__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'gte' does not support operands of type {self.__class__} and {other.__class__}")
 
   def method_cmp(self, other: 'ObjTransaction') -> 'ObjInt':
     if self.__eq__(other) == True:
@@ -84,4 +85,4 @@ class ObjTransaction(ObjRecord, typename = "Transaction"):
       return ObjInt(-1)
     elif self.__gt__(other) == True:
       return ObjInt(1)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'cmp' does not support operands of type {self.__class__} and {other.__class__}")

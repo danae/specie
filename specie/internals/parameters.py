@@ -131,7 +131,7 @@ class Parameters:
 
         # Check the type of the argument
         if not issubclass(check_type := type(arg), param_type := param.type):
-          raise InvalidCallException(f"Expected argument '{param.name}' of type {param_type.typename}, got type {check_type.typename}", location)
+          raise InvalidCallException(f"Expected argument '{param.name}' of type {param_type}, got type {check_type}", location)
 
         # Add the argument to the list
         if i == len(self.parameters) - 1 and param.is_variadic():
@@ -201,4 +201,14 @@ class Parameters:
     elif ',' not in param.annotation:
       return ObjMeta.obj_classes[param.annotation]
     else:
-      return tuple(ObjMeta.obj_classes[annot.strip()] for annot in param.annotation.split(','))
+      return UnionType(ObjMeta.obj_classes[annot.strip()] for annot in param.annotation.split(','))
+
+
+##########################################
+### Definition of the union type class ###
+##########################################
+
+class UnionType(tuple):
+  # Return the string representation of this class
+  def __str__(self):
+    return ' | '.join(str(type) for type in self)

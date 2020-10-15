@@ -2,7 +2,7 @@ from datetime import datetime, date, timedelta
 
 from .object import Obj, ObjBool, ObjInt, ObjString
 from .object_record import ObjRecord
-from .errors import InvalidTypeException
+from .errors import InvalidOperationException
 
 
 ###########################################
@@ -75,7 +75,7 @@ class ObjDate(ObjRecord, typename = 'Date', prettyprint = False):
     if isinstance(format_spec, (ObjString, str)):
       format_spec = format_spec.value if isinstance(format_spec, ObjString) else format_spec
       return format(self.value, format_spec)
-    raise InvalidTypeException(format_spec)
+    raise InvalidTypeException(f"Method 'asFormat' does not support arguments of type {format_spec.__class__}")
 
   def method_asFormat(self, format_spec: 'ObjString') -> 'ObjString':
     return ObjString(self.__format__(format_spec))
@@ -89,7 +89,7 @@ class ObjDate(ObjRecord, typename = 'Date', prettyprint = False):
   def method_lt(self, other: 'ObjDate') -> 'ObjBool':
     if (result := self.__lt__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __le__(self, other):
     if isinstance(other, ObjDate):
@@ -99,7 +99,7 @@ class ObjDate(ObjRecord, typename = 'Date', prettyprint = False):
   def method_lte(self, other: 'ObjDate') -> 'ObjBool':
     if (result := self.__le__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __gt__(self, other):
     if isinstance(other, ObjDate):
@@ -109,7 +109,7 @@ class ObjDate(ObjRecord, typename = 'Date', prettyprint = False):
   def method_gt(self, other: 'ObjDate') -> 'ObjBool':
     if (result := self.__gt__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def __ge__(self, other):
     if isinstance(other, ObjDate):
@@ -119,7 +119,7 @@ class ObjDate(ObjRecord, typename = 'Date', prettyprint = False):
   def method_gte(self, other: 'ObjDate') -> 'ObjBool':
     if (result := self.__ge__(other)) is not NotImplemented:
       return ObjBool(result)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   def method_cmp(self, other: 'ObjDate') -> 'ObjInt':
     if self.__eq__(other) == True:
@@ -128,7 +128,7 @@ class ObjDate(ObjRecord, typename = 'Date', prettyprint = False):
       return ObjInt(-1)
     elif self.__gt__(other) == True:
       return ObjInt(1)
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return this date with a specified amount of days added
   def __add__(self, other):
@@ -139,7 +139,7 @@ class ObjDate(ObjRecord, typename = 'Date', prettyprint = False):
   def method_add(self, other: 'ObjInt') -> 'ObjDate':
     if (result := self.__add__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
   # Return this date with a specified amount of days subtracted
   def __sub__(self, other):
@@ -152,7 +152,7 @@ class ObjDate(ObjRecord, typename = 'Date', prettyprint = False):
   def method_sub(self, other: 'ObjInt, ObjDate') -> 'ObjDate, ObjInt':
     if (result := self.__sub__(other)) is not NotImplemented:
       return result
-    raise InvalidTypeException(other)
+    raise InvalidOperationException(f"Operation 'lt' does not support operands of type {self.__class__} and {other.__class__}")
 
 
   # Return the Python representation for this object

@@ -15,16 +15,17 @@ class RuntimeException(Exception):
 class InvalidStateException(RuntimeException):
   pass
 
+# Exception that is raised when an invalid operation is encountered
+class InvalidOperationException(RuntimeException):
+  pass
 
 # Exception that is raised when an invalid type is encountered
 class InvalidTypeException(RuntimeException):
   pass
 
-
 # Exception that is raised when an invalid value is encountered
 class InvalidValueException(RuntimeException):
   pass
-
 
 # Exception that is raised when an invalid call signature is encountered
 class InvalidCallException(RuntimeException):
@@ -37,13 +38,11 @@ class UndefinedMethodException(RuntimeException):
     RuntimeException.__init__(self, f"Undefined method '{method_name}'", location)
     self.method_name = method_name
 
-
 # Exception that is raised when an undefined field is accessed
 class UndefinedFieldException(RuntimeException):
   def __init__(self, field_name, location = None):
     RuntimeException.__init__(self, f"Undefined field '{field_name}'", location)
     self.field_name = field_name
-
 
 # Exception that is raised when an undefined index is accessed
 class UndefinedIndexException(RuntimeException):

@@ -1,7 +1,8 @@
 # Import errors
 from .errors import (RuntimeException, InvalidStateException,
-  InvalidTypeException, InvalidValueException, InvalidCallException,
-  UndefinedMethodException, UndefinedFieldException, UndefinedIndexException)
+  InvalidOperationException,  InvalidTypeException, InvalidValueException,
+  InvalidCallException, UndefinedMethodException, UndefinedFieldException,
+  UndefinedIndexException, UndefinedKeyException)
 
 # Import parameters
 from .parameters import (Parameter, ParameterRequired, ParameterVariadic,

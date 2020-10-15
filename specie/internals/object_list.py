@@ -80,7 +80,7 @@ class ObjList(ObjIterable, typename = "List"):
     if isinstance(index, (ObjInt, int)):
       index = index.value if isinstance(index, ObjInt) else index
       return self.get_item_at(index)
-    raise InvalidTypeException(index)
+    raise InvalidTypeException(f"Method 'at' does not support arguments of type {index.__class__}")
 
   def method_at(self, index: 'ObjInt') -> 'Obj':
     return self.__getitem__(index)
