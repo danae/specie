@@ -172,6 +172,13 @@ class ObjNull(Obj, typename = "Null"):
   def method_as_string(self):
     return ObjString(self.__str__())
 
+  # Return the hash of this object
+  def __hash__(self):
+    return hash(None)
+
+  def method_asHash(self) -> 'ObjInt':
+    return ObjInt(self.__hash__())
+
 
 ###########################################
 ### Definition of the bool object class ###
@@ -224,6 +231,13 @@ class ObjBool(Obj, typename = "Bool"):
 
   def method_asString(self):
     return ObjString(self.__str__())
+
+  # Return the hash of this object
+  def __hash__(self):
+    return hash(self.value)
+
+  def method_asHash(self) -> 'ObjInt':
+    return ObjInt(self.__hash__())
 
 
   # Return the Python representation of this object

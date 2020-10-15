@@ -18,6 +18,7 @@ from .object_function import ObjFunction
 from .object_iterable import ObjIterable, ObjDelegatedIterable, ObjIterator
 from .object_list import ObjList, ObjListIterator
 from .object_record import FieldOptions, Field, ObjRecord
+from .object_map import ObjMap, ObjMapElement, ObjMapIterator
 from .object_date import ObjDate
 from .object_money import ObjMoney
 from .object_transaction import ObjTransaction

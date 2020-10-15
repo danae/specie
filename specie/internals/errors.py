@@ -49,3 +49,9 @@ class UndefinedIndexException(RuntimeException):
   def __init__(self, index_name, location = None):
     RuntimeException.__init__(self, f"Undefined index '{index_name}'", location)
     self.index_name = index_name
+
+# Exception that is raised when an undefined index is accessed
+class UndefinedKeyException(RuntimeException):
+  def __init__(self, index_name, location = None):
+    RuntimeException.__init__(self, f"Undefined key '{index_name}'", location)
+    self.index_name = index_name

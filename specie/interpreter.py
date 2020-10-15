@@ -127,6 +127,7 @@ class Environment:
     globals.declare_field('int', internals.ObjPyCallable(internals.ObjInt), mutable = False)
     globals.declare_field('float', internals.ObjPyCallable(internals.ObjFloat), mutable = False)
     globals.declare_field('string', internals.ObjPyCallable(internals.ObjString), mutable = False)
+    globals.declare_field('map', internals.ObjPyCallable(internals.ObjMap), mutable = False)
     globals.declare_field('date', internals.ObjPyCallable(internals.ObjDate), mutable = False)
     globals.declare_field('money', internals.ObjPyCallable(internals.ObjMoney), mutable = False)
 
