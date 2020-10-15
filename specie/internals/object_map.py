@@ -50,11 +50,11 @@ class ObjMap(ObjIterable, typename = "Map"):
       raise UndefinedKeyException(key)
 
   def method_get(self, key: 'Obj', default: 'Obj' = None) -> 'Obj':
-    return self.get(hash(key), default)
+    return self.get(key, default)
 
   # Set a value in the map object
   def set(self, key, value):
-    if not key.has_method('asHash'):
+    if not hasattr(key, '__hash__'):
       raise InvalidTypeException(f"Maps don't support unhashable keys of type {key.__class__}")
     self.elements[key] = value
 
