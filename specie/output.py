@@ -1,9 +1,13 @@
 import functools
+import types
 
 from . import internals, utils
 
 
+
+#############################################
 ### Definition of the table utility class ###
+#############################################
 
 class Table:
   # Constructor
@@ -119,6 +123,8 @@ def print_object(*objects: 'Obj') -> 'ObjNull':
     object = objects[0]
     if isinstance(object, internals.ObjRecord) and object.__class__.prettyprint:
       print_record(object)
+    elif isinstance(object, internals.ObjMap):
+      print_map(object)
     elif isinstance(object, internals.ObjList):
       print_list(object)
     else:
@@ -136,8 +142,20 @@ def print_record(record: 'ObjRecord'):
   tbl.append_row(['field', 'value'])
   tbl.append_separator_row()
 
-  for name, value  in record:
+  for name, value in record:
     tbl.append_row([name, value])
+
+  if tbl:
+    print(tbl)
+
+# Print a map oject
+def print_map(map: 'ObJMap'):
+  tbl = Table()
+  tbl.append_row(['key', 'value'])
+  tbl.append_separator_row()
+
+  for key, value in map.elements.items():
+    tbl.append_row([key, value])
 
   if tbl:
     print(tbl)
@@ -157,7 +175,7 @@ def print_list(list: 'ObjList'):
       for item in list:
         print(f"- {item}")
 
-# print a table object
+# Print a table object
 def print_table(table: 'ObjList'):
   # Get all fields
   fields = functools.reduce(utils.distinct_append, ([name for name, field in record.fields.items() if field.public] for record in table), [])
