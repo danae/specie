@@ -31,7 +31,10 @@ class ObjMoney(ObjRecord, typename = "Money", prettyprint = False):
 
   # Return the string representation of this object
   def __str__(self):
-    return f"{self.currency} {self.value:.2f}"
+    if float(self.value) < 0.0:
+      return f"[red]{self.currency} {self.value:.2f}"
+    else:
+      return f"{self.currency} {self.value:.2f}"
 
   def method_asString(self) -> 'ObjString':
     return ObjString(self.__str__())

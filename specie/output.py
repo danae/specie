@@ -1,14 +1,21 @@
 import functools
-import types
+
+from rich import box
+from rich.console import Console
+from rich.table import Table
 
 from . import internals, utils
 
+
+# Create the console
+console = Console()
 
 
 #############################################
 ### Definition of the table utility class ###
 #############################################
 
+"""
 class Table:
   # Constructor
   def __init__(self):
@@ -104,16 +111,15 @@ class Table:
 
     # Return the strings
     return "\n".join(strings)
+"""
 
 
 ### Definition of functions to print objects ###
 
 # Print a title
 def title(string: 'ObjString') -> 'ObjNull':
-  string = string.value.upper()
-  print()
-  print(string)
-  print("=" * (len(string)))
+  console.print()
+  console.rule(f"[bold]{string}", align = 'left')
   return internals.ObjNull()
 
 # Print an object
@@ -128,37 +134,37 @@ def print_object(*objects: 'Obj') -> 'ObjNull':
     elif isinstance(object, internals.ObjList):
       print_list(object)
     else:
-      print(object)
+      console.print(str(object))
 
   # If there are multiple objects, concatenate them
   elif len(objects) > 1:
-    print("".join(str(object) for object in objects))
+    console.print("".join(str(object) for object in objects))
 
   return internals.ObjNull()
 
 # Print a record oject
 def print_record(record: 'ObjRecord'):
-  tbl = Table()
-  tbl.append_row(['field', 'value'])
-  tbl.append_separator_row()
+  table = Table(box = box.SQUARE)
 
-  for name, value in record:
-    tbl.append_row([name, value])
+  table.add_column('field', justify = 'left', style = 'cyan', no_wrap = True)
+  table.add_column('value', justify = 'left', no_wrap = True)
 
-  if tbl:
-    print(tbl)
+  for field, value in record:
+    table.add_row(str(field), str(value))
+
+  console.print(table)
 
 # Print a map oject
-def print_map(map: 'ObJMap'):
-  tbl = Table()
-  tbl.append_row(['key', 'value'])
-  tbl.append_separator_row()
+def print_map(map: 'ObjMap'):
+  table = Table(box = box.SQUARE)
+
+  table.add_column('key', justify = 'left', style = 'cyan', no_wrap = True)
+  table.add_column('value', justify = 'left', no_wrap = True)
 
   for key, value in map.elements.items():
-    tbl.append_row([key, value])
+    table.add_row(str(key), str(value))
 
-  if tbl:
-    print(tbl)
+  console.print(table)
 
 # Print a list object
 def print_list(list: 'ObjList'):
@@ -173,20 +179,20 @@ def print_list(list: 'ObjList'):
     # Otherwise just print every item on its own line
     else:
       for item in list:
-        print(f"- {item}")
+        console.print(f"- {item}")
 
 # Print a table object
-def print_table(table: 'ObjList'):
+def print_table(list: 'ObjList'):
   # Get all fields
-  fields = functools.reduce(utils.distinct_append, ([name for name, field in record.fields.items() if field.public] for record in table), [])
+  fields = functools.reduce(utils.distinct_append, ([name for name, field in record.fields.items() if field.public] for record in list), [])
 
   # Print the list in table form
-  tbl = Table()
-  tbl.append_row(fields)
-  tbl.append_separator_row()
+  table = Table(box = box.SQUARE)
 
-  for record in table:
-    tbl.append_row([record.get_field_or(name, "") for name in fields])
+  for field in fields:
+    table.add_column(field, justify = 'left')
 
-  if tbl:
-    print(tbl)
+  for record in list:
+    table.add_row(*[str(record.get_field_or(name, "")) for name in fields])
+
+  console.print(table)

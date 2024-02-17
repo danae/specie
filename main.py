@@ -1,5 +1,4 @@
 import argparse
-import readline
 import sys
 
 from colorama import Fore, Back, Style
