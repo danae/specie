@@ -105,13 +105,6 @@ class Obj(metaclass = ObjMeta, typename = "Object"):
   def method_eq(self, other: 'Obj') -> 'ObjBool':
     return ObjBool(self.__eq__(other))
 
-  # Return if this object is not equal to another object
-  def __ne__(self, other):
-    return not self.__eq__(other)
-
-  def method_neq(self, other: 'Obj') -> 'ObjBool':
-    return ObjBool(self.__ne__(other))
-
   # Return the bool representation of this object
   def __bool__(self):
     return True
@@ -210,6 +203,10 @@ class ObjBool(Obj, typename = "Bool"):
     else:
       raise TypeError(f"Unexpected native type {value.__class__.__name__}")
 
+
+  # Negate the bool object
+  def negate(self):
+    return ObjBool(not self.value)
 
   # Return if this bool object is equal to another object
   def __eq__(self, other):
@@ -471,7 +468,7 @@ class ObjFloat(ObjNumber, typename = "Float"):
       try:
         self.value = float(value)
       except ValueError:
-        raise RuntimeException(f"Invalid int literal {value}")
+        raise RuntimeException(f"Invalid float literal {value}")
     else:
       raise TypeError(f"Unexpected native type {value.__class__.__name__}")
 

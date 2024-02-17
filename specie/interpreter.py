@@ -381,27 +381,31 @@ class Interpreter(ast.ExprVisitor[internals.Obj]):
 
     # Comparison operations
     elif op == '<':
-      return left.call_method('lt', right)
+      return left.call_method('lt', right).method_asBool()
     elif op == '<=':
-      return left.call_method('lte', right)
+      return left.call_method('lte', right).method_asBool()
     elif op == '>':
-      return left.call_method('gt', right)
+      return left.call_method('gt', right).method_asBool()
     elif op == '>=':
-      return left.call_method('gte', right)
+      return left.call_method('gte', right).method_asBool()
     elif op == '<=>':
-      return left.call_method('cmp', right)
-    elif op == '~':
-      return left.call_method('match', right)
-
+      return left.call_method('cmp', right).method_asBool()
+    elif op == '=~':
+      return left.call_method('match', right).method_asBool()
+    elif op == '!~':
+      return left.call_method('match', right).method_asBool().negate()
+    
     # Containment operations
     elif op == 'in':
-      return right.call_method('contains', left)
-
+      return right.call_method('contains', left).method_asBool()
+    elif op == '!in':
+      return right.call_method('contains', left).method_asBool().negate()
+    
     # Equality operations
     elif op == '==':
-      return left.call_method('eq', right)
+      return left.call_method('eq', right).method_asBool()
     elif op == '!=':
-      return left.call_method('neq', right)
+      return left.call_method('eq', right).method_asBool().negate()
 
     # No matching operation found
     raise internals.RuntimeException("Undefined binary operator '{}'".format(op), expr.op.location)

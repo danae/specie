@@ -192,7 +192,7 @@ class Lexer:
       # Remove the comments
       for match in re.finditer(comment_pattern, string, re.DOTALL):
         # Ignore block comments
-        if self.comment_block and match.group(0).startswith(self.comment_block):
+        if self.comment_block and match.group(0).startswith(self.comment_block[0]):
           start, end = match.span(0)
           line_ends = [start + newline_match.end() for newline_match in newline_pattern.finditer(string, start, end)]
           ignored.append((start, end, line_ends))
